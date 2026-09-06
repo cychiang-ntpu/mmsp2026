@@ -1,0 +1,12 @@
+# Makefile 與原始碼固定 LF（CRLF 會弄壞 make 與 diff）
+Makefile text eol=lf
+*.c      text eol=lf
+*.h      text eol=lf
+*.py     text eol=lf
+*.md     text eol=lf
+*.yml    text eol=lf
+*.txt    text eol=lf
+*.sh     text eol=lf
+*.wav    binary
+*.pdf    binary
+*.bin    binary

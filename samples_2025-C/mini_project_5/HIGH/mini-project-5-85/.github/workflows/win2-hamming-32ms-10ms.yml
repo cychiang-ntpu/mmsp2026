@@ -1,0 +1,85 @@
+name: win2-hamming-32ms-10ms
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "spectrogram.c"
+      - "spectshow.py"
+      - ".github/workflows/win2-hamming-32ms-10ms.yml"
+      - "**/*.wav"
+
+jobs:
+  build-and-generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 python3-pip
+
+      - name: Install Python deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install numpy matplotlib scipy
+
+      - name: Build spectrogram
+        run: |
+          gcc -O2 -o spectrogram spectrogram.c -lm
+
+      - name: Generate spectrogram TXT (win2)
+        run: |
+          set -e
+
+          W_SIZE=32
+          W_TYPE=hamming
+          DFT_SIZE=32
+          F_ITV=10
+
+          mkdir -p out/win2
+
+          for wav in aeueo-8kHz.wav aeueo-16kHz.wav s-8kHz.wav s-16kHz.wav; do
+            if [ ! -f "$wav" ]; then
+              echo "ERROR: missing wav file: $wav"
+              exit 1
+            fi
+
+            base="$(basename "$wav" .wav)"
+            txt="out/win2/${base}_win2_${W_TYPE}_w${W_SIZE}ms_dft${DFT_SIZE}ms_f${F_ITV}ms.txt"
+
+            echo "Running spectrogram: $wav -> $txt"
+            ./spectrogram "$W_SIZE" "$W_TYPE" "$DFT_SIZE" "$F_ITV" "$wav" "$txt"
+          done
+
+      - name: Generate PDF plots via spectshow.py
+        run: |
+          set -e
+
+          if [ ! -f "spectshow.py" ]; then
+            echo "ERROR: missing spectshow.py in repo root"
+            exit 1
+          fi
+
+          for wav in aeueo-8kHz.wav aeueo-16kHz.wav s-8kHz.wav s-16kHz.wav; do
+            base="$(basename "$wav" .wav)"
+            txt="out/win2/${base}_win2_hamming_w32ms_dft32ms_f10ms.txt"
+            pdf="out/win2/${base}_win2_hamming_w32ms_dft32ms_f10ms.pdf"
+
+            if [ ! -f "$txt" ]; then
+              echo "ERROR: missing txt file: $txt"
+              exit 1
+            fi
+
+            echo "Running spectshow.py: $wav + $txt -> $pdf"
+            python3 spectshow.py "$wav" "$txt" "$pdf"
+          done
+
+      - name: Upload outputs (txt + pdf)
+        uses: actions/upload-artifact@v4
+        with:
+          name: win2-hamming-32ms-10ms
+          path: out/win2/*.pdf

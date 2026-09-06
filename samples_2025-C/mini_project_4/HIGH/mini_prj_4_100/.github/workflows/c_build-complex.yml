@@ -1,0 +1,113 @@
+name: c_build-complex
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-encode-decode-complex:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 步驟 1: 取得 repo 中的程式碼
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 安裝編譯工具
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl
+
+      # 步驟 2: 編譯 C 語言程式 (encoder.c)
+      - name: Build encoder
+        run: |
+          gcc -Wall -Wextra -std=c11 -o encoder.exe encoder.c logger.c -lm
+
+      # 步驟 3: 上傳建置成品 encoder.exe
+      - name: Upload encoder binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: encoder-binary
+          path: encoder.exe
+
+      # 步驟 4: 編譯 C 語言程式 (decoder.c)
+      - name: Build decoder
+        run: |
+          gcc -Wall -Wextra -std=c11 -o decoder.exe decoder.c logger.c
+
+      # 步驟 5: 上傳建置成品 decoder.exe
+      - name: Upload decoder binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: decoder-binary
+          path: decoder.exe
+
+      # 步驟 6: 用 curl 抓取 Sherlock Holmes 文字，存成 test_input_complex.txt
+      - name: Download complex test input
+        run: |
+          curl -sS https://sherlock-holm.es/stories/plain-text/cano.txt \
+            -o test_input_complex.txt
+
+      # 步驟 7: 使用 encoder 對 test_input_complex.txt 進行編碼
+      #       輸出 test_encoded-complex.bin、test_codebook-complex.csv、log test_encoder-complex.log
+      - name: Run encoder on complex input
+        run: |
+          ./encoder.exe test_input_complex.txt test_codebook-complex.csv test_encoded-complex.bin \
+            > test_encoder-complex.log 2>&1
+
+      # 步驟 8: 上傳輸出編碼檔
+      - name: Upload encoded complex binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-encoded-complex-bin
+          path: test_encoded-complex.bin
+
+      # 步驟 9: 上傳輸出 codebook
+      - name: Upload complex codebook
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-codebook-complex-csv
+          path: test_codebook-complex.csv
+
+      # 步驟 10: 上傳 encoder log
+      - name: Upload encoder complex log
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-encoder-complex-log
+          path: test_encoder-complex.log
+
+      # 步驟 11: 使用 decoder 解碼 test_encoded-complex.bin + test_codebook-complex.csv
+      #         輸出 test_output-complex.txt 與 log test_decoder-complex.log
+      #         （這邊用 set +e 讓失敗時也能把 log 印出來）
+      - name: Run decoder on complex encoded data
+        run: |
+          set +e
+          ./decoder.exe test_encoded-complex.bin test_codebook-complex.csv test_output-complex.txt \
+            > test_decoder-complex.log 2>&1
+          status=$?
+          echo "===== Decoder complex log ====="
+          cat test_decoder-complex.log
+          exit $status
+
+      # 步驟 12: 上傳解碼文字檔
+      - name: Upload decoded complex text
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output-complex-txt
+          path: test_output-complex.txt
+
+      # 步驟 13: 上傳 decoder log
+      - name: Upload decoder complex log
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-decoder-complex-log
+          path: test_decoder-complex.log
+
+      # 步驟 14: 使用 diff 檢驗 input / output 是否一致
+      - name: Diff complex input and output
+        run: |
+          echo "===== diff test_input_complex.txt vs test_output-complex.txt ====="
+          diff test_input_complex.txt test_output-complex.txt

@@ -1,0 +1,15 @@
+# build artifacts
+*.exe
+*.obj
+*.o
+*.out
+
+# generated data（樣本自帶的紀錄檔除外，見下方白名單）
+*.csv
+*.log
+!samples_2025-C/mini_project_4/HIGH/mini_prj_4_90/decoder.log
+!samples_2025-C/mini_project_4/HIGH/mini_prj_4_90/encoder.log
+
+# editor/OS
+.DS_Store
+Thumbs.db

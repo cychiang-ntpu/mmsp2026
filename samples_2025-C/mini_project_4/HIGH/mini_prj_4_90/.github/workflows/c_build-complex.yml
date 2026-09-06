@@ -1,0 +1,49 @@
+name: C Build Simple
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile encoder
+        run: gcc encoder.c logger.c -lm -o encoder.exe
+
+      - name: Compile decoder
+        run: gcc decoder.c logger.c -o decoder.exe
+
+      - name: Download input.txt
+        run: curl -o input.txt https://sherlock-holm.es/stories/plain-text/cano.txt
+
+      - name: Run encoder
+        run: ./encoder.exe input.txt codebook.csv encoded.bin > encoder.log 2>&1
+
+      - name: Upload encoder artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: encoder-artifacts
+          path: |
+            encoded.bin
+            codebook.csv
+            encoder.log
+
+      - name: Run decoder
+        run: ./decoder.exe output.txt codebook.csv encoded.bin > decoder.log 2>&1
+
+      - name: Upload decoder artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: decoder-artifacts
+          path: |
+            output.txt
+            decoder.log
+
+      - name: Verify output
+        run: diff input.txt output.txt

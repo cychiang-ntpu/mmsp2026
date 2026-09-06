@@ -1,0 +1,101 @@
+name: c_build-simple
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-encode-decode:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 步驟 1: 取得 repo 中的程式碼
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 安裝編譯工具 (gcc 等)
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      # 步驟 2: 編譯 C 語言程式 (encoder.c)
+      - name: Build encoder
+        run: |
+          gcc -Wall -Wextra -std=c11 -o encoder.exe encoder.c logger.c -lm
+
+      # 步驟 3: 上傳建置成品 encoder.exe
+      - name: Upload encoder binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: encoder-binary
+          path: encoder.exe
+
+      # 步驟 4: 編譯 C 語言程式 (decoder.c)
+      - name: Build decoder
+        run: |
+          gcc -Wall -Wextra -std=c11 -o decoder.exe decoder.c logger.c
+
+      # 步驟 5: 上傳建置成品 decoder.exe
+      - name: Upload decoder binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: decoder-binary
+          path: decoder.exe
+
+      # 步驟 6: 使用 encoder 對 test_input_simple.txt 編碼
+      # 輸出：test_encoded-simple.bin、test_codebook-simple.csv，以及 log test_encoder-simple.log
+      - name: Run encoder on test_input_simple.txt
+        run: |
+          ./encoder.exe test_input_simple.txt test_codebook-simple.csv test_encoded-simple.bin \
+            > test_encoder-simple.log 2>&1
+
+      # 步驟 7: 上傳輸出編碼檔 test_encoded-simple.bin
+      - name: Upload encoded binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-encoded-simple-bin
+          path: test_encoded-simple.bin
+
+      # 步驟 8: 上傳輸出 codebook test_codebook-simple.csv
+      - name: Upload codebook
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-codebook-simple-csv
+          path: test_codebook-simple.csv
+
+      # 步驟 9: 上傳 encoder 的 log test_encoder-simple.log
+      - name: Upload encoder log
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-encoder-simple-log
+          path: test_encoder-simple.log
+
+      # 步驟 10: 使用 decoder 對 test_encoded-simple.bin + test_codebook-simple.csv 解碼
+      # 輸出：test_output-simple.txt 以及 log test_decoder-simple.log
+      - name: Run decoder on encoded data
+        run: |
+          ./decoder.exe test_encoded-simple.bin test_codebook-simple.csv test_output-simple.txt \
+            > test_decoder-simple.log 2>&1
+
+      # 步驟 11: 上傳解碼文字檔 test_output-simple.txt
+      - name: Upload decoded text
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output-simple-txt
+          path: test_output-simple.txt
+
+      # 步驟 12: 上傳 decoder 的 log test_decoder-simple.log
+      - name: Upload decoder log
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-decoder-simple-log
+          path: test_decoder-simple.log
+
+      # 步驟 13: 使用 diff 檢驗 test_input_simple.txt vs test_output_simple.txt 是否一致
+      - name: Diff input and output
+        run: |
+          echo "===== diff test_input_simple.txt vs test_output-simple.txt ====="
+          diff test_input_simple.txt test_output-simple.txt

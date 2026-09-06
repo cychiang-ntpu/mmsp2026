@@ -1,0 +1,60 @@
+name: Build and Generate Spectrograms
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc python3 python3-pip sox
+        python3 -m pip install numpy matplotlib
+
+    - name: Compile C programs
+      run: |
+        gcc signal_gen.c -o signal_gen -lm
+        gcc spectrogram.c -o spectrogram -lm
+
+    - name: Generate waveforms
+      run: |
+        ./signal_gen 8000 s-8kHz.wav
+        ./signal_gen 16000 s-16kHz.wav
+        # 確保 aeueo-8kHz.wav 和 aeueo-16kHz.wav 已經在 repo 中
+
+    - name: Generate spectrogram ASCII files
+      run: |
+        for wav in s-8kHz.wav s-16kHz.wav aeueo-8kHz.wav aeueo-16kHz.wav; do
+          base=$(echo $wav | cut -d'.' -f1)
+          ./spectrogram 32 rectangular 32 10 $wav ${base}.Set1.txt
+          ./spectrogram 32 hamming     32 10 $wav ${base}.Set2.txt
+          ./spectrogram 30 rectangular 32 10 $wav ${base}.Set3.txt
+          ./spectrogram 30 hamming     32 10 $wav ${base}.Set4.txt
+        done
+
+    - name: Generate spectrogram PDFs
+      run: |
+        for wav in s-8kHz.wav s-16kHz.wav aeueo-8kHz.wav aeueo-16kHz.wav; do
+          base=$(echo $wav | cut -d'.' -f1)
+          for i in 1 2 3 4; do
+            python3 spectshow.py $wav ${base}.Set${i}.txt ${base}.Set${i}.pdf
+          done
+        done
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: spectrogram-results
+        path: |
+          *.wav
+          *.txt
+          *.pdf

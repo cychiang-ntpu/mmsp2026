@@ -1,0 +1,7 @@
+2025-12-01 14:35:58 [INFO] encoder: start input_file=input.txt codebook_file=codebook.csv encoded_file=encoded.bin
+2025-12-01 14:35:58 [INFO] encoder: histogram_built num_symbols=78 total_symbols=2018252
+2025-12-01 14:35:58 [INFO] encoder: codebook_generated num_symbols=78
+2025-12-01 14:35:58 [INFO] encoder: write_codebook done file=codebook.csv
+2025-12-01 14:35:58 [INFO] encoder: encode_file done encoded_file=encoded.bin
+2025-12-01 14:35:58 [INFO] metrics: summary input_file=input.txt codebook_file=codebook.csv encoded_file=encoded.bin total_symbols=2018252 num_unique_symbols=78 entropy=4.494515 avg_code_length=4.528106 original_bits=16146016 encoded_bits=9138858 compression_ratio=0.566013 status=ok
+2025-12-01 14:35:58 [INFO] encoder: finish status=ok
