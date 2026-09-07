@@ -21,16 +21,36 @@ mmsp2026/
 └── tools/                  課程工具（loss／reorder 模擬器等，陸續發布）
 ```
 
+## 課程 Slack（線上即時討論）
+
+本課程使用 **Slack** 進行線上即時討論、公告資訊、分享資料與程式碼，
+請同學務必用以下連結加入：
+
+👉 [加入 ntpu-ce-mmsp-2026 Slack 工作區](https://join.slack.com/t/ntpu-ce-mmsp-2026/shared_invite/zt-48ss07vog-APg0gDwKIJUQ88j8nfRJPQ)
+
+## 助教（TA）
+
+| 姓名 | 學號 | 電子郵件 |
+|---|---|---|
+| 梁博森 | 711481101 | benson20030603@gmail.com |
+| 洪子軒 | 711481104 | loveiswar456789@gmail.com |
+| 廖經凱 | 711481114 | kevin05251017@gmail.com |
+| 郭宸瑋 | 711581117 | s711581117@ms.ntpu.edu.tw |
+
+問問題的建議順序：先查 [docs/tutorials/](docs/tutorials/) 的教學與
+錯誤急救手冊 → Slack 頻道發問（附完整錯誤訊息與程式碼）→ 私訊助教。
+
 ## 第一堂課 checklist
 
-1. 讀 [docs/course_plan.md](docs/course_plan.md)：整學期的時程、評分與分組方式。
-2. 照 [docs/tutorials/vscode_c_starter.md](docs/tutorials/vscode_c_starter.md)
+1. **加入課程 Slack**（連結見上方），之後所有公告與討論都在那裡。
+2. 讀 [docs/course_plan.md](docs/course_plan.md)：整學期的時程、評分與分組方式。
+3. 照 [docs/tutorials/vscode_c_starter.md](docs/tutorials/vscode_c_starter.md)
    把開發環境架起來，跑出 Hello World（文件結尾有其他教學的建議閱讀順序）。
-3. 學會存檔點：[docs/tutorials/git_intro.md](docs/tutorials/git_intro.md)，
+4. 學會存檔點：[docs/tutorials/git_intro.md](docs/tutorials/git_intro.md)，
    並依課堂指示建置個人 repo。
-4. 編譯執行 [team_projects/team1_textlink/baseline/chat.c](team_projects/team1_textlink/baseline/chat.c)
+5. 編譯執行 [team_projects/team1_textlink/baseline/chat.c](team_projects/team1_textlink/baseline/chat.c)
    聊天範例，和同學互傳訊息（步驟在 vscode_c_starter.md 步驟 6）。
-5. 瀏覽 [samples_2025-C/](samples_2025-C/) 了解去年作業長什麼樣子。
+6. 瀏覽 [samples_2025-C/](samples_2025-C/) 了解去年作業長什麼樣子。
 
 ## 個人作業（MP1–MP5）
 
