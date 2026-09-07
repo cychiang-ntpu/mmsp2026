@@ -31,12 +31,12 @@ mmsp2026/
 
 ## 助教（TA）
 
-| 姓名 | 學號 | 電子郵件 |
+| 姓名 | 系級 | 電子郵件 |
 |---|---|---|
-| 梁博森 | 711481101 | benson20030603 [at] gmail.com |
-| 洪子軒 | 711481104 | loveiswar456789 [at] gmail.com |
-| 廖經凱 | 711481114 | kevin05251017 [at] gmail.com |
-| 郭宸瑋 | 711581117 | s711581117 [at] ms.ntpu.edu.tw |
+| 梁博森 | 通訊碩二 | benson20030603 [at] gmail.com |
+| 洪子軒 | 通訊碩二 | loveiswar456789 [at] gmail.com |
+| 廖經凱 | 通訊碩二 | kevin05251017 [at] gmail.com |
+| 郭宸瑋 | 通訊碩一 | s711581117 [at] ms.ntpu.edu.tw |
 
 問問題的建議順序：先查 [docs/tutorials/](docs/tutorials/) 的教學與
 錯誤急救手冊 → Slack 頻道發問（附完整錯誤訊息與程式碼）→ 私訊助教。
