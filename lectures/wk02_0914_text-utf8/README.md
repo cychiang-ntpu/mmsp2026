@@ -40,7 +40,7 @@
 
 ## 第一節｜從多媒體到「資料就是 bytes」
 
-### 1.1 本學期的地圖（8 分鐘）
+### 1.1 本學期的地圖（5 分鐘）
 
 多媒體系統 = 輸入裝置 → 數位資料 → 處理／壓縮／傳輸 → 輸出裝置。
 本學期三條線各對應一次 Team Project，終點是自己寫的 MiniLINE：
@@ -54,7 +54,7 @@
 補充閱讀：2023 課程 [Chapter 1 Introduction](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/tree/master/Chapter-1)
 （多媒體作為訊號與系統、日常系統、產業與會議）。2026 年的產業／會議清單見 [slides/outline.md](slides/outline.md) 末段。
 
-### 1.2 文字怎麼變成 bytes（15 分鐘）
+### 1.2 文字怎麼變成 bytes（10 分鐘）
 
 > 完整的歷史脈絡與參考文獻見 [encoding_history.md](encoding_history.md)（課後閱讀，約 15 分鐘）。
 > 課堂上只走這條時間軸，重點是**每一代都在解決上一代的問題**：
@@ -85,7 +85,7 @@ RFC 3629 另外禁止三種「長得像 UTF-8 但不合法」的序列：**overl
 看前導 byte 就知道這個字元幾 bytes；續位元組永遠是 `10xxxxxx`，
 所以從任何位置都能往回找到字元開頭（[chat.c 第 237 行](../../team_projects/team1_textlink/baseline/chat.c#L237) 折行就是這樣做的）。
 
-### 1.2a 為什麼要有 UTF-8？Unicode、UTF-16、UTF-8 是什麼關係（8 分鐘）
+### 1.2a 為什麼要有 UTF-8？Unicode、UTF-16、UTF-8 是什麼關係（5 分鐘：課堂只講表格與「五個問題」，其餘課後讀）
 
 先把三個常混在一起的名字分開：
 
@@ -154,7 +154,7 @@ U+1F600 = 0 0001 1111 0110 0000 0000（21 bits → 4 bytes）
 
 課堂練習：算「媒」U+5A92 與「Ω」U+03A9，再用 utf8_dump 對答案。
 
-### 1.2c 各種文字各佔幾 bytes？一個字不一定是一個 code point（10 分鐘）
+### 1.2c 各種文字各佔幾 bytes？一個字不一定是一個 code point（8 分鐘：正規化段落課後讀）
 
 | bytes | code point 範圍 | 誰住在這裡 | 例子 |
 |---|---|---|---|
@@ -192,7 +192,7 @@ macOS 的檔案系統習慣用 NFD，Windows 與 Linux 多用 NFC；Google 文�
 |---|---|
 | `./examples/utf8_dump < data/sample_scripts.txt` | `cmd /c ".\examples\utf8_dump.exe < data\sample_scripts.txt"` |
 
-### 1.3 現場 demo：數 byte（10 分鐘）
+### 1.3 現場 demo：數 byte（8 分鐘）
 
 先進到本週資料夾（兩個平台都一樣，PowerShell 也接受 `/`）：
 
@@ -230,7 +230,7 @@ macOS／Linux 若兩個數字一樣，是終端機沒設 UTF-8 語系：先打 `
 但輸出格式與 C 版逐 byte 相同。`make check`（Windows `mingw32-make check`）會同時跑兩版並 diff，
 沒有差異就代表你的 C 程式解碼正確。這就是本學期「C 實作、Python 對答案」的模式。
 
-### 1.4 工具箱：怎麼 byte by byte 看任何檔案（5 分鐘，其餘課後讀）
+### 1.4 工具箱：怎麼 byte by byte 看任何檔案（課後讀；課堂只用 1.3 的 hexdump／Format-Hex）
 
 本學期從文字、WAV 到 JPEG，每一種資料最後都要用這些工具看它「真正的樣子」。至少學會一個命令列工具和一個 GUI。
 
@@ -265,7 +265,7 @@ PS> Format-Hex data\sample_zh_en.txt | Select-Object -First 4
 不可見的印 `.`。中文在右欄一律是 `...`，因為每個 byte 單獨看都不是 ASCII。
 下週 Team 1 抓封包、第 7 週（10/19）看 WAV 檔頭的 `RIFF`、第 12 週（11/23）看 JPEG 的 `FF D8`，用的都是同一招。
 
-### 1.5 BOM：看不見，但會咬人（12 分鐘）
+### 1.5 BOM：看不見，但會咬人（7 分鐘）
 
 **它是什麼。** BOM（Byte Order Mark）是 Unicode 字元 U+FEFF，UTF-8 存成 3 bytes `EF BB BF`。
 它原本是 UTF-16 用來標示位元組順序的記號；UTF-8 沒有順序問題，所以 Unicode 標準說 UTF-8 的 BOM
