@@ -62,6 +62,11 @@ mmsp2026/
 問問題的建議順序：先查 [docs/tutorials/](docs/tutorials/) 的教學與
 錯誤急救手冊 → Slack 頻道發問（附完整錯誤訊息與程式碼）→ 私訊助教。
 
+## 每週講義
+
+每週上課用的講義、範例程式與回家作業都在 [lectures/](lectures/README.md)，上課前先打開當週資料夾。
+本週：[第 2 週（9/14）文字表示、UTF-8、MP1 導讀、TCP 黏包](lectures/wk02_0914_text-utf8/README.md)。
+
 ## 第一堂課 checklist
 
 1. **加入課程 Slack**（連結見上方），之後所有公告與討論都在那裡。
@@ -70,8 +75,8 @@ mmsp2026/
    [macos_c_starter.md](docs/tutorials/macos_c_starter.md)（macOS）或
    [wsl_c_starter.md](docs/tutorials/wsl_c_starter.md)（WSL）把開發環境架起來，
    跑出 Hello World（文件結尾有其他教學的建議閱讀順序）。
-4. 學會存檔點：[docs/tutorials/git_intro.md](docs/tutorials/git_intro.md)，
-   並依課堂指示建置個人 repo。
+4. 照 [docs/tutorials/git_intro.md](docs/tutorials/git_intro.md) 把本 repo `git clone` 到自己電腦、
+   用 VSCode 打開整個 `mmsp2026` 資料夾，並學會存檔點（commit）；個人作業 repo 依課堂指示建置。
 5. 編譯執行 [team_projects/team1_textlink/baseline/chat.c](team_projects/team1_textlink/baseline/chat.c)
    聊天範例，和同學互傳訊息（步驟在 vscode_c_starter.md 步驟 6）。
 6. 瀏覽 [samples_2025-C/](samples_2025-C/) 了解去年作業長什麼樣子。
