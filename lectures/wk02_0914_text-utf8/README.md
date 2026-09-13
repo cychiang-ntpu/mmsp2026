@@ -408,11 +408,12 @@ Windows 這裡刻意用 `cmd /c` 包起來，因為 PowerShell 的 `>` 會把輸
 
 | 步驟 | macOS / Linux | Windows PowerShell |
 |---|---|---|
-| 編譯 | `cd team_projects/team1_textlink/baseline && make` | `cd team_projects\team1_textlink\baseline; mingw32-make` |
+| 編譯（從本週資料夾出發） | `cd ../../team_projects/team1_textlink/baseline && make` | `cd ..\..\team_projects\team1_textlink\baseline; mingw32-make` |
 | 電腦 A（server） | `./chat tcp server 5000` | `.\chat.exe tcp server 5000` |
 | 電腦 B（client） | `./chat tcp client <A 的 IP> 5000` | `.\chat.exe tcp client <A 的 IP> 5000` |
 | 查自己 IP | macOS `ipconfig getifaddr en0`；Linux `hostname -I` | `ipconfig`，看「IPv4 位址」 |
 
+（上一節結束時你站在 `lectures/wk02_0914_text-utf8`，所以要 `../..` 回到 repo 根目錄再進 `team_projects`；迷路了打 `pwd` 看自己在哪。）
 Windows 第一次執行會跳出防火牆詢問，選「允許存取」，否則同學連不進來。
 兩人互傳一句中文，確認泡泡顯示正常。同一台電腦測試用 `127.0.0.1`。
 
@@ -433,7 +434,14 @@ TCP 是位元組串流，沒有「一則訊息」的概念。
 
 ### 3.3 黏包實驗（15 分鐘）
 
-一邊開 chat server，另一邊用 sticky_send 連續送 5 則不停頓：
+一邊開 chat server，另一邊用 sticky_send 連續送 5 則不停頓。要開**兩個終端機**（VSCode 終端機右上角 `+`），新開的終端機會站在 repo 根目錄，先各自走到正確的資料夾：
+
+| 終端機 | macOS / Linux | Windows PowerShell |
+|---|---|---|
+| 1 | `cd team_projects/team1_textlink/baseline`（3.1 已在這裡的不用動） | `cd team_projects\team1_textlink\baseline` |
+| 2（新開） | `cd lectures/wk02_0914_text-utf8/examples` | `cd lectures\wk02_0914_text-utf8\examples` |
+
+然後：
 
 | 終端機 | macOS / Linux | Windows PowerShell |
 |---|---|---|
