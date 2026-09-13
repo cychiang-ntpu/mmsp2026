@@ -1,0 +1,6 @@
+Hello, MMSP 2026!
+多媒體訊號處理：把系統做出來。
+Tab	here	OK
+He said "hi" and she said 'yo'.
+這行結尾是 CRLF
+Emoji 也算一個符號：😀
