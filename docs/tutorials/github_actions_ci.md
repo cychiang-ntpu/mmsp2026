@@ -7,6 +7,11 @@
 
 > 需要先會：[git_intro.md](git_intro.md)（commit、push）與一個 GitHub 帳號。
 > 沒有 GitHub 帳號的同學先到 <https://github.com/signup> 註冊，用學校信箱可申請學生方案。
+>
+> **第一次接觸 GitHub Actions？先看助教梁博森寫的最小範例**：
+> <https://github.com/Bensonlllll/build_on_github_test>
+> 只有一個 `main.c` 和一個 workflow 檔，逐步解釋 checkout、gcc 編譯、執行、上傳 artifact 四個步驟，
+> 10 分鐘看完就知道 Actions 在做什麼。本文的 workflow 是同一套概念，只是多了「和 Python 參考實作比對」。
 
 ---
 
@@ -202,6 +207,12 @@ template 的 `README.md` 已經有這一行，只要把 `OWNER/REPO` 換成你�
 - 不要在截止後 force push 改歷史，SHA 對不上視同未交。
 
 ---
+
+## 延伸閱讀
+
+- 助教梁博森的最小範例 <https://github.com/Bensonlllll/build_on_github_test>：想自己改 workflow（例如加 `-fsanitize=address`、多一個測資）時，先在這個範例上練。
+- GitHub 官方 Actions 快速入門：<https://docs.github.com/actions/quickstart>
+- 去年 MP4 滿分同學自己寫的 workflow：[samples_2025-C/mini_project_4/HIGH/mini_prj_4_100/.github/workflows/](../../samples_2025-C/mini_project_4/HIGH/mini_prj_4_100/.github/workflows/)，包含用 curl 抓大文本做壓力測試的寫法。
 
 ## 7. 常見問題
 

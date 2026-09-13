@@ -270,6 +270,7 @@ Format-Hex bom_test.txt | Select-Object -First 2     # 看到 EF BB BF 了嗎？
 今年這件事由 GitHub Actions 自動做：把 [tools/ci/mp-ci.yml](../../tools/ci/mp-ci.yml) 放進個人 repo，
 每次 push 就會編譯並和 Python 版比對，本機也可以 `bash ../mmsp2026/tools/ci/run_tests.sh mp1` 跑同一支腳本。
 設定步驟見 [github_actions_ci.md](../../docs/tutorials/github_actions_ci.md)，下週開始交 MP 前務必設好。
+沒碰過 GitHub Actions 的同學先看助教梁博森的最小範例 <https://github.com/Bensonlllll/build_on_github_test>。
 Windows 這裡刻意用 `cmd /c` 包起來，因為 PowerShell 的 `>` 會把輸出重新編碼成 UTF-16，diff 會全錯。今年 MP1–MP5 的評分就是這種自動比對，
 所以「自己先跑 diff」是交作業前的最後一步，也是 Team Project `tests/` 目錄要放的東西。
 

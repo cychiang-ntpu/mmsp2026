@@ -92,4 +92,5 @@ mmsp2026/
 終端機（terminal_basics.md）、C 速查表
 （c_cheatsheet.md）、編譯錯誤急救（c_error_guide.md）、逐行除錯
 （vscode_debug_tutorial.md）、Git（git_intro.md）、Makefile
-（makefile_intro.md）、GitHub Actions 自動測試（github_actions_ci.md）。完成 Hello World 後再開始作業。
+（makefile_intro.md）、GitHub Actions 自動測試（github_actions_ci.md；入門可先看助教梁博森的
+[最小範例](https://github.com/Bensonlllll/build_on_github_test)）。完成 Hello World 後再開始作業。
