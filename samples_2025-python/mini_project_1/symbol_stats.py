@@ -22,7 +22,7 @@ def main():
     ap.add_argument("output")
     args = ap.parse_args()
 
-    text = open(args.input, encoding="utf-8", newline="").read()  # newline="" 保留 \r，否則 CRLF 檔會少一個符號
+    text = open(args.input, encoding="utf-8-sig", newline="").read()  # utf-8-sig：檔頭若有 BOM（EF BB BF）自動跳過，不算內容  # newline="" 保留 \r，否則 CRLF 檔會少一個符號
     counter = collections.Counter(text)
     total = sum(counter.values())
 

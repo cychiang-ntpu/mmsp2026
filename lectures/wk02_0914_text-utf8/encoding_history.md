@@ -96,6 +96,9 @@
 - UTF-8 沒有位元組順序問題，理論上不需要它，但微軟的工具習慣在 UTF-8 檔頭也寫入 `EF BB BF` 當作「這是 UTF-8」的標記。
 - Unicode 標準明說 UTF-8 的 BOM「既不要求也不建議」。Unix 世界的工具多半不認它，會把它當成內容的一部分。
   這就是為什麼本週 data/sample_bom.txt 用 utf8_dump 看會多出第 0 個「字元」。
+- 實務上最常把 BOM 帶進你資料的是 **Excel 的「CSV UTF-8」**（它靠 BOM 認編碼）與舊版 Windows 工具；
+  Python 的 `utf-8-sig` 編碼、.NET 的 `StreamReader`、Java 的多數 JSON 函式庫會自動剝掉，
+  而 C 標準函式庫、`gcc`、`bash`、`JSON.parse` 不會。寫 C 的人要自己處理，這是本課程明訂「跳過不計」的原因。
 
 ## 8. 回到這門課
 

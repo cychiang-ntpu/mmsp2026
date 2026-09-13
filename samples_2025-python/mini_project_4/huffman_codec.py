@@ -46,7 +46,7 @@ def build_codes(freq: dict) -> dict:
 
 
 def encode(args):
-    text = open(args.input, encoding="utf-8", newline="").read()  # 保留 \r
+    text = open(args.input, encoding="utf-8-sig", newline="").read()  # utf-8-sig：檔頭若有 BOM（EF BB BF）自動跳過，不算內容  # 保留 \r
     freq = collections.Counter(text)
     freq[EOF] = 1
     total = sum(freq.values())

@@ -49,7 +49,9 @@ int main(void) {
         for (int i = 0; i < len; i++) printf(" %02X", buf[pos + i]);
         printf("%*s  U+%04X  ", 3 * (4 - len), "", cp);
         if (cp == '\n') puts("'\\n'"); else if (cp == '\r') puts("'\\r'");
-        else if (cp == '\t') puts("'\\t'"); else { fwrite(buf + pos, 1, len, stdout); puts(""); }
+        else if (cp == '\t') puts("'\\t'");
+        else if (cp == 0xFEFF && idx == 0) puts("(BOM)");       /* 檔頭的 U+FEFF 是標記不是內容 */
+        else { fwrite(buf + pos, 1, len, stdout); puts(""); }
         pos += len;
     }
     free(buf);

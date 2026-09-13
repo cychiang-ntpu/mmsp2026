@@ -34,7 +34,7 @@
 
 ## 第一節｜從多媒體到「資料就是 bytes」
 
-### 1.1 本學期的地圖（10 分鐘）
+### 1.1 本學期的地圖（8 分鐘）
 
 多媒體系統 = 輸入裝置 → 數位資料 → 處理／壓縮／傳輸 → 輸出裝置。
 本學期三條線各對應一次 Team Project，終點是自己寫的 MiniLINE：
@@ -48,7 +48,7 @@
 補充閱讀：2023 課程 [Chapter 1 Introduction](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/tree/master/Chapter-1)
 （多媒體作為訊號與系統、日常系統、產業與會議）。2026 年的產業／會議清單見 [slides/outline.md](slides/outline.md) 末段。
 
-### 1.2 文字怎麼變成 bytes（20 分鐘）
+### 1.2 文字怎麼變成 bytes（15 分鐘）
 
 > 完整的歷史脈絡與參考文獻見 [encoding_history.md](encoding_history.md)（課後閱讀，約 15 分鐘）。
 > 課堂上只走這條時間軸，重點是**每一代都在解決上一代的問題**：
@@ -72,14 +72,10 @@ UTF-8 的規則只有一張表：
 | U+0800–U+FFFF | 3 | `1110xxxx` | `10xxxxxx 10xxxxxx` |
 | U+10000–U+10FFFF | 4 | `11110xxx` | `10xxxxxx ×3` |
 
-**BOM（Byte Order Mark）**：有些編輯器（尤其 Windows 記事本的「UTF-8」選項）會在檔案最前面偷放
-3 個 bytes `EF BB BF`，也就是看不見的字元 U+FEFF。它不是內容，只是「這是 UTF-8」的標記，
-但對 C 程式來說它就是 3 個 bytes。VSCode 右下角會顯示「UTF-8 with BOM」，存檔時請選「UTF-8」（無 BOM）。
-
 看前導 byte 就知道這個字元幾 bytes；續位元組永遠是 `10xxxxxx`，
 所以從任何位置都能往回找到字元開頭（[chat.c 第 237 行](../../team_projects/team1_textlink/baseline/chat.c#L237) 折行就是這樣做的）。
 
-### 1.3 現場 demo：數 byte（20 分鐘）
+### 1.3 現場 demo：數 byte（10 分鐘）
 
 先進到本週資料夾（兩個平台都一樣，PowerShell 也接受 `/`）：
 
@@ -112,21 +108,11 @@ macOS／Linux 若兩個數字一樣，是終端機沒設 UTF-8 語系：先打 `
 輸出每列是「第幾個字元、幾 bytes、hex、code point、字元本身」。
 請同學找出：emoji 😀 幾 bytes？`\r` 在哪一行？這就是 MP1 要處理的全部特殊情況。
 
-再看 [data/sample_bom.txt](data/sample_bom.txt)：內容和第一個檔案的前兩行相同，但檔頭多了 BOM。
-
-| macOS / Linux | Windows PowerShell |
-|---|---|
-| `./utf8_dump < ../data/sample_bom.txt \| head -3` | `cmd /c ".\utf8_dump.exe < ..\data\sample_bom.txt" \| Select-Object -First 3` |
-
-第 0 個「字元」是 `EF BB BF`、U+FEFF，畫面上什麼都看不到。去年 MP1 的滿分程式與 Python 參考實作
-**都把它當一個符號計數**，今年比照。不管規格怎麼定，
-你的程式至少要「知道它在那裡」，而不是被它弄壞第一個字。
-
 同一件事的 Python 版 [utf8_dump.py](examples/utf8_dump.py) 只用 `bytes.decode`，看不到「前導 byte」的邏輯，
 但輸出格式與 C 版逐 byte 相同。`make check`（Windows `mingw32-make check`）會同時跑兩版並 diff，
 沒有差異就代表你的 C 程式解碼正確。這就是本學期「C 實作、Python 對答案」的模式。
 
-### 1.4 工具箱：怎麼 byte by byte 看任何檔案
+### 1.4 工具箱：怎麼 byte by byte 看任何檔案（5 分鐘，其餘課後讀）
 
 本學期從文字、WAV 到 JPEG，每一種資料最後都要用這些工具看它「真正的樣子」。至少學會一個命令列工具和一個 GUI。
 
@@ -160,6 +146,56 @@ PS> Format-Hex data\sample_zh_en.txt | Select-Object -First 4
 讀法：最左邊是**位移**（offset，從檔頭數第幾個 byte，十六進位），中間是 bytes 的 hex，右邊把可見 ASCII 印出來、
 不可見的印 `.`。中文在右欄一律是 `...`，因為每個 byte 單獨看都不是 ASCII。
 下週 Team 1 抓封包、第 7 週（10/19）看 WAV 檔頭的 `RIFF`、第 12 週（11/23）看 JPEG 的 `FF D8`，用的都是同一招。
+
+### 1.5 BOM：看不見，但會咬人（12 分鐘）
+
+**它是什麼。** BOM（Byte Order Mark）是 Unicode 字元 U+FEFF，UTF-8 存成 3 bytes `EF BB BF`。
+它原本是 UTF-16 用來標示位元組順序的記號；UTF-8 沒有順序問題，所以 Unicode 標準說 UTF-8 的 BOM
+「既不要求也不建議」。但很多工具還是會寫，於是它成了同學抓資料時最常踩的坑。
+
+**你會在哪裡碰到它。**
+
+| 來源 | 會不會有 BOM |
+|---|---|
+| Windows 記事本存成「UTF-8」 | 舊版一定有；Windows 10 1903 後預設無 BOM，但選單裡仍有「UTF-8 with BOM」 |
+| Excel「另存新檔 → CSV UTF-8」 | **一定有**。這是為了讓 Excel 自己重開時認得編碼 |
+| PowerShell 5 的 `Out-File -Encoding utf8`、`>` 重導向 | 有（PowerShell 7 改為無 BOM） |
+| 從網站、政府開放資料平台下載的 CSV／JSON | 常有，尤其是 Windows 主機產生的檔案 |
+| HTTP 回應的 JSON | 偶爾有，`JSON.parse` 與多數解析器會直接報錯 |
+| VSCode、macOS、Linux 工具、Git、Python 的預設 | 無 |
+
+**它會造成什麼。** 檔案第一個「字」多了 3 bytes：CSV 第一欄名稱變成 `\ufeffid`、
+JSON 解析失敗、`gcc` 對 `.c` 檔報 `stray '\357' in program`、shell script 第一行 `#!/bin/bash` 不被認得、
+你的 MP1 多算一個看不見的符號、比對檔案時「明明一樣卻 diff 不過」。
+
+**現場做一次。** [data/sample_bom.txt](data/sample_bom.txt) 內容與第一個檔案前兩行相同，但檔頭多了 BOM：
+
+| macOS / Linux | Windows PowerShell |
+|---|---|
+| `hexdump -C -n 8 data/sample_bom.txt` | `Format-Hex data\sample_bom.txt \| Select-Object -First 3` |
+| `./utf8_dump < ../data/sample_bom.txt \| head -2` | `cmd /c ".\utf8_dump.exe < ..\data\sample_bom.txt" \| Select-Object -First 2` |
+| `diff data/sample_bom.txt <(head -2 data/sample_zh_en.txt)` | `fc.exe data\sample_bom.txt data\sample_zh_en.txt` |
+
+hex 的前 3 bytes 是 `EF BB BF`；utf8_dump 第 0 個字元標示 `(BOM)`；`diff` 說第一行不同，但用眼睛看完全一樣。
+Windows 同學再自己做一個：
+
+```
+"hello" | Out-File -Encoding utf8 bom_test.txt      # PowerShell 5
+Format-Hex bom_test.txt | Select-Object -First 2     # 看到 EF BB BF 了嗎？
+```
+
+**怎麼處理。** 原則是：**BOM 是標記，不是內容；讀入時偵測並跳過，寫出時不要加。**
+
+- C：讀檔後檢查前 3 bytes，是 `EF BB BF` 就從第 4 個 byte 開始處理。
+  [examples/utf8_dump.c](examples/utf8_dump.c) 只是印出來讓你看見；MP1 要真的跳過。
+- Python：`open(path, encoding="utf-8-sig")`，有 BOM 自動去掉、沒有也不會出錯。課程的 Python 參考實作就是這樣寫。
+- 命令列一次去掉：macOS／Linux `tail -c +4 in.txt > out.txt`（先確認真的有 BOM 再用），
+  或 `sed -i '' $'1s/^\xEF\xBB\xBF//' in.txt`；PowerShell 7 `Get-Content in.txt | Set-Content -Encoding utf8NoBOM out.txt`。
+- VSCode：右下角點「UTF-8 with BOM」→ Save with Encoding → UTF-8。
+
+**本課程的規則（MP1、MP3、MP4 都適用）：** 輸入檔開頭若有 BOM，跳過它、不計入任何統計；
+輸出檔一律不寫 BOM。自動測試的私有測資含有帶 BOM 的檔案。去年的 C 樣本把 BOM 當一個符號計數，
+**今年不再如此**，這是今年與去年樣本唯二的差異之一（另一個是檔名參數）。
 
 **與 Team 1 的關係**：TCP 送出「多媒體」是 9 bytes，如果對方 `recv` 只收到前 7 bytes，
 第三個字就是壞的。Team 1 的驗收項「中文訊息 round-trip」與「半包／黏包」都源自這裡。
@@ -331,7 +367,7 @@ UDP 為什麼沒這個問題？（`chat udp 5000 127.0.0.1 6000` 與 `chat udp 6
    用 `diff` 對 Python 參考輸出，遇到 `\r` 的差異回想今天第二節。
 3. 把自己的 MP1 push 到個人 repo，確認 `gcc -Wall -Wextra` 無警告。
    Windows 同學：讀檔記得用 `"rb"` 或 `_setmode`（見 utf8_dump.c 開頭），否則 `\r` 會被 C 函式庫吃掉；
-   自己做的測試檔用 VSCode 存成「UTF-8」而非「UTF-8 with BOM」，並用 utf8_dump 確認第一個字元不是 U+FEFF。
+   MP1 要能處理帶 BOM 的輸入（跳過、不計入），用 data/sample_bom.txt 與 sample_zh_en.txt 前兩行比對輸出是否相同。
 
 ## 參考
 

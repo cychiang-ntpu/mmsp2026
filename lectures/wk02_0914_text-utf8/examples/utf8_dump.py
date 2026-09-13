@@ -31,7 +31,7 @@ def main():
         hexs = " ".join(f"{b:02X}" for b in raw)
         head = f"#{idx:<4} {n} byte{'s' if n > 1 else ' '}  hex: {hexs}{' ' * (3 * (4 - n))}  U+{cp:04X}  "
         special = {"\n": "'\\n'", "\r": "'\\r'", "\t": "'\\t'"}
-        shown = special[ch].encode() if ch in special else raw
+        shown = special[ch].encode() if ch in special else (b"(BOM)" if cp == 0xFEFF and idx == 0 else raw)
         out.write(head.encode("utf-8") + shown + b"\n")
         idx += 1
         pos += n

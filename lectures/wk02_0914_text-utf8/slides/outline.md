@@ -14,7 +14,10 @@
 6. **UTF-8**：1992 Thompson & Pike 在餐廳墊紙上設計；編號（U+591A）與存法（E5 A4 9A）是兩件事
 7. **UTF-8 一張表**：0xxx／110x／1110／11110 與 10xx
 8. **為什麼能從中間找回字元邊界**：續位元組永遠 10xxxxxx
-8a. **BOM**：`EF BB BF` = U+FEFF，記事本偷放的看不見 3 bytes；VSCode 存「UTF-8」不要「with BOM」
+8a. **BOM 是什麼**：U+FEFF → `EF BB BF`；UTF-16 的遺物，Unicode 說 UTF-8「不要求也不建議」
+8b. **哪裡會碰到**：記事本、Excel CSV UTF-8（一定有）、PowerShell 5、開放資料平台下載、部分 HTTP JSON
+8c. **會咬人的地方**：CSV 第一欄名壞掉、JSON.parse 失敗、gcc stray '\357'、diff 看起來一樣卻不同
+8d. **怎麼處理**：讀入偵測前 3 bytes 跳過、寫出不加；Python utf-8-sig；本課程規則：跳過不計
 9. **demo**：`hexdump -C`／`Format-Hex`、bytes 數 vs 字元數、`utf8_dump`
 9a. **工具箱**：hexdump／xxd／od（Unix）、Format-Hex（PowerShell）、Python 一行、VSCode Hex Editor（三平台）、HxD／Hex Fiend；怎麼讀 offset／hex／ASCII 三欄
 10. **與 Team 1 的關係**：「多媒體」= 9 bytes，收到 7 bytes 會怎樣

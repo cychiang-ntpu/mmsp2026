@@ -27,6 +27,13 @@ python3 mini_project_5/spectrogram.py gen 8000 out.wav
 python3 mini_project_5/spectrogram.py spec 20 hamming 32 10 in.wav spec.txt
 ```
 
+## 兩條與去年不同的規則（今年的 C 程式也要照做）
+
+1. **檔名參數**：C 程式的命令列參數與這裡的 Python 完全相同（不是 stdin／stdout）。
+2. **BOM 不算內容**：檔案開頭若有 `EF BB BF`（UTF-8 BOM），MP1／MP3／MP4 讀入時要跳過，不計入符號。
+   Python 這裡用 `encoding="utf-8-sig"` 做到；C 要自己檢查前 3 bytes。
+   去年的 C 樣本把 BOM 當一個符號，今年不再如此。
+
 ## 怎麼對答案
 
 | 作業 | 對法 |
