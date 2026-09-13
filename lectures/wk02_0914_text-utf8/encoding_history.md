@@ -85,6 +85,21 @@
   | 前導 byte 自己說明長度 | 前導 byte 開頭有幾個 1 就是幾 bytes |
   | 保持 code point 排序 | byte 序列的大小順序與 code point 一致 |
 
+- **UTF-8 與 UTF-16 的取捨**，用一張表看：
+
+  | | UTF-8 | UTF-16 |
+  |---|---|---|
+  | ASCII 檔案 | 原封不動 | 每個字多一個 `00`，體積 2 倍 |
+  | 中文 | 3 bytes | 2 bytes |
+  | emoji、罕用漢字 | 4 bytes | 4 bytes（代理對） |
+  | 字串裡會不會有 `00` | 不會 | 會，C 字串函式全壞 |
+  | 位元組順序 | 沒有這個問題 | 有，需要 BOM 或事先約定 |
+  | 從中間找字元邊界 | 看前導 byte 就行 | 要判斷是否落在代理對中間 |
+  | 誰在用 | 檔案、網路、Unix 系、Git、Python 3、Go、Rust | Windows API、Java、JavaScript、.NET 的內部字串 |
+
+  Windows NT（1993）與 Java（1995）在 UTF-8 普及前就選了 16-bit，之後為了向下相容改不掉；
+  網路與檔案格式則因為 ASCII 相容與無位元組順序問題一面倒選 UTF-8。
+  UTF-32（每字固定 4 bytes）概念上最乾淨，但沒有人拿它存檔，只在程式內部偶爾當中間表示。
 - 1993 年 1 月在聖地牙哥 USENIX 冬季會議發表的論文標題就叫 *Hello World or Καλημέρα κόσμε or こんにちは 世界*。
 - 標準化：RFC 2044（1996）→ RFC 2279（1998）→ **RFC 3629（2003）**，最後一版把長度限制在 4 bytes、碼位上限 U+10FFFF。
 - 今天約 99% 的網頁用 UTF-8（W3Techs 2026 年統計為 99.1%），Linux、macOS、Git、Python 3、Go、Rust 都以 UTF-8 為預設。
@@ -110,6 +125,21 @@
 | MP1 的 `"\n"` `"\r"` `"\t"` | 第 2 節：ASCII 控制字元 |
 | BOM 算不算符號 | 第 7 節 |
 | 第 5 週（10/5）的 Huffman | 第 1 節：摩斯電碼的直覺 |
+| 講義 1.2a 為什麼不是 UTF-16 | 第 5、6 節 |
+| 講義 1.2c 組合字、ZWJ、國旗 | 下方「一個字不一定是一個 code point」 |
+
+### 一個字不一定是一個 code point：組合字、字素叢集與正規化
+
+Unicode 有兩種方式表示帶重音的字母：**預組字**（precomposed，`é` = U+00E9）與**組合序列**（`e` U+0065 + 結合尖音符 U+0301）。
+兩者顯示完全相同，但 bytes 不同（`C3 A9` vs `65 CC 81`），`strcmp` 與 `diff` 都會說不一樣。
+Unicode 為此定義了**正規化形式**：NFC 盡量合成預組字，NFD 全部拆開。macOS 的 HFS+／APFS 檔名用 NFD，
+Windows、Linux 與多數網路協定用 NFC，這是跨平台專案「檔名看起來一樣卻找不到」的老問題。
+本課程的測資一律 NFC；Python 可用 `unicodedata.normalize("NFC", s)` 轉換。
+
+Emoji 把這件事推到極致：膚色修飾符（U+1F3FB–U+1F3FF）、零寬連接字 ZWJ（U+200D）把多個 emoji 拼成一個「家庭」、
+兩個區域指示符拼成一面國旗，都是「一個字、多個 code point」。使用者眼中的「一個字」在 Unicode 叫 **grapheme cluster**，
+切法定義在 UAX #29，需要查表，`wc -m` 與 Python `len()` 都不做這件事。
+MP1 明確以 code point 為單位計數，就是為了把這一層留在課程之外。
 
 ---
 

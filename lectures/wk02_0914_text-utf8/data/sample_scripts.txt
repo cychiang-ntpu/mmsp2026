@@ -1,0 +1,6 @@
+1 byte : ASCII
+2 bytes: café Ω я שלום سلام
+3 bytes: 多媒體 ：，。 ㄅㄆㄇ
+4 bytes: 😀 𠮷
+1 char != 1 code point: é vs é
+1 char != 1 code point: 👍 👍🏽 👨‍👩‍👧 🇹🇼

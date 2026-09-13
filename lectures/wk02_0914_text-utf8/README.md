@@ -85,6 +85,113 @@ RFC 3629 另外禁止三種「長得像 UTF-8 但不合法」的序列：**overl
 看前導 byte 就知道這個字元幾 bytes；續位元組永遠是 `10xxxxxx`，
 所以從任何位置都能往回找到字元開頭（[chat.c 第 237 行](../../team_projects/team1_textlink/baseline/chat.c#L237) 折行就是這樣做的）。
 
+### 1.2a 為什麼要有 UTF-8？Unicode、UTF-16、UTF-8 是什麼關係（8 分鐘）
+
+先把三個常混在一起的名字分開：
+
+| 名字 | 是什麼 | 一句話 |
+|---|---|---|
+| **Unicode** | 一張**字表**：每個字一個編號（code point，U+XXXX） | 只管「是哪個字」，不管怎麼存 |
+| **UTF-32** | 存法一：每個 code point 固定 4 bytes | 最簡單，但英文檔案變 4 倍大 |
+| **UTF-16** | 存法二：多數字 2 bytes，U+10000 以上（emoji、罕用漢字）用 2 個 16-bit「代理對」共 4 bytes | Windows、Java、JavaScript 內部用 |
+| **UTF-8** | 存法三：1–4 bytes 變長，ASCII 維持 1 byte | 檔案、網路、Linux／macOS、Git、Python 3 的預設 |
+
+**歷史順序是這樣的。** 1991 年 Unicode 1.0 假設 16 bits（65,536 個位置）夠放全世界的字，所以第一個存法就是「每字 2 bytes」（UCS-2，後來的 UTF-16）。
+這個假設在 Unix 世界是災難：
+
+1. **ASCII 檔案全部要重存**：`A` 從 `41` 變成 `00 41`，全世界的既有文字檔、原始碼、設定檔一夜之間都變成「舊格式」。
+2. **字串裡出現 0x00**：C 的字串以 `\0` 結尾，`strlen`、`strcpy`、`printf("%s")` 全部在第一個英文字母後就停掉。
+3. **路徑分隔符會出現在別的字的一半裡**：某個字的第二個 byte 剛好是 `2F`（`/`），檔案系統就會把它當成資料夾分隔，Big5 的許功蓋問題（`\` = `5C`）就是同一種病。
+4. **要選位元組順序**：`00 41` 還是 `41 00`？兩派都有，於是需要 BOM（見 1.5）。
+5. 1996 年發現 16 bits 不夠，UTF-16 只好再打補丁：用兩個 16-bit 湊出 U+10000 以上的字（代理對），「固定長度」的優點也沒了。
+
+1992 年 Thompson 與 Pike 設計 UTF-8，就是為了在**不動任何一個既有 ASCII 檔案**的前提下裝下整張 Unicode 表。
+上面五個問題它一次解掉：ASCII 原封不動；多 byte 序列每個 byte 都 ≥ `80`，不會出現 `00` 或 `/`；沒有位元組順序問題；
+前導 byte 自己說長度、續位元組永遠 `10xxxxxx`，從任何位置都找得到字元邊界。代價是中文從 Big5 的 2 bytes 變 3 bytes。
+今天 99% 的網頁與幾乎所有檔案格式都用 UTF-8；UTF-16 留在需要向下相容的地方（Windows API、Java、JavaScript 字串），
+這也是為什麼 Windows 同學會遇到 BOM 與 `chcp 65001`。完整故事見 [encoding_history.md](encoding_history.md) 第 5、6 節。
+
+### 1.2b 手算一次：從 code point 到 bytes，再算回來（7 分鐘）
+
+規則表看得懂不等於會算，一定要親手做一次。以「多」U+591A 為例：
+
+```
+U+591A  = 0101 1001 0001 1010            （16 bits，落在 U+0800–U+FFFF → 3 bytes）
+3 bytes 的模板：1110xxxx 10xxxxxx 10xxxxxx   有 4+6+6 = 16 個 x，剛好
+
+把 16 bits 由左到右填進 x：
+  0101 | 100100 | 011010
+  1110 0101   10 100100   10 011010
+  = E5        = A4        = 9A            ← 和 hexdump 看到的一樣
+```
+
+反過來，看到 `E5 A4 9A` 怎麼算回 U+591A：
+
+```
+E5 = 1110 0101 → 開頭三個 1，所以 3 bytes；有效位元是後 4 個：0101
+A4 = 10 100100 → 續位元組，有效位元是後 6 個：100100
+9A = 10 011010 → 續位元組，有效位元是後 6 個：011010
+串起來：0101 100100 011010 = 0101 1001 0001 1010 = 0x591A ✓
+```
+
+utf8_dump.c 做的就是這兩步：`cp = b0 & 0x0F`，然後每個續位元組 `cp = (cp << 6) | (b & 0x3F)`。
+
+2 bytes 的例子「é」U+00E9：
+
+```
+U+00E9 = 000 1110 1001（11 bits，落在 U+0080–U+07FF → 2 bytes）
+模板 110xxxxx 10xxxxxx，5+6 = 11 個 x
+  00011 | 101001  →  110 00011   10 101001  =  C3 A9
+```
+
+4 bytes 的例子「😀」U+1F600：
+
+```
+U+1F600 = 0 0001 1111 0110 0000 0000（21 bits → 4 bytes）
+模板 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx，3+6+6+6 = 21 個 x
+  000 | 011111 | 011000 | 000000  →  F0 9F 98 80
+```
+
+課堂練習：算「媒」U+5A92 與「Ω」U+03A9，再用 utf8_dump 對答案。
+
+### 1.2c 各種文字各佔幾 bytes？一個字不一定是一個 code point（10 分鐘）
+
+| bytes | code point 範圍 | 誰住在這裡 | 例子 |
+|---|---|---|---|
+| 1 | U+0000–U+007F | ASCII：英文、數字、`\n` `\t`、半形標點 | `A` = `41` |
+| 2 | U+0080–U+07FF | 拉丁字母的重音變體、希臘、西里爾、希伯來、阿拉伯 | `é` = `C3 A9`、`Ω` = `CE A9`、`я` = `D1 8F` |
+| 3 | U+0800–U+FFFF | 中日韓漢字、假名、諺文、注音、全形標點、泰文、天城文、多數符號 | `多` = `E5 A4 9A`、`：` = `EF BC 9A`、`ㄅ` = `E3 84 85` |
+| 4 | U+10000–U+10FFFF | emoji、罕用與古漢字（CJK 擴充 B 以後）、古文字、數學字母 | `😀` = `F0 9F 98 80`、`𠮷` = `F0 A0 AE B7` |
+
+所以「一個中文字 3 bytes」只是台灣最常見的情況；MP1 的輸入若混了法文或俄文，就會出現 2 bytes 的符號，你的程式不能只寫死 1 或 3。
+
+**再往下一層：你眼睛看到的「一個字」，可能是好幾個 code point。**
+
+| 看起來 | 實際 code point | UTF-8 bytes |
+|---|---|---|
+| é（預組字，precomposed） | U+00E9 | `C3 A9`（2 bytes） |
+| é（組合字，e + 尖音符） | U+0065 U+0301 | `65 CC 81`（3 bytes、2 個 code point） |
+| 👍🏽（拇指 + 膚色修飾） | U+1F44D U+1F3FD | 8 bytes、2 個 code point |
+| 👨‍👩‍👧（用零寬連接字 ZWJ 串起三個人） | U+1F468 U+200D U+1F469 U+200D U+1F467 | 18 bytes、5 個 code point |
+| 🇹🇼（兩個區域指示符） | U+1F1F9 U+1F1FC | 8 bytes、2 個 code point |
+
+Unicode 把「使用者眼中的一個字」叫做 **grapheme cluster（字素叢集）**，怎麼切有一套規則（UAX #29），連 `wc -m` 和 Python 的 `len()` 都不管它，只數 code point。
+
+**本課程的規則：MP1 的「符號」= 一個 UTF-8 序列 = 一個 code point**（Big5 字則是一個 2-byte 序列）。
+上表的 `é`（組合字）算 2 個符號、`👨‍👩‍👧` 算 5 個，這是**刻意的**：MP1 練的是「從 bytes 切出 code point」，字素叢集是下一層的問題，本課程不處理。
+Python 參考程式也是這樣數，所以對答案不會有差異。
+
+**一個真的會咬到的地方：正規化（normalization）。** 同一個「café」可以存成 `63 61 66 C3 A9`（NFC，預組）或 `63 61 66 65 CC 81`（NFD，分解）。
+macOS 的檔案系統習慣用 NFD，Windows 與 Linux 多用 NFC；Google 文件、某些網頁表單也會偷偷轉。
+兩個檔案內容看起來一模一樣、`diff` 卻說不同，或 MP1 統計出來的符號數不一樣，先用 utf8_dump 看是不是這個。
+本課程的測資一律 NFC；你自己做測資時，用 Python `unicodedata.normalize("NFC", s)` 統一，或直接避免從 macOS Finder 複製檔名進來。
+
+現場看：[data/sample_scripts.txt](data/sample_scripts.txt) 六行各放一類，跑 `utf8_dump` 數一數第 5、6 行有幾個 code point。
+
+| macOS / Linux | Windows PowerShell |
+|---|---|
+| `./examples/utf8_dump < data/sample_scripts.txt` | `cmd /c ".\examples\utf8_dump.exe < data\sample_scripts.txt"` |
+
 ### 1.3 現場 demo：數 byte（10 分鐘）
 
 先進到本週資料夾（兩個平台都一樣，PowerShell 也接受 `/`）：
@@ -246,6 +353,7 @@ Format-Hex bom_test.txt | Select-Object -First 2     # 看到 EF BB BF 了嗎？
 | [8–13](../../samples_2025-C/mini_project_1/HIGH/mini_prj_1_100.c#L8-L13) | `Symb` 結構：bytes、長度、次數、機率 | 符號不是 `char`，是「最多 4 bytes 的一小段」 |
 | [26–36](../../samples_2025-C/mini_project_1/HIGH/mini_prj_1_100.c#L26-L36) | `utf8_len`、`is_utf8_follow` | 和我們的 utf8_dump.c 一模一樣 |
 | [78–134](../../samples_2025-C/mini_project_1/HIGH/mini_prj_1_100.c#L78-L134) | 讀一個符號：先試 UTF-8，失敗 `ungetc` 退回再試 Big5，都不是就當 1 byte | `ungetc` 是「讀錯了放回去」 |
+| （同上） | Big5 的判斷：第一 byte `81`–`FE`，第二 byte `40`–`7E` 或 `A1`–`FE`；兩個條件都成立才是 Big5 字，否則退回當 1 byte | 先試 UTF-8 再試 Big5 的順序不能反：Big5 的範圍太寬，會把合法 UTF-8 的前兩個 byte 誤吃掉 |
 | [39–47](../../samples_2025-C/mini_project_1/HIGH/mini_prj_1_100.c#L39-L47) | `qsort` 的比較函式 | 三層排序條件寫成三個 `if` |
 | [49–63](../../samples_2025-C/mini_project_1/HIGH/mini_prj_1_100.c#L49-L63) | `csv_char` 輸出符號 | 特殊符號與雙引號在這裡處理 |
 
@@ -372,6 +480,7 @@ UDP 為什麼沒這個問題？（`chat udp 5000 127.0.0.1 6000` 與 `chat udp 6
 | [sticky_send.py](examples/sticky_send.py) | 上者的 Python 版，不需編譯，參數相同 | `python3 sticky_send.py 127.0.0.1 5000 5 0` |
 | [data/sample_zh_en.txt](data/sample_zh_en.txt) | 含中英文、tab、引號、CRLF、emoji 的測試檔 | 給 utf8_dump 與 MP1 用 |
 | [data/sample_bom.txt](data/sample_bom.txt) | 檔頭帶 BOM（`EF BB BF`）的 UTF-8 檔 | 示範看不見的 3 bytes |
+| [data/sample_scripts.txt](data/sample_scripts.txt) | 1／2／3／4 bytes 各一行，加組合字、膚色 emoji、ZWJ、國旗 | 示範各類文字的長度與「一個字 ≠ 一個 code point」 |
 
 ## 回家作業／下週前要做的事
 

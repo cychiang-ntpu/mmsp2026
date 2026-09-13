@@ -12,7 +12,13 @@
 5. **Big5**：2 bytes、13,053 字；許功蓋問題（第二 byte = `\`）、缺字造字
 5a. **Unicode**：1991，全世界一張表，Han unification；原以為 16 bits 夠，1996 擴到 17 個平面
 6. **UTF-8**：1992 Thompson & Pike 在餐廳墊紙上設計；編號（U+591A）與存法（E5 A4 9A）是兩件事
+6a. **為什麼不是「每字 2 bytes」**：ASCII 檔全要重存、字串裡出現 00、`/` 會出現在字的一半、要選位元組順序、16 bits 後來還是不夠；UTF-8 一次解掉，代價是中文 3 bytes
+6b. **Unicode 是字表，UTF-8／16／32 是三種存法**：Windows／Java／JS 內部 UTF-16，檔案與網路 UTF-8
 7. **UTF-8 一張表**：0xxx／110x／1110／11110 與 10xx
+7a. **手算一次**：多 U+591A = 0101 1001 0001 1010 → 1110 0101／10 100100／10 011010 = E5 A4 9A；再從 bytes 算回去；練習「媒」「Ω」
+7b. **各類文字幾 bytes**：ASCII 1；é Ω я 2；中日韓、注音、全形標點 3；emoji、𠮷 4
+7c. **一個字 ≠ 一個 code point**：é 兩種存法、👍🏽 2 個、👨‍👩‍👧 5 個、🇹🇼 2 個；MP1 以 code point 為單位（刻意）
+7d. **正規化 NFC／NFD**：macOS 檔名 NFD、其他 NFC；看起來一樣 diff 卻不同；測資一律 NFC
 8. **為什麼能從中間找回字元邊界**：續位元組永遠 10xxxxxx
 8x. **RFC 3629 三條禁令**：overlong（C0 80）、代理區 D800–DFFF、超過 10FFFF；overlong 的 `/` 是經典漏洞
 8a. **BOM 是什麼**：U+FEFF → `EF BB BF`；UTF-16 的遺物，Unicode 說 UTF-8「不要求也不建議」
