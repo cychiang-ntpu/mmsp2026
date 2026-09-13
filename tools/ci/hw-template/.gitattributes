@@ -4,3 +4,4 @@
 Makefile text eol=lf
 *.wav binary
 *.bin binary
+*.yml text eol=lf
