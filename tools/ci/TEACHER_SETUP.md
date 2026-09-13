@@ -6,7 +6,7 @@
 > - [x] 端到端驗證：<https://github.com/ntpu-ce-mmsp-2026/mmsp2026-hw-citest>（私有；放入 MP1 後 Actions 綠勾，可留作範例或刪除）
 > - [ ] 教育方案申請、邀請助教（需助教 GitHub 帳號）
 > - [ ] GitHub Classroom 建 classroom 與 assignment、貼連結到 Slack
-> - [x] 私有測資：`~/mmsp2026-private-tests/`（老師電腦，不在 repo）
+> - [x] 私有測資、評分腳本、講義筆記、完整走法：私有 repo `cychiang-ntpu/mmsp2026-private`（`grading/`、`lectures_private/`、`setup/`）
 
 學生端教學在 [docs/tutorials/github_actions_ci.md](../../docs/tutorials/github_actions_ci.md)。
 這份是老師端要做的事，依序約 30 分鐘。
@@ -48,7 +48,7 @@
 
 ## 4. 評分
 
-- 公開測資：`tools/ci/tests/`。私有測資另放一個資料夾（**不要**放進本 repo），建議加入含 `\r`、BOM、空檔、大檔的案例，並先決定 BOM 是否算符號。
+- 公開測資：`tools/ci/tests/`。私有測資在私有 repo `mmsp2026-private/grading/private_tests/`（含 `\r`、BOM、空檔、大檔；BOM 規則：跳過不計入）。單人評分用該 repo 的 `grading/grade_one.sh`。
 - 對每位學生的登錄 SHA：
 
   ```
