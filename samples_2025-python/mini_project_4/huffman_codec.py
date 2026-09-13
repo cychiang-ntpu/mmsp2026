@@ -46,7 +46,7 @@ def build_codes(freq: dict) -> dict:
 
 
 def encode(args):
-    text = open(args.input, encoding="utf-8").read()
+    text = open(args.input, encoding="utf-8", newline="").read()  # 保留 \r
     freq = collections.Counter(text)
     freq[EOF] = 1
     total = sum(freq.values())
@@ -68,7 +68,7 @@ def encode(args):
 
 def decode(args):
     codes = {}
-    for line in open(args.codebook, encoding="utf-8"):
+    for line in open(args.codebook, encoding="utf-8", newline=""):
         if not line.strip():
             continue
         field, _count, _p, codeword, _info = line.rsplit(",", 4)

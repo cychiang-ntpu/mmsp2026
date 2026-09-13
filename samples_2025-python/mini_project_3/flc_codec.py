@@ -36,7 +36,7 @@ def build_codebook(text: str):
 
 
 def encode(args):
-    text = open(args.input, encoding="utf-8").read()
+    text = open(args.input, encoding="utf-8", newline="").read()  # 保留 \r
     code, counter = build_codebook(text)
     total = len(text)
 
@@ -57,7 +57,7 @@ def encode(args):
 def decode(args):
     # codebook：反查 bit pattern -> 符號
     lookup = {}
-    for line in open(args.codebook, encoding="utf-8"):
+    for line in open(args.codebook, encoding="utf-8", newline=""):
         if not line.strip():
             continue
         field, _count, _prob, bits = line.rsplit(",", 3)
