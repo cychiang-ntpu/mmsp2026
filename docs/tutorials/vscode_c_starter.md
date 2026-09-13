@@ -162,13 +162,20 @@ PATH 沒設定好。回到步驟 2 的第 4 步檢查，設定完記得把 VSCod
 ### 6-1 取得程式碼並用 VSCode 打開
 
 1. 程式在課程 repo 的 `team_projects/team1_textlink/baseline/` 資料夾（`chat.c` 與 `Makefile`）。
-   還沒 clone repo 的話先看 [git_intro.md](git_intro.md)。
-2. 在 VSCode 按 `File > Open Folder...`，打開 `baseline` 資料夾。
-3. 可以先點開 `chat.c` 看看，程式開頭有詳細的流程圖與逐行註解。
+   還沒 clone repo 的話先照 [git_intro.md](git_intro.md) 的「取得課程 repo」做。
+2. 在 VSCode 按 `File > Open Folder...`，打開整個 `mmsp2026` 資料夾（之後每週講義都這樣開）。
+3. 按 `` Ctrl+` `` 打開終端機，走到聊天程式的資料夾：
+
+   ```
+   cd team_projects\team1_textlink\baseline
+   ```
+
+   （macOS／Linux 把 `\` 換成 `/`。走錯了打 `cd` 加路徑重來，或看 [terminal_basics.md](terminal_basics.md)。）
+4. 可以先點開 `chat.c` 看看，程式開頭有詳細的流程圖與逐行註解。
 
 ### 6-2 編譯
 
-按 `` Ctrl+` `` 打開 VSCode 終端機，輸入（Windows 需要連結網路函式庫 ws2_32）：
+在剛才的終端機輸入（Windows 需要連結網路函式庫 ws2_32）：
 
 ```
 gcc chat.c -o chat.exe -lws2_32

@@ -3,12 +3,18 @@
 對應：MP1、Team 1 前導
 時間：13:10–16:00，三節。
 
-> **課前準備（同學）**：clone 本 repo，照 [vscode_c_starter.md](../../docs/tutorials/vscode_c_starter.md)（Windows）、
-> [macos_c_starter.md](../../docs/tutorials/macos_c_starter.md) 或 [wsl_c_starter.md](../../docs/tutorials/wsl_c_starter.md)
-> 裝好 gcc 與 Python 3，在 [examples/](examples/) 能編譯成功
-> （macOS／Linux 打 `make`；Windows PowerShell 打 `mingw32-make`，見 [examples/README.md](examples/README.md)）。
+> **課前準備（同學）**：
+> 1. 照 [vscode_c_starter.md](../../docs/tutorials/vscode_c_starter.md)（Windows）、
+>    [macos_c_starter.md](../../docs/tutorials/macos_c_starter.md) 或 [wsl_c_starter.md](../../docs/tutorials/wsl_c_starter.md)
+>    裝好 gcc、make 與 Python 3。
+> 2. 照 [git_intro.md](../../docs/tutorials/git_intro.md) 的「取得課程 repo」`git clone` 本 repo，
+>    用 VSCode **打開整個 `mmsp2026` 資料夾**，終端機（`` Ctrl+` ``）就會站在 repo 根目錄；本講義所有指令都從這裡出發。
+>    已經 clone 過的同學先 `git pull`。
+> 3. 在 [examples/](examples/) 能編譯成功
+>    （macOS／Linux 打 `make`；Windows PowerShell 打 `mingw32-make`，見 [examples/README.md](examples/README.md)）。
 >
 > **指令怎麼讀**：本講義每段指令都分兩欄，左邊 macOS／Linux 終端機，右邊 Windows 的 VSCode PowerShell。
+> 不熟 `cd`、`..`、`.\` 的同學先花 10 分鐘讀 [terminal_basics.md](../../docs/tutorials/terminal_basics.md)。
 > Windows 執行檔要寫 `.\xxx.exe`，路徑用 `\`；中文亂碼先打 `chcp 65001`；`python3` 在 Windows 通常叫 `python`。
 > **WSL 同學看左欄**（你在 Linux 裡），但和同學互連前先讀 wsl_c_starter.md 的 6-4。
 

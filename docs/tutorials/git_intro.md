@@ -28,6 +28,37 @@
 
 ---
 
+## 取得課程 repo（clone）
+
+課程的講義、範例程式與去年樣本都在 GitHub 上的 `mmsp2026` repo，
+**整學期每週都會用到，先抓一份到自己電腦**：
+
+1. 打開 VSCode 終端機（`` Ctrl+` ``），先站到你放程式的地方，例如自己的家目錄：
+
+   ```
+   cd ~
+   ```
+
+   （Windows 的 `~` 就是 `C:\Users\你的名字`；macOS／Linux 同樣是家目錄。路徑不要有中文和空白。）
+2. 把 repo 抓下來，會產生一個 `mmsp2026` 資料夾：
+
+   ```
+   git clone https://github.com/cychiang-ntpu/mmsp2026
+   ```
+
+3. 在 VSCode 按 `File > Open Folder...`，**打開整個 `mmsp2026` 資料夾**（不是裡面的某個子資料夾）。
+   這樣終端機一打開就站在 repo 根目錄，講義裡的 `cd lectures/...`、`cd team_projects/...` 才走得到。
+4. 以後老師更新講義，在這個資料夾的終端機打一次就同步：
+
+   ```
+   git pull
+   ```
+
+> 這個 repo 是老師的，你不能 push 上去。自己的作業要放在 GitHub Classroom 幫你建的個人 repo，
+> 見 [github_actions_ci.md](github_actions_ci.md)。
+
+---
+
 ## 核心觀念：三個步驟一個循環
 
 ```
