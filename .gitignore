@@ -20,3 +20,10 @@ tools/ci/repos.txt
 
 # 老師私人筆記
 lectures/_private/
+
+# 講義範例與 baseline 的執行檔、比對暫存（無副檔名）
+lectures/*/examples/utf8_dump
+lectures/*/examples/sticky_send
+lectures/*/examples/c_dump.txt
+lectures/*/examples/py_dump.txt
+team_projects/*/baseline/chat
