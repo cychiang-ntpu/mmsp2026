@@ -1,0 +1,4 @@
+# fs w_ms window dft_ms hop_ms   （gen 用 fs；spec 用其餘四個）
+8000 32 hamming 32 10
+16000 32 rectangular 32 10
+8000 64 hamming 64 10

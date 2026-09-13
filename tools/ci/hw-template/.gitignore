@@ -1,0 +1,14 @@
+# 編譯產物與測試輸出
+*.o
+*.exe
+*.out
+mp1/mp1
+mp2/mp2
+mp3/mp3
+mp4/mp4
+mp5/mp5
+.ci_out/
+# 編輯器
+.vscode/
+.DS_Store
+Thumbs.db

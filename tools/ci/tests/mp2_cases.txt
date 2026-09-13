@@ -1,0 +1,5 @@
+# fs bits channels kind freq amp seconds   （每列一組，# 開頭為註解）
+8000 16 1 sine 440 0.8 0.5
+16000 8 1 square 1000 0.5 0.25
+44100 16 2 triangle 261.63 1.0 0.1
+8000 32 1 sawtooth 100 0.3 0.2

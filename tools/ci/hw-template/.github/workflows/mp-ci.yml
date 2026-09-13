@@ -1,0 +1,39 @@
+# MP1–MP5 自動建置與測試
+# 放到你個人 repo 的 .github/workflows/mp-ci.yml（路徑與檔名都要一樣）
+# 每次 push 都會：抓課程 repo → 裝 gcc 與 numpy → 執行課程的 run_tests.sh → 綠勾或紅叉
+name: mp-ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:        # 也可以在 Actions 頁面手動按 Run workflow
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取得你的程式碼
+        uses: actions/checkout@v4
+
+      - name: 取得課程 repo（測試腳本、測資、Python 參考實作）
+        uses: actions/checkout@v4
+        with:
+          repository: cychiang-ntpu/mmsp2026
+          path: course
+
+      - name: 安裝工具（gcc、make、python、numpy）
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential python3 python3-pip
+          pip3 install --quiet numpy
+
+      - name: 建置並與 Python 參考實作比對
+        run: bash course/tools/ci/run_tests.sh
+
+      - name: 上傳輸出檔（失敗時到 Actions 頁面下載來看差在哪）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-outputs
+          path: .ci_out/
+          if-no-files-found: ignore

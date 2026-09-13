@@ -1,0 +1,6 @@
+*.c   text eol=lf
+*.h   text eol=lf
+*.md  text eol=lf
+Makefile text eol=lf
+*.wav binary
+*.bin binary

@@ -1,0 +1,3 @@
+# 全班個人 repo 清單（owner/repo，一列一個）。複製成 repos.txt 使用，repos.txt 不要 commit。
+student-a/mmsp2026-hw
+student-b/mmsp2026-hw
