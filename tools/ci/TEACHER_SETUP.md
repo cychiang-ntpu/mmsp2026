@@ -1,5 +1,13 @@
 # 老師／助教：MP 自動測試的 GitHub 端設定（一次性）
 
+> **進度（2026/9/13）**
+> - [x] organization：<https://github.com/ntpu-ce-mmsp-2026>（free plan；教育方案待申請）
+> - [x] template repo：<https://github.com/ntpu-ce-mmsp-2026/mmsp2026-hw-template>（已設 Template repository）
+> - [x] 端到端驗證：<https://github.com/ntpu-ce-mmsp-2026/mmsp2026-hw-citest>（私有；放入 MP1 後 Actions 綠勾，可留作範例或刪除）
+> - [ ] 教育方案申請、邀請助教（需助教 GitHub 帳號）
+> - [ ] GitHub Classroom 建 classroom 與 assignment、貼連結到 Slack
+> - [x] 私有測資：`~/mmsp2026-private-tests/`（老師電腦，不在 repo）
+
 學生端教學在 [docs/tutorials/github_actions_ci.md](../../docs/tutorials/github_actions_ci.md)。
 這份是老師端要做的事，依序約 30 分鐘。
 
