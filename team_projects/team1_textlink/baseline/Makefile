@@ -1,4 +1,4 @@
-# 跨平台 Makefile（逐行解說見 ../envsetup 產生的 makefile_intro.md）：在 Linux / macOS 直接 `make`；
+# 跨平台 Makefile（逐行解說見 docs/tutorials/makefile_intro.md）：在 Linux / macOS 直接 `make`；
 # Windows (MinGW/MSYS2) 也可用 `make`，或手動執行下面對應的 gcc 指令。
 
 CC     = gcc

@@ -38,14 +38,14 @@ Root
 ├── mini_project_2/
 │   ├── README.md
 │   ├── HIGH/
-│   │   ├── mini_prj_1_100.c
-│   │   └── mini_prj_1_95.c
+│   │   ├── mini_prj_2_100.c
+│   │   └── mini_prj_2_95.c
 │   ├── MEDIUM/
-│   │   ├── mini_prj_1_80.c
-│   │   └── mini_prj_1_70.c
+│   │   ├── mini_prj_2_80.c
+│   │   └── mini_prj_2_70.c
 │   ├── LOW/
-│   │   ├── mini_prj_1_50.c
-│   │   └── mini_prj_1_50(1).c
+│   │   ├── mini_prj_2_50.c
+│   │   └── mini_prj_2_50(1).c
 ├── mini_project_3/
 │   ├── README.md
 │   ├── HIGH/
@@ -65,7 +65,7 @@ Root
 └── mini_project_5/
     ├── README.md
     └── HIGH/
-        ├── mini_project_5_100/
-        ├── mini_project_5_85/
-        └── mini_project_5_80/
+        ├── mini-project-5-100/
+        ├── mini-project-5-85/
+        └── mini-project-5-80/
 ```

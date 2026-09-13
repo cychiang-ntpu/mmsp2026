@@ -3,6 +3,8 @@
 > **2026 課程註記**：本資料夾為**完整可編譯**的去年作品（含滿分版），
 > 目的是讓你在做 MP1 前看懂一份完整作業。今年 MP1 的評分測資與去年不同，
 > 照抄無法直接通過；建議自己先寫，卡住再對照。
+> 另外今年的程式改用**檔名參數**（`./mp1 input.txt output.csv`）而非 stdin／stdout，
+> 以便 GitHub Actions 自動比對，見 [github_actions_ci.md](../../docs/tutorials/github_actions_ci.md)。
 
 
 ### 1. 作業規定

@@ -13,3 +13,10 @@
 # editor/OS
 .DS_Store
 Thumbs.db
+
+# CI 測試輸出與老師的私人清單
+.ci_out/
+tools/ci/repos.txt
+
+# 老師私人筆記
+lectures/_private/
