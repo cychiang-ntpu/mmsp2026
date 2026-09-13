@@ -14,6 +14,7 @@
 6. **UTF-8**：1992 Thompson & Pike 在餐廳墊紙上設計；編號（U+591A）與存法（E5 A4 9A）是兩件事
 7. **UTF-8 一張表**：0xxx／110x／1110／11110 與 10xx
 8. **為什麼能從中間找回字元邊界**：續位元組永遠 10xxxxxx
+8x. **RFC 3629 三條禁令**：overlong（C0 80）、代理區 D800–DFFF、超過 10FFFF；overlong 的 `/` 是經典漏洞
 8a. **BOM 是什麼**：U+FEFF → `EF BB BF`；UTF-16 的遺物，Unicode 說 UTF-8「不要求也不建議」
 8b. **哪裡會碰到**：記事本、Excel CSV UTF-8（一定有）、PowerShell 5、開放資料平台下載、部分 HTTP JSON
 8c. **會咬人的地方**：CSV 第一欄名壞掉、JSON.parse 失敗、gcc stray '\357'、diff 看起來一樣卻不同

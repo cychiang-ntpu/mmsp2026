@@ -3,8 +3,9 @@
  *         Windows cmd:  .\utf8_dump.exe < ..\data\sample_zh_en.txt
  *         PowerShell:   cmd /c ".\utf8_dump.exe < ..\data\sample_zh_en.txt"   （PowerShell 不支援 < 重導向）
  * 規則：前導 byte 0xxxxxxx=1 byte、110xxxxx=2、1110xxxx=3、11110xxx=4；續位元組一律 10xxxxxx
- * 非法序列（前導 byte 後面不是 10xxxxxx，或檔案提早結束）：只把前導 byte 當 1 byte 印出，
- * 後面的 byte 留給下一輪重新判斷——這和去年 MP1 滿分程式的做法相同。 */
+ * 非法序列（前導 byte 後面不是 10xxxxxx、檔案提早結束、overlong、代理區、超過 U+10FFFF）：
+ * 只把前導 byte 當 1 byte 印出，後面的 byte 留給下一輪重新判斷。
+ * 「非法就退一個 byte」與去年 MP1 滿分程式相同；RFC 3629 的三條禁令是它沒做的。 */
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef _WIN32
@@ -44,6 +45,9 @@ int main(void) {
         if (ok && len > 1) {                                 /* 拼出 code point：去掉前導標記位元再串接 */
             cp = buf[pos] & (0xFF >> (len + 1));
             for (int i = 1; i < len; i++) cp = (cp << 6) | (buf[pos + i] & 0x3F);
+            /* RFC 3629 的三條禁令：overlong（用太多 bytes 表示小編號）、UTF-16 代理區、超過 U+10FFFF */
+            static const unsigned min_cp[5] = { 0, 0, 0x80, 0x800, 0x10000 };
+            if (cp < min_cp[len] || (cp >= 0xD800 && cp <= 0xDFFF) || cp > 0x10FFFF) { ok = 0; len = 1; cp = buf[pos]; }
         }
         printf("#%-4zu %d byte%s  hex:", idx, len, len > 1 ? "s" : " ");
         for (int i = 0; i < len; i++) printf(" %02X", buf[pos + i]);

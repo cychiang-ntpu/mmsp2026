@@ -72,6 +72,10 @@ UTF-8 的規則只有一張表：
 | U+0800–U+FFFF | 3 | `1110xxxx` | `10xxxxxx 10xxxxxx` |
 | U+10000–U+10FFFF | 4 | `11110xxx` | `10xxxxxx ×3` |
 
+RFC 3629 另外禁止三種「長得像 UTF-8 但不合法」的序列：**overlong**（用 2 bytes 表示本來 1 byte 就夠的編號，例如 `C0 80`）、
+**UTF-16 代理區** U+D800–U+DFFF、**超過 U+10FFFF**（前導 byte F5 以上）。這些是安全漏洞的常客
+（用 overlong 的 `/` 繞過路徑檢查），utf8_dump.c 有做這三項檢查，MP1 建議也做。
+
 看前導 byte 就知道這個字元幾 bytes；續位元組永遠是 `10xxxxxx`，
 所以從任何位置都能往回找到字元開頭（[chat.c 第 237 行](../../team_projects/team1_textlink/baseline/chat.c#L237) 折行就是這樣做的）。
 
@@ -274,9 +278,9 @@ Format-Hex bom_test.txt | Select-Object -First 2     # 看到 EF BB BF 了嗎？
 Windows 這裡刻意用 `cmd /c` 包起來，因為 PowerShell 的 `>` 會把輸出重新編碼成 UTF-16，diff 會全錯。今年 MP1–MP5 的評分就是這種自動比對，
 所以「自己先跑 diff」是交作業前的最後一步，也是 Team Project `tests/` 目錄要放的東西。
 
-> 現場會發現 diff 有差異：C 版多了一列 `"\r"`，Python 版沒有。
-> 原因在 Python 那邊：`open()` 文字模式會把 `\r\n` 自動轉成 `\n`。
-> 這正是去年 60 分樣本被扣的「`\r` 未顯示」。**對答案的工具也可能有 bug，看到差異先想「誰對」。**
+> 一個真實故事：這份 Python 參考程式原本用文字模式 `open()`，會把 `\r\n` 自動轉成 `\n`，
+> 所以去年拿它對答案會看到 C 版多一列 `"\r"`。那其實是 Python 錯、C 對（現已修正，改用 `newline=""`）。
+> 去年 60 分樣本被扣的「`\r` 未顯示」則是 C 那邊真的漏掉。**對答案的工具也可能有 bug，看到差異先想「誰對」。**
 
 ---
 
