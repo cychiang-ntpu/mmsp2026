@@ -2,7 +2,7 @@
 
 | 動作 | macOS / Linux | Windows PowerShell（MSYS2 gcc） |
 |---|---|---|
-| 編譯 | `make` | `mingw32-make`（或在 MSYS2 終端機打 `make`） |
+| 編譯 | `make` | `mingw32-make` |
 | 跑 utf8_dump | `make demo` | `mingw32-make demo` |
 | C 版 vs Python 版比對 | `make check` | `mingw32-make check` |
 | Python 版（免編譯） | `python3 utf8_dump.py ../data/sample_zh_en.txt` | `python utf8_dump.py ..\data\sample_zh_en.txt` |
@@ -16,3 +16,4 @@
 - `sticky_send.py`：同功能 Python 版，參數相同，免編譯。
   先在另一個終端機開 chat server，再執行 sticky_send，見上層 README 第三節。
 - Windows 終端機若中文變亂碼，先打 `chcp 65001`。
+- 在 MSYS2 終端機（而非 PowerShell）跑 `mingw32-make check` 要先 `pacman -S diffutils`，並讓 Windows 的 `python` 在 PATH 上。

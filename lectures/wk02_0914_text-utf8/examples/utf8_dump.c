@@ -25,6 +25,7 @@ static int utf8_len(unsigned char b0) {
 int main(void) {
 #ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY); /* Windows 預設會把 \r\n 讀成 \n，改成 binary 才看得到 \r */
+    _setmode(_fileno(stdout), _O_BINARY);/* 輸出也用 binary：\n 不會變成 \r\n，才能和 Python 版逐 byte 相同 */
     SetConsoleOutputCP(65001);           /* 終端機用 UTF-8 顯示中文（等同 chcp 65001） */
 #endif
     /* 先把整個輸入讀進記憶體，之後用索引往前看，不必 ungetc */

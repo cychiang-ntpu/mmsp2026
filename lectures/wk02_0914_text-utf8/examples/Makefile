@@ -1,7 +1,8 @@
 # 跨平台 Makefile
 #   macOS / Linux           : make / make demo / make clean
-#   Windows (MSYS2 終端機)   : make / make demo / make clean
 #   Windows (PowerShell/cmd): mingw32-make / mingw32-make demo / mingw32-make clean
+#   Windows (MSYS2 UCRT64 終端機): 同上用 mingw32-make；要先 pacman -S diffutils，且 Windows 的
+#       python 要在 PATH 上（MSYS2 預設不繼承 Windows PATH，可在 Windows 環境變數設 MSYS2_PATH_TYPE=inherit）
 #   make check : C 版與 Python 版 utf8_dump 輸出逐 byte 比對（沒有差異就是一致）
 CC     = gcc
 CFLAGS = -Wall -Wextra -std=c99
@@ -15,8 +16,8 @@ ifeq ($(OS),Windows_NT)
         RUN  = ./
         DIFF = diff
     else                          # mingw32-make 在 PowerShell / cmd 裡：recipe 由 cmd 執行，
-        RM_F = del /q             # 用 del；cmd 會自動搜尋目前目錄，不需 ./ 前綴
-        RUN  =
+        RM_F = del /q             # 用 del；執行檔加 .\ 前綴（$(EMPTY) 是為了避免行尾反斜線被當成續行）
+        RUN  = .\$(EMPTY)
         DIFF = fc
     endif
 else

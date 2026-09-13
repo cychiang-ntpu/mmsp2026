@@ -7,7 +7,7 @@
 #   環境變數：
 #     COURSE_DIR   課程 repo 路徑（預設：本腳本所在 repo）
 #     TESTS_DIR    測資資料夾（預設：$COURSE_DIR/tools/ci/tests；助教評分時換成私有測資）
-#     PY           python 指令（預設 python3）
+#     PY           python 指令（預設 python3，不能用時退回 python）
 #
 # 個人 repo 約定：mp1/ … mp5/ 各一個資料夾，裡面有 Makefile（產生執行檔 mpN）
 # 或單一 .c 檔（腳本會用 gcc -Wall -Wextra -std=c99 -lm 編譯）。
@@ -16,7 +16,10 @@ set -u
 CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COURSE_DIR="${COURSE_DIR:-$(cd "$CI_DIR/../.." && pwd)}"
 TESTS_DIR="${TESTS_DIR:-$CI_DIR/tests}"
-PY="${PY:-python3}"
+# python 指令：預設 python3；Windows 上 python3 常是 Microsoft Store 的空殼（跑了沒輸出），退回 python
+if [ -z "${PY:-}" ]; then
+    if python3 --version > /dev/null 2>&1; then PY=python3; else PY=python; fi
+fi
 REF="$COURSE_DIR/samples_2025-python"
 ROOT="$(pwd)"
 WORK="$ROOT/.ci_out"; rm -rf "$WORK"; mkdir -p "$WORK"

@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+  #include <io.h>
+  #include <fcntl.h>
+#endif
 
 #define BYTE_MAX     256  //maximum one byte number
 #define MAX_SYMB     3000  //maximux symbol type
@@ -63,6 +67,9 @@ static void csv_char(const unsigned char *s,int len){
 }
 
 int main(void){
+#ifdef _WIN32
+    _setmode(_fileno(stdin), _O_BINARY);  /* Windows 文字模式會把 \r\n 吃成 \n，改 binary 才數得到 \r */
+#endif
     Symb symb[MAX_SYMB]={0};
 
     // initial all ascii symbol: len=1 chr[0]=ascii

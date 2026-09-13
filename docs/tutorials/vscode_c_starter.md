@@ -43,10 +43,10 @@ VSCode 本身不會編譯 C 程式，我們要另外安裝編譯器 GCC。
 1. 前往 <https://www.msys2.org/>，下載安裝檔（installer）。
 2. 執行安裝檔，安裝路徑保持預設的 `C:\msys64` 即可，一路下一步。
 3. 安裝完成後會自動打開一個黑色的 MSYS2 終端機視窗，
-   在裡面輸入以下指令後按 Enter（安裝 GCC 工具組）：
+   在裡面輸入以下指令後按 Enter（安裝 GCC 工具組與 make；`make` 是課程 Makefile 需要的建置工具）：
 
    ```
-   pacman -S mingw-w64-ucrt-x86_64-gcc
+   pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make
    ```
 
    過程中問你 `Proceed with installation? [Y/n]` 時，輸入 `Y` 按 Enter。
@@ -65,6 +65,11 @@ VSCode 本身不會編譯 C 程式，我們要另外安裝編譯器 GCC。
    看到類似 `gcc (Rev...) 13.x.x` 的版本訊息就代表成功了！
    如果出現「不是內部或外部命令」，請回頭檢查第 4 步的 PATH 設定，
    並記得**關掉 cmd 重開**再試一次。
+6. 同一個視窗再輸入 `mingw32-make --version`，看到 `GNU Make 4.x` 就代表 make 也裝好了
+   （課程的 Makefile 在 PowerShell 一律用 `mingw32-make` 執行）。
+7. 安裝 Python 3（課程用它產生參考答案來比對）：前往 <https://www.python.org/downloads/>，
+   下載 Windows 安裝檔，安裝時**勾選「Add python.exe to PATH」**。裝好後在 cmd 輸入 `python --version`
+   看到 `Python 3.x` 即可。注意：Windows 只有 `python` 指令，教學裡的 `python3` 在 Windows 都改打 `python`。
 
 ---
 

@@ -253,10 +253,11 @@ Format-Hex bom_test.txt | Select-Object -First 2     # 看到 EF BB BF 了嗎？
   結構對了，但機率分母算錯、`\n` `\r` 沒輸出、雙引號沒雙寫。
   **教訓：核心演算法對只拿一半分數，格式邊界是另一半。**
 - [HIGH/mini_prj_1_90.c](../../samples_2025-C/mini_project_1/HIGH/mini_prj_1_90.c)：
-  只差雙引號。順便看 [第 160 行](../../samples_2025-C/mini_project_1/HIGH/mini_prj_1_90.c#L160)：
+  只差雙引號。順便看 [第 160 行](../../samples_2025-C/mini_project_1/HIGH/mini_prj_1_90.c#L160)，
+  編譯時會出現這個警告（gcc 的寫法；clang 會說 `comparison of constant 65536 with expression of type 'unsigned char' is always true`，第 151 行也有一個）：
 
   ```
-  warning: result of comparison of constant 65536 with expression of type 'unsigned char' is always true
+  warning: comparison is always true due to limited range of data type [-Wtype-limits]
   ```
 
   `unsigned char` 最大 255，永遠小於 65536，這個 `if` 是死的。程式仍然能跑，但
@@ -270,7 +271,9 @@ Format-Hex bom_test.txt | Select-Object -First 2     # 看到 EF BB BF 了嗎？
 | `./mp1 < data/sample_zh_en.txt > c.csv` | `cmd /c ".\mp1.exe < data\sample_zh_en.txt > c.csv"` |
 | `diff c.csv py.csv` | `fc.exe c.csv py.csv` |
 
-沒有輸出（Windows 顯示「找不到任何差異」）就是全對。
+沒有輸出（Windows 顯示「FC: 找不到任何差異」）就是全對。
+（Windows 同學注意：C 程式若用文字模式讀 stdin，`\r\n` 會被吃成 `\n`，`"\r"` 那列就不見、每列機率也跟著錯。
+樣本程式已加 `_setmode(_fileno(stdin), _O_BINARY)`，MP1 用 `fopen(path, "rb")` 開檔就沒這個問題。）
 今年這件事由 GitHub Actions 自動做：把 [tools/ci/mp-ci.yml](../../tools/ci/mp-ci.yml) 放進個人 repo，
 每次 push 就會編譯並和 Python 版比對，本機也可以 `bash ../mmsp2026/tools/ci/run_tests.sh mp1` 跑同一支腳本。
 設定步驟見 [github_actions_ci.md](../../docs/tutorials/github_actions_ci.md)，下週開始交 MP 前務必設好。

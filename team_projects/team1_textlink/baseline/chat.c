@@ -105,7 +105,9 @@
   #include <ws2tcpip.h>
   #include <windows.h>
   #include <process.h>                 /* _beginthreadex（要在使用前 include）*/
-  #pragma comment(lib, "ws2_32.lib")   /* MSVC 自動連結 winsock 函式庫 */
+  #ifdef _MSC_VER
+    #pragma comment(lib, "ws2_32.lib") /* MSVC 自動連結 winsock 函式庫（gcc 不認得這個 pragma，會警告）*/
+  #endif
 
   typedef SOCKET socket_t;             /* Windows 的 socket 型別是 SOCKET */
   #define CLOSESOCK(s)  closesocket(s)
