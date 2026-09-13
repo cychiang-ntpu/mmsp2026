@@ -186,11 +186,8 @@ macOS 的檔案系統習慣用 NFD，Windows 與 Linux 多用 NFC；Google 文�
 兩個檔案內容看起來一模一樣、`diff` 卻說不同，或 MP1 統計出來的符號數不一樣，先用 utf8_dump 看是不是這個。
 本課程的測資一律 NFC；你自己做測資時，用 Python `unicodedata.normalize("NFC", s)` 統一，或直接避免從 macOS Finder 複製檔名進來。
 
-現場看：[data/sample_scripts.txt](data/sample_scripts.txt) 六行各放一類，跑 `utf8_dump` 數一數第 5、6 行有幾個 code point。
-
-| macOS / Linux | Windows PowerShell |
-|---|---|
-| `./examples/utf8_dump < data/sample_scripts.txt` | `cmd /c ".\examples\utf8_dump.exe < data\sample_scripts.txt"` |
+現場看：[data/sample_scripts.txt](data/sample_scripts.txt) 六行各放一類。utf8_dump 要等 1.3 編譯好才有，
+所以這個 demo 排在 1.3 的最後一步；先記得回來數第 5、6 行各有幾個 code point。
 
 ### 1.3 現場 demo：數 byte（8 分鐘）
 
@@ -221,7 +218,13 @@ macOS／Linux 若兩個數字一樣，是終端機沒設 UTF-8 語系：先打 `
 | `./utf8_dump < ../data/sample_zh_en.txt` | `cmd /c ".\utf8_dump.exe < ..\data\sample_zh_en.txt"` |
 
 （PowerShell 不支援 `<` 輸入重導向，所以 Windows 這類指令一律用 `cmd /c "..."` 包起來；或直接打 `mingw32-make demo`。）
-看完之後 **`cd ..` 回到本週資料夾**，後面的指令都從這裡下。
+看完之後 **`cd ..` 回到本週資料夾**，後面的指令都從這裡下。回來後順便跑 1.2c 那個檔案：
+
+| macOS / Linux | Windows PowerShell |
+|---|---|
+| `./examples/utf8_dump < data/sample_scripts.txt` | `cmd /c ".\examples\utf8_dump.exe < data\sample_scripts.txt"` |
+
+第 5 行的兩個 é 各是幾個 code point？第 6 行的家庭 emoji 呢？
 
 輸出每列是「第幾個字元、幾 bytes、hex、code point、字元本身」。
 請同學找出：emoji 😀 幾 bytes？`\r` 在哪一行？這就是 MP1 要處理的全部特殊情況。
