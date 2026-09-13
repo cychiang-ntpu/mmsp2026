@@ -8,6 +8,9 @@
 
 1. 前往 <https://git-scm.com/download/win> 下載 Windows 安裝檔。
 2. 執行安裝，全部保持預設值一路下一步即可。
+
+> macOS：裝完 Command Line Tools（[macos_c_starter.md](macos_c_starter.md) 步驟 2）就已經有 git，不用另裝。
+> WSL：在 Ubuntu 裡 `sudo apt install git`（[wsl_c_starter.md](wsl_c_starter.md) 步驟 2 已包含）。
 3. 裝完**重開 VSCode**，在終端機輸入驗證：
 
    ```

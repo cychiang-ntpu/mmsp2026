@@ -93,7 +93,7 @@ macOS / Linux 同理，只是斜線方向相反：`./hello`。
 | 刪除檔案 | `rm 檔名`（**小心！沒有資源回收桶**） |
 | 編譯 C 程式 | `gcc hello.c -o hello` |
 | 執行程式 | `.\hello` |
-| 查自己的 IP | `ipconfig`（macOS/Linux 用 `ifconfig`） |
+| 查自己的 IP | `ipconfig`（macOS 用 `ipconfig getifaddr en0`，Linux／WSL 用 `hostname -I`） |
 | 強制停止程式 | `Ctrl+C` |
 
 ---

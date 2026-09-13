@@ -4,6 +4,13 @@
 並成功執行你的第一個 C 程式 **Hello, World!**。
 完全不需要任何程式開發經驗，照著步驟做即可。
 
+> **不是 Windows，或想用 Linux？** 步驟編號相同的平行版本：
+> - macOS 同學看 [macos_c_starter.md](macos_c_starter.md)
+> - 想在 Windows 裡用 Ubuntu（WSL）的同學看 [wsl_c_starter.md](wsl_c_starter.md)
+>
+> 三種環境本課程都接受；其他教學文件以本文的 Windows + MSYS2 為主，
+> 遇到 `.\` 想成 `./`、`mingw32-make` 想成 `make` 即可。
+
 ---
 
 ## 你會安裝的三樣東西
@@ -149,8 +156,9 @@ PATH 沒設定好。回到步驟 2 的第 4 步檢查，設定完記得把 VSCod
 
 ### 6-1 取得程式碼並用 VSCode 打開
 
-1. 向老師取得 `nettcpudp` 資料夾（裡面有 `chat.c`、`Makefile`、`README.md`）。
-2. 在 VSCode 按 `File > Open Folder...`，打開 `nettcpudp` 資料夾。
+1. 程式在課程 repo 的 `team_projects/team1_textlink/baseline/` 資料夾（`chat.c` 與 `Makefile`）。
+   還沒 clone repo 的話先看 [git_intro.md](git_intro.md)。
+2. 在 VSCode 按 `File > Open Folder...`，打開 `baseline` 資料夾。
 3. 可以先點開 `chat.c` 看看，程式開頭有詳細的流程圖與逐行註解。
 
 ### 6-2 編譯
@@ -211,5 +219,6 @@ gcc chat.c -o chat.exe -lws2_32
 5. 《Git 入門》（git_intro.md）——幫程式設存檔點。
 6. 《Makefile 入門》（makefile_intro.md）＋《聊天程式延伸作業引導》
    （nettcpudp_homework.md）——進階挑戰。
+7. 《GitHub Actions 自動測試教學》（github_actions_ci.md）——交 MP 作業前必讀。
 
 祝學習順利！
