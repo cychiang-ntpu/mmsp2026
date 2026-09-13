@@ -108,6 +108,7 @@ macOS／Linux 若兩個數字一樣，是終端機沒設 UTF-8 語系：先打 `
 | `./utf8_dump < ../data/sample_zh_en.txt` | `cmd /c ".\utf8_dump.exe < ..\data\sample_zh_en.txt"` |
 
 （PowerShell 不支援 `<` 輸入重導向，所以 Windows 這類指令一律用 `cmd /c "..."` 包起來；或直接打 `mingw32-make demo`。）
+看完之後 **`cd ..` 回到本週資料夾**，後面的指令都從這裡下。
 
 輸出每列是「第幾個字元、幾 bytes、hex、code point、字元本身」。
 請同學找出：emoji 😀 幾 bytes？`\r` 在哪一行？這就是 MP1 要處理的全部特殊情況。
@@ -177,7 +178,7 @@ JSON 解析失敗、`gcc` 對 `.c` 檔報 `stray '\357' in program`、shell scri
 | macOS / Linux | Windows PowerShell |
 |---|---|
 | `hexdump -C -n 8 data/sample_bom.txt` | `Format-Hex data\sample_bom.txt \| Select-Object -First 3` |
-| `./utf8_dump < ../data/sample_bom.txt \| head -2` | `cmd /c ".\utf8_dump.exe < ..\data\sample_bom.txt" \| Select-Object -First 2` |
+| `./examples/utf8_dump < data/sample_bom.txt \| head -2` | `cmd /c ".\examples\utf8_dump.exe < data\sample_bom.txt" \| Select-Object -First 2` |
 | `diff data/sample_bom.txt <(head -2 data/sample_zh_en.txt)` | `fc.exe data\sample_bom.txt data\sample_zh_en.txt` |
 
 hex 的前 3 bytes 是 `EF BB BF`；utf8_dump 第 0 個字元標示 `(BOM)`；`diff` 說第一行不同，但用眼睛看完全一樣。

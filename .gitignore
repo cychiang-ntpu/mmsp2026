@@ -26,4 +26,5 @@ lectures/*/examples/utf8_dump
 lectures/*/examples/sticky_send
 lectures/*/examples/c_dump.txt
 lectures/*/examples/py_dump.txt
+lectures/*/bom_test.txt
 team_projects/*/baseline/chat
