@@ -7,9 +7,8 @@
 > 1. 照 [vscode_c_starter.md](../../docs/tutorials/vscode_c_starter.md)（Windows）、
 >    [macos_c_starter.md](../../docs/tutorials/macos_c_starter.md) 或 [wsl_c_starter.md](../../docs/tutorials/wsl_c_starter.md)
 >    裝好 gcc、make 與 Python 3。
-> 2. 照 [git_intro.md](../../docs/tutorials/git_intro.md) 的「取得課程 repo」`git clone` 本 repo，
->    用 VSCode **打開整個 `mmsp2026` 資料夾**，終端機（`` Ctrl+` ``）就會站在 repo 根目錄；本講義所有指令都從這裡出發。
->    已經 clone 過的同學先 `git pull`。
+> 2. 照下面「開始之前」把課程 repo `git clone` 到自己電腦，用 VSCode 打開整個 `mmsp2026` 資料夾；
+>    本講義所有指令都從這裡出發。已經 clone 過的同學先 `git pull`。
 > 3. 在 [examples/](examples/) 能編譯成功
 >    （macOS／Linux 打 `make`；Windows PowerShell 打 `mingw32-make`，見 [examples/README.md](examples/README.md)）。
 >
@@ -17,6 +16,65 @@
 > 不熟 `cd`、`..`、`.\` 的同學先花 10 分鐘讀 [terminal_basics.md](../../docs/tutorials/terminal_basics.md)。
 > Windows 執行檔要寫 `.\xxx.exe`，路徑用 `\`；中文亂碼先打 `chcp 65001`；`python3` 在 Windows 通常叫 `python`。
 > **WSL 同學看左欄**（你在 Linux 裡），但和同學互連前先讀 wsl_c_starter.md 的 6-4。
+
+## 開始之前：把課程資料抓到自己電腦（還沒做的同學，5 分鐘）
+
+本週所有範例都在 GitHub 的課程 repo 裡：<https://github.com/cychiang-ntpu/mmsp2026>。
+「repo」就是一個資料夾，GitHub 幫我們放在雲端；`git clone` 就是**把這個資料夾完整複製一份到你的電腦**。
+不需要 GitHub 帳號、不需要登入，因為這個 repo 是公開的。**沒用過 git 也沒關係，照下面打就好。**
+
+**步驟 1：確認電腦有 git。** 打開 VSCode，按 `` Ctrl+` ``（Ctrl 加鍵盤左上角 Esc 下面那顆）打開終端機，輸入：
+
+```
+git --version
+```
+
+看到 `git version 2.xx` 就有。出現「無法辨識」或 `command not found`，先裝：
+Windows 到 <https://git-scm.com/download/win> 下載安裝，全部預設一路下一步，**裝完把 VSCode 整個關掉重開**；
+macOS 在終端機打 `xcode-select --install`；WSL 在 Ubuntu 打 `sudo apt install -y git`。
+
+**步驟 2：站到你要放程式的地方。** 建議放在家目錄底下（不要放桌面、不要放有中文或空白的路徑）：
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `cd ~` | `cd ~` |
+
+（`~` 代表你的家目錄，Windows 是 `C:\Users\你的名字`。打 `pwd` 可以確認自己現在在哪。）
+
+**步驟 3：複製 repo 下來。** 三個平台指令完全一樣：
+
+```
+git clone https://github.com/cychiang-ntpu/mmsp2026
+```
+
+會跑幾秒鐘、印出 `Receiving objects: 100%`，然後家目錄底下多了一個 `mmsp2026` 資料夾。
+
+**步驟 4：用 VSCode 打開這個資料夾。** VSCode 左上角 `File > Open Folder...`（檔案 > 開啟資料夾），
+選剛才出現的 `mmsp2026`，按「選擇資料夾」。**要選整個 `mmsp2026`，不要選裡面的子資料夾。**
+左邊會出現 `lectures/`、`docs/`、`samples_2025-C/` 這些資料夾就對了。
+
+**步驟 5：確認終端機站在對的地方。** 再按一次 `` Ctrl+` `` 開終端機（打開資料夾後新開的終端機會自動站在 `mmsp2026` 裡），輸入：
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `ls lectures` | `ls lectures` |
+
+看到 `wk02_0914_text-utf8` 就完成了。本講義後面所有指令都假設你從這裡出發。
+
+**已經 clone 過的同學**：老師上課前可能更新講義，在 `mmsp2026` 資料夾的終端機打一次
+
+```
+git pull
+```
+
+就會同步到最新。（若出現 `error: Your local changes would be overwritten`，代表你改過 repo 裡的檔案；
+本 repo 只是拿來讀，自己的程式請寫在別的資料夾，遇到這個錯打 `git stash` 再 `git pull`。）
+
+**真的裝不起來 git？** GitHub 頁面右上角綠色 **Code** 按鈕 → **Download ZIP**，解壓縮後用 VSCode 開那個資料夾，
+今天一樣能跟。但之後老師更新你要重新下載，所以下週前還是把 git 裝好。
+
+> 想多知道一點 git 是什麼、怎麼幫自己的程式設存檔點：[git_intro.md](../../docs/tutorials/git_intro.md)。
+> 終端機的 `cd`、`ls`、`..` 不熟：[terminal_basics.md](../../docs/tutorials/terminal_basics.md)。
 
 ## 本週目標
 
