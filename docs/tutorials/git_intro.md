@@ -56,6 +56,8 @@
 
 > 這個 repo 是老師的，你不能 push 上去。自己的作業要放在 GitHub Classroom 幫你建的個人 repo，
 > 見 [github_actions_ci.md](github_actions_ci.md)。
+> 在**電腦教室**：clone 課程 repo 不需要登入 GitHub，可以放心做；但要 push 作業到個人 repo 前，
+> 先讀 github_actions_ci.md 的 3-2「在電腦教室或共用電腦上」，下課前把憑證清掉。
 
 ---
 

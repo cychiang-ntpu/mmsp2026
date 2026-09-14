@@ -157,6 +157,82 @@ MP2、MP5 需要 numpy：`pip install numpy`（Windows 用 `pip`，macOS 用 `pi
    約 1 分鐘後變成 ✅ 綠勾或 ❌ 紅叉。
    （Classroom 建的 repo 第一次可能要到 Actions 分頁按一下 **I understand my workflows, go ahead and enable them**。）
 
+### 3-1 第一次 push 會問你是誰：GitHub 登入與憑證
+
+課程 repo（`cychiang-ntpu/mmsp2026`）是公開的，`git clone` 不需要登入。
+**個人作業 repo 是私有的，第一次 `git push` 時 Git 會要求你證明自己是誰**，這一步教材前面沒講，這裡補上。
+
+用 HTTPS 網址（教材給的都是 HTTPS）時，Windows 的 Git 內建 **Git Credential Manager**：
+
+1. 第一次 `git push`，會跳出一個視窗「Connect to GitHub」，選 **Sign in with your browser**。
+2. 瀏覽器打開 GitHub，登入、按 **Authorize**，回到終端機就會看到 push 成功。
+3. 之後在**這台電腦**push 都不用再登入，因為憑證（一個 token，不是你的密碼）已經存進 Windows 的「認證管理員」。
+
+> macOS：第一次 push 會在終端機問 Username 與 Password，**Password 要填 Personal Access Token 不是 GitHub 密碼**
+> （GitHub 已不接受密碼）。到 GitHub 右上角頭像 → Settings → Developer settings → Personal access tokens → Tokens (classic)
+> → Generate new token，勾 `repo`，把產生的字串當密碼貼上；macOS 的 Keychain 會記住。
+> WSL／Linux：同 macOS 的方式，或在 Ubuntu 裡 `sudo apt install gh` 後 `gh auth login` 用瀏覽器登入。
+
+### 3-2 在電腦教室或共用電腦上（一定要看）
+
+上一節「之後都不用再登入」在**自己的電腦**是方便，在**共用電腦**是漏洞：
+你下課沒清掉，下一個坐這台電腦的人打 `git push` 就是用你的身分。
+
+**在電腦教室的建議做法**
+
+- **只 clone 課程 repo 看講義、跑範例、寫程式**：`git clone https://github.com/cychiang-ntpu/mmsp2026` 不需要登入，什麼都不會留在電腦上。
+- **作業 push 回自己的筆電或宿舍電腦做**。真的要在教室 push，做完**當場清掉憑證**（下面）。
+- **不要在共用電腦產生 SSH 金鑰**：私鑰會留在那台電腦的 `C:\Users\你\.ssh`，等於把家門鑰匙放在公用置物櫃。
+
+**下課前清掉 GitHub 憑證（Windows）**，兩種方式擇一：
+
+```
+git credential-manager erase
+```
+
+（打完會等你輸入，貼三行後按 Enter、再按一次 Enter 結束）：
+
+```
+protocol=https
+host=github.com
+
+```
+
+或用圖形介面：`Win` 鍵輸入「認證管理員」→ **Windows 認證** → 找到 `git:https://github.com` → 移除。
+
+同時清掉你的名字與信箱（否則下一個人的 commit 會掛你的名）：
+
+```
+git config --global --unset user.name
+git config --global --unset user.email
+```
+
+驗證：再打一次 `git push`，如果又跳出登入視窗，代表清乾淨了（這時直接關掉視窗即可）。
+
+**macOS 共用電腦**：「鑰匙圈存取」搜尋 `github.com` 刪除，或終端機
+`printf "protocol=https\nhost=github.com\n\n" | git credential-osxkeychain erase`。
+**Linux／WSL**：`gh auth logout`，或刪除 `~/.git-credentials` 裡 github.com 那行。
+
+### 3-3 想用 SSH 金鑰的同學（只在自己的電腦上做）
+
+SSH 是另一種免密碼 push 的方式：電腦上一把私鑰、GitHub 上放對應的公鑰。只做一次，只在自己的電腦做：
+
+1. 終端機（Windows 用 PowerShell 或 Git Bash 都可以）：
+
+   ```
+   ssh-keygen -t ed25519 -C "你的學校信箱"
+   ```
+
+   一路按 Enter（passphrase 可以留空，或設一個你記得住的）。會產生 `~/.ssh/id_ed25519`（**私鑰，絕對不要給任何人、不要 commit、不要放共用電腦**）
+   與 `~/.ssh/id_ed25519.pub`（公鑰，可以公開）。
+2. 把公鑰內容複製出來：Windows `Get-Content ~/.ssh/id_ed25519.pub | Set-Clipboard`；macOS `pbcopy < ~/.ssh/id_ed25519.pub`；Linux `cat ~/.ssh/id_ed25519.pub` 後手動複製。
+3. GitHub 右上角頭像 → Settings → **SSH and GPG keys** → New SSH key，Title 隨意（例如「我的筆電」），Key 貼上，Add。
+4. 測試：`ssh -T git@github.com`，看到 `Hi 你的帳號! You've successfully authenticated` 就成功。
+5. 之後 clone 個人 repo 改用 SSH 網址：`git clone git@github.com:ntpu-ce-mmsp-2026/mmsp2026-hw-你的帳號.git`；
+   已經用 HTTPS clone 的，`git remote set-url origin git@github.com:ntpu-ce-mmsp-2026/mmsp2026-hw-你的帳號.git` 即可切換。
+
+課程 repo 維持用 HTTPS clone 就好，公開 repo 用 SSH 沒有好處。
+
 ---
 
 ## 4. 看懂 Actions 頁面（紅了怎麼辦）
@@ -215,6 +291,11 @@ template 的 `README.md` 已經有這一行，只要把 `OWNER/REPO` 換成你�
 - 去年 MP4 滿分同學自己寫的 workflow：[samples_2025-C/mini_project_4/HIGH/mini_prj_4_100/.github/workflows/](../../samples_2025-C/mini_project_4/HIGH/mini_prj_4_100/.github/workflows/)，包含用 curl 抓大文本做壓力測試的寫法。
 
 ## 7. 常見問題
+
+**Q：`git push` 出現 `remote: Permission to ... denied` 或 `Authentication failed`？**
+你用的 GitHub 帳號不是這個 repo 的擁有者，通常是電腦上還留著別人的憑證（在電腦教室很常見）。
+照 3-2 清掉憑證後再 push 一次，會重新問你登入。
+
 
 **Q1：Actions 分頁是空的？**
 `.github/workflows/mp-ci.yml` 路徑或檔名打錯，或還沒 push。在 repo 頁面確認檔案在正確位置。
