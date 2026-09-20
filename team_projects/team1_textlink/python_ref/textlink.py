@@ -112,6 +112,8 @@ def wav_data_range(data):
     while pos + 8 <= len(data):
         chunk_id, size = data[pos:pos + 4], struct.unpack("<I", data[pos + 4:pos + 8])[0]
         if chunk_id == b"fmt ":
+            if size < 16 or pos + 24 > len(data):          # fmt 不到 16 bytes：壞掉的檔案，交給呼叫者改用 byte 當符號
+                raise ValueError("fmt chunk 太短")
             audio_format, _, _, _, _, bits = struct.unpack("<HHIIHH", data[pos + 8:pos + 24])
             if audio_format != 1 or bits != 16:
                 raise ValueError("不是 16-bit PCM")

@@ -33,6 +33,11 @@ import heapq
 import math
 import sys
 
+# Windows 上把輸出導到檔案或管線（例如 > out.txt）時，Python 會改用 cp950 編碼，印不出 −、²、≤ 這些符號而當掉；
+# 這裡強制用 UTF-8。直接在終端機執行時本來就沒問題。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 
 # 把一個符號變成「印得出來、看得見」的字串。
 #   以 byte 為符號時，符號是 0–255 的整數：印成兩位的十六進位（{sym:02X}：X = 大寫十六進位、寬 2、前面補 0）。

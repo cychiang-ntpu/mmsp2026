@@ -23,6 +23,11 @@ import struct
 import sys
 import wave
 
+# Windows 上把輸出導到檔案或管線（例如 > out.txt）時，Python 會改用 cp950 編碼，印不出 −、²、≤ 這些符號而當掉；
+# 這裡強制用 UTF-8。直接在終端機執行時本來就沒問題。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # sys.argv 是命令列上的字串清單：argv[0] 是程式名稱，argv[1] 起才是使用者給的參數。
 # 「A if 條件 else B」是 Python 的條件運算式（相當於 C 的 條件 ? A : B）：有給參數就用它，沒給就用 8000。
 # 命令列參數一律是字串，所以要用 int() 轉成整數。

@@ -51,3 +51,6 @@ team_projects/*/starter/test_codec
 team_projects/*/starter/out/
 team_projects/*/starter/received/
 team_projects/*/starter/samples/
+
+# Python 的快取
+__pycache__/
