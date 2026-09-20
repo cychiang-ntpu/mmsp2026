@@ -137,7 +137,7 @@ b = ⌈ log2(r + 1) ÷ 8 ⌉        r ≤ 255 → 1 byte；r ≤ 65535 → 2 byt
 
 ### 1.3 熵：壓縮的極限在哪裡（10 分鐘）
 
-Claude Shannon 的資訊理論回答了一個問題：無失真壓縮**最多**能壓到多小？
+Claude Shannon 的資訊理論（[[1]](#ref-1)；教科書的整理見 [[5]](#ref-5) 第 5 章）回答了一個問題：無失真壓縮**最多**能壓到多小？
 對一串符號 S，第 i 種符號出現的機率是 pᵢ（＝它的次數 ÷ 總數），S 的**熵（entropy）**定義為：
 
 ```
@@ -180,6 +180,8 @@ yellow 用 log2(256/20) ≈ **3.678 bits**。問題來了：**code 的長度必�
 
 ### 1.5 Shannon-Fano：由上往下切（5 分鐘）
 
+出處是 Fano 1949 年的技術報告 [[2]](#ref-2)。
+
 1. 把符號依次數由大到小排好。
 2. 切成兩堆，讓兩堆的次數總和**盡量接近**；左堆的 code 加一個 `0`、右堆加一個 `1`。
 3. 每一堆再照同樣的方法切下去，直到每堆只剩一個符號。
@@ -205,7 +207,7 @@ Shannon-Fano 簡單好懂，但「由上往下切」不保證最佳；下面的 
 
 ### 1.6 Huffman：由下往上合併（15 分鐘）
 
-David Huffman 1951 年在 MIT 當研究生時，把它當成一門課的期末報告做出來（1952 年發表）。他反過來做：**從最少見的符號開始，由下往上長出一棵樹。**
+David Huffman 1951 年在 MIT 當研究生時，把它當成一門課（Robert Fano 開的資訊理論）的期末報告做出來 [[4]](#ref-4)，1952 年發表 [[3]](#ref-3)。他反過來做：**從最少見的符號開始，由下往上長出一棵樹。**
 
 1. 每種符號是一個節點，數字是次數。全部放進一個**依次數由小到大排好的佇列**。
 2. 取出最小的兩個，合併成一個新節點（次數＝兩者相加，兩者當它的左右小孩），把新節點**放回佇列該在的位置**。
@@ -436,6 +438,8 @@ DAC 就是 ADC 的反推；兩邊的取樣率與 bit depth 必須一致，否則
 
 ### 2.2 Sampling：取樣率、Nyquist、aliasing（10 分鐘；頻譜複製那一段課後讀）
 
+取樣定理的原始文獻是 Nyquist 1928 [[8]](#ref-8) 與 Shannon 1949 [[9]](#ref-9)。
+
 先複習幾個量：頻率 f（Hz ＝ 每秒幾個週期）與週期 T 互為倒數，`T = 1/f`；寫成弦波要換成角頻率 `ω = 2πf`（radians／秒）。
 振幅對應**響度**，頻率對應**音高**；複雜的波形可以拆成許多不同頻率的弦波相加（Fourier transform，第 7 週）。
 
@@ -560,9 +564,11 @@ bit depth 從 16 降到 8、6、4，可以看到也聽到這件事；降到 4 bi
 「觀察在極值（弦波最高點）是否發生 overflow」。程式會另外寫出 `out_16bit.wav`、`out_8bit.wav`、`out_4bit.wav`，
 依序播放，4-bit 的「沙沙聲」就是量化雜訊。
 
-也有不均勻的量化（A-law、μ-law）：小訊號用細的階距、大訊號用粗的階距，電話網路用它把 16 bits 壓成 8 bits。本課程只做均勻量化。
+也有不均勻的量化（A-law、μ-law）：小訊號用細的階距、大訊號用粗的階距，電話網路（G.711 [[15]](#ref-15)）用它把 13～14 bits 的線性 PCM 壓成 8 bits。本課程只做均勻量化。
 
 ### 2.4 分貝、SNR 與 SQNR（8 分鐘；推導課後讀，課堂上看實測的表）
+
+「量化誤差當成均勻分布的雜訊、功率是 Δ²/12」這個模型出自 Bennett 1948 [[10]](#ref-10)；量化理論的完整回顧見 [[11]](#ref-11)。
 
 **訊號雜訊比（SNR）**＝有用訊號的功率 ÷ 雜訊的功率。因為數字範圍很大，習慣取對數，用**分貝（dB）**表示。
 dB 沒有單位，它描述的是兩個量的**相對**大小：
@@ -631,6 +637,8 @@ CD：44,100 × 16 × 2 = 1,411,200 bits/s ≈ 1.41 Mb/s
 14,929,920,000 bits ≈ 1.74 GB。第一節的[計算機](slides/media_size.html)可以換任何規格來算；這一節我們知道了公式裡的「取樣率」與「bit depth」是怎麼來的。
 
 ### 2.6 WAV 檔：把 PCM 包起來（7 分鐘）
+
+各欄位的定義以 [[13]](#ref-13) 為準（該頁同時收錄 Microsoft／IBM 的原始規格文件）。
 
 WAV 是 **RIFF** 容器：開頭 12 bytes，後面接一串 **chunk**；每個 chunk ＝ 4 bytes 的 id ＋ 4 bytes 的大小 ＋ 內容
 （內容長度是奇數時補 1 byte）。最常見的 WAV 只有 `fmt ` 與 `data` 兩個 chunk，檔頭剛好 44 bytes：
@@ -975,13 +983,60 @@ Python 的示範程式只用標準函式庫，不需要安裝任何套件（MP2 
 
 ## 參考
 
-- J. Burg,《The Science of Digital Media》, Pearson/Prentice Hall, 2009，第 1 章 Digital Data Representation and Communication
-  ——Analog to Digital Conversion、Data Storage、Compression Methods 三節（本講義 1.1–1.5、2.2–2.5 的數學式與算例出處）。
+編號的文獻都逐筆查證過（2026/9/21）：有 DOI 的，作者、刊名、卷期、頁碼與 [Crossref](https://www.crossref.org/) 的登錄資料一致，點 DOI 連結就能核對；
+標準與規格則連到發布單位自己的網頁（RFC Editor、ITU、W3C、Unicode、Microsoft）。部分論文全文要從校內網路或圖書館帳號才能下載。
+
+**教科書**
+
+- <a id="ref-5"></a>[5] T. M. Cover and J. A. Thomas, *Elements of Information Theory*, 2nd ed., Wiley-Interscience, 2006. ISBN 978-0-471-24195-9. [doi:10.1002/047174882X](https://doi.org/10.1002/047174882X)
+  ——第 2 章（熵）、第 5 章 Data Compression（prefix code、Kraft 不等式、H ≤ L < H + 1、Huffman code 的最佳性）。本講義 1.3、1.4、1.6。
+- <a id="ref-6"></a>[6] K. Sayood, *Introduction to Data Compression*, 5th ed., Morgan Kaufmann, 2017. ISBN 978-0-12-809474-7. [doi:10.1016/C2015-0-06248-7](https://doi.org/10.1016/C2015-0-06248-7)
+  ——Huffman coding、字典式壓縮（LZ77／LZW）、量化、各種影音壓縮標準的入門。本講義 1.1、1.6、1.7。
+- <a id="ref-7"></a>[7] J. Burg, *The Science of Digital Media*, Pearson Prentice Hall, 2009. ISBN 978-0-13-243580-2.
+  ——第 1 章 Digital Data Representation and Communication 的 Analog to Digital Conversion、Data Storage、Compression Methods 三節；
+  本講義 1.1–1.5、2.2–2.5 的數學式、RLE 與 8 色影像的算例出自這裡。
+
+**原始論文**
+
+- <a id="ref-1"></a>[1] C. E. Shannon, "A Mathematical Theory of Communication," *Bell System Technical Journal*, vol. 27, no. 3, pp. 379–423, July 1948, [doi:10.1002/j.1538-7305.1948.tb01338.x](https://doi.org/10.1002/j.1538-7305.1948.tb01338.x)；
+  vol. 27, no. 4, pp. 623–656, Oct. 1948, [doi:10.1002/j.1538-7305.1948.tb00917.x](https://doi.org/10.1002/j.1538-7305.1948.tb00917.x)。——熵的定義（1.3）。
+- <a id="ref-2"></a>[2] R. M. Fano, "The Transmission of Information," Technical Report No. 65, Research Laboratory of Electronics, MIT, Mar. 1949.
+  掃描檔：<https://archive.org/details/fano-tr65.7z>。——Shannon-Fano coding（1.5）。
+- <a id="ref-3"></a>[3] D. A. Huffman, "A Method for the Construction of Minimum-Redundancy Codes," *Proceedings of the IRE*, vol. 40, no. 9, pp. 1098–1101, Sept. 1952.
+  [doi:10.1109/JRPROC.1952.273898](https://doi.org/10.1109/JRPROC.1952.273898)。——Huffman coding（1.6）；只有四頁，值得讀原文。
+- <a id="ref-4"></a>[4] G. Stix, "Encoding the 'Neatness' of Ones and Zeroes"（Profile: David A. Huffman）, *Scientific American*, vol. 265, no. 3, pp. 54–58, Sept. 1991.
+  [doi:10.1038/scientificamerican0991-54](https://doi.org/10.1038/scientificamerican0991-54)。——1951 年期末報告那段故事的出處（1.6）。
+- <a id="ref-8"></a>[8] H. Nyquist, "Certain Topics in Telegraph Transmission Theory," *Transactions of the AIEE*, vol. 47, no. 2, pp. 617–644, Apr. 1928.
+  [doi:10.1109/T-AIEE.1928.5055024](https://doi.org/10.1109/T-AIEE.1928.5055024)。
+- <a id="ref-9"></a>[9] C. E. Shannon, "Communication in the Presence of Noise," *Proceedings of the IRE*, vol. 37, no. 1, pp. 10–21, Jan. 1949.
+  [doi:10.1109/JRPROC.1949.232969](https://doi.org/10.1109/JRPROC.1949.232969)。——取樣定理（2.2）。
+- <a id="ref-10"></a>[10] W. R. Bennett, "Spectra of Quantized Signals," *Bell System Technical Journal*, vol. 27, no. 3, pp. 446–472, July 1948.
+  [doi:10.1002/j.1538-7305.1948.tb01340.x](https://doi.org/10.1002/j.1538-7305.1948.tb01340.x)。——量化雜訊模型（2.3、2.4）。
+- <a id="ref-11"></a>[11] R. M. Gray and D. L. Neuhoff, "Quantization," *IEEE Transactions on Information Theory*, vol. 44, no. 6, pp. 2325–2383, 1998.
+  [doi:10.1109/18.720541](https://doi.org/10.1109/18.720541)。——量化理論的回顧（2.3、2.4）。
+- <a id="ref-12"></a>[12] 1.1 提到的字典式壓縮與 JPEG：
+  J. Ziv and A. Lempel, "A Universal Algorithm for Sequential Data Compression," *IEEE Trans. Information Theory*, vol. 23, no. 3, pp. 337–343, 1977, [doi:10.1109/TIT.1977.1055714](https://doi.org/10.1109/TIT.1977.1055714)（LZ77）；
+  T. A. Welch, "A Technique for High-Performance Data Compression," *Computer*, vol. 17, no. 6, pp. 8–19, June 1984, [doi:10.1109/MC.1984.1659158](https://doi.org/10.1109/MC.1984.1659158)（LZW）；
+  G. K. Wallace, "The JPEG Still Picture Compression Standard," *Communications of the ACM*, vol. 34, no. 4, pp. 30–44, Apr. 1991, [doi:10.1145/103085.103089](https://doi.org/10.1145/103085.103089)。
+
+**檔案格式、標準與規格**
+
+- <a id="ref-13"></a>[13] P. Kabal, "Wave File Specifications," McGill University：<https://www.mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html>
+  ——WAV 各欄位的說明，並收錄原始規格 IBM／Microsoft *Multimedia Programming Interface and Data Specifications 1.0*（1991）。本講義 2.6。
+- [14] Microsoft Learn, "BITMAPINFOHEADER structure (wingdi.h)"：<https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapinfoheader>——BMP 檔頭（2.6 的檢視器）。
+- <a id="ref-15"></a>[15] ITU-T Rec. G.711, "Pulse code modulation (PCM) of voice frequencies," Nov. 1988：<https://www.itu.int/rec/T-REC-G.711>——電話的 8 kHz、8-bit A-law／μ-law（1.1、2.3）。
+- [16] ITU-T Rec. T.81, "Information technology – Digital compression and coding of continuous-tone still images – Requirements and guidelines," Sept. 1992：<https://www.itu.int/rec/T-REC-T.81>（JPEG）；
+  ITU-T Rec. H.264, "Advanced video coding for generic audiovisual services," 第一版 May 2003：<https://www.itu.int/rec/T-REC-H.264>。
+- [17] IETF RFC：[RFC 1951](https://www.rfc-editor.org/rfc/rfc1951)（DEFLATE，＝LZ77＋Huffman）、[RFC 9639](https://www.rfc-editor.org/rfc/rfc9639)（FLAC）、[RFC 6716](https://www.rfc-editor.org/rfc/rfc6716)（Opus）、
+  [RFC 3629](https://www.rfc-editor.org/rfc/rfc3629)（UTF-8）、[RFC 9293](https://www.rfc-editor.org/rfc/rfc9293)（TCP：byte stream，沒有訊息邊界，3.3）；
+  W3C, *Portable Network Graphics (PNG) Specification (Third Edition)*：<https://www.w3.org/TR/png-3/>。
+
+**授課教師的講義與延伸閱讀**
+
 - 江振宇，DSP 2026 課堂講義〈第三部分：語音信號的表示（補充教材）〉：
   <https://github.com/cychiang-ntpu/dsp2026/blob/master/docs/lectures/dsp2026_lecture_notes.md>（本講義 2.1–2.3 關於麥克風、ADC 四步驟、量化數學式與 DAC 的敘述出處）。
 - 2023 講義：[Chapter 2 Digital Data (Signal) Representation](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/tree/master/Chapter-2)
   （A/D 的投影片 SpeechA2D、理想取樣的數學、量化與 SQNR；含上課影片連結）。
-- Huffman 原始論文：D. A. Huffman, "A Method for the Construction of Minimum-Redundancy Codes," *Proc. IRE*, 1952。
-- WAV 格式：[WAV（維基百科）](https://zh.wikipedia.org/wiki/WAV)；非均勻量化：[A-law](https://en.wikipedia.org/wiki/A-law_algorithm)、[μ-law](https://en.wikipedia.org/wiki/%CE%9C-law_algorithm)。
+- 維基百科（入門用，不是引用依據）：[WAV](https://zh.wikipedia.org/wiki/WAV)、[A-law](https://en.wikipedia.org/wiki/A-law_algorithm)、[μ-law](https://en.wikipedia.org/wiki/%CE%9C-law_algorithm)。
 - 本 repo：[Team 1 規格](../../team_projects/team1_textlink/README.md)、[starter/README.md](../../team_projects/team1_textlink/starter/README.md)、
   [MP2 樣本與評語](../../samples_2025-C/mini_project_2/README.md)、[MP4 樣本](../../samples_2025-C/mini_project_4/README.md)。

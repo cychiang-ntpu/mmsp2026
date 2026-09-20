@@ -279,3 +279,14 @@ STATS role=recv mode=huff file_bytes=1048576 wire_bytes=743210 ratio=0.7088 deco
 它**沒有**長度前綴、沒有 Huffman、沒有檔案傳輸，這三樣就是你們要做的。
 長度前綴的引導見 [../../docs/tutorials/nettcpudp_homework.md](../../docs/tutorials/nettcpudp_homework.md) 作業 3；
 半包與黏包的現象見[第 2 週講義第三節](../../lectures/wk02_0914_text-utf8/README.md)。
+
+## 參考文獻
+
+下列文獻都逐筆查證過（2026/9/21；DOI 的書目資料與 Crossref 一致）。報告裡引用時請照這個格式寫；完整清單與各節的對應見[第 3 週講義的「參考」](../../lectures/wk03_0921_team1-kickoff/README.md#參考)。
+
+- D. A. Huffman, "A Method for the Construction of Minimum-Redundancy Codes," *Proceedings of the IRE*, vol. 40, no. 9, pp. 1098–1101, Sept. 1952. [doi:10.1109/JRPROC.1952.273898](https://doi.org/10.1109/JRPROC.1952.273898)
+- C. E. Shannon, "A Mathematical Theory of Communication," *Bell System Technical Journal*, vol. 27, no. 3, pp. 379–423, July 1948. [doi:10.1002/j.1538-7305.1948.tb01338.x](https://doi.org/10.1002/j.1538-7305.1948.tb01338.x)（熵 H 的定義）
+- T. M. Cover and J. A. Thomas, *Elements of Information Theory*, 2nd ed., Wiley-Interscience, 2006, 第 5 章 Data Compression. [doi:10.1002/047174882X](https://doi.org/10.1002/047174882X)（H ≤ L < H + 1、Huffman code 的最佳性）
+- F. Yergeau, "UTF-8, a transformation format of ISO 10646," RFC 3629, Nov. 2003：<https://www.rfc-editor.org/rfc/rfc3629>（合法 UTF-8 的定義）
+- W. Eddy, Ed., "Transmission Control Protocol (TCP)," RFC 9293, Aug. 2022：<https://www.rfc-editor.org/rfc/rfc9293>（TCP 是 byte stream、沒有訊息邊界，所以需要 frame）
+- P. Kabal, "Wave File Specifications," McGill University：<https://www.mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html>（WAV 檔頭與 chunk）
