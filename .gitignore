@@ -21,6 +21,17 @@ tools/ci/repos.txt
 # 老師私人筆記
 lectures/_private/
 
+# 防呆：學生名冊、成績、分組名單含個資，只能放私有 repo mmsp2026-private/roster/
+*.ods
+*.xlsx
+*.xls
+roster/
+*roster*
+*名冊*
+*名單*
+*成績*
+*.docx
+
 # 講義範例與 baseline 的執行檔、比對暫存（無副檔名）
 lectures/*/examples/utf8_dump
 lectures/*/examples/sticky_send
