@@ -1,4 +1,4 @@
-# 開發日誌 (Mini-Project 5: Spectrogram/STFT)(411186008)
+# 開發日誌 (Mini-Project 5: Spectrogram/STFT)
 
 ## 2025-12-20
 ### 今日目標
