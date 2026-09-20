@@ -1,0 +1,28 @@
+# 課程 repo 的程式在 macOS、Linux、Windows 三個平台都要能編譯、能執行。
+# 同學用的電腦三種都有；這個 workflow 每次 push 在三種機器上各跑一次 tools/ci/build_course_code.sh。
+# （同學個人作業 MP1–MP5 的自動測試是另一個檔案：tools/ci/mp-ci.yml。）
+name: build-course-code
+
+on:
+  push:
+    paths:
+      - "lectures/**"
+      - "team_projects/**"
+      - "tools/ci/build_course_code.sh"
+      - ".github/workflows/build-course-code.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run everything students are asked to build
+        run: bash tools/ci/build_course_code.sh

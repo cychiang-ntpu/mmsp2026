@@ -38,4 +38,16 @@ lectures/*/examples/sticky_send
 lectures/*/examples/c_dump.txt
 lectures/*/examples/py_dump.txt
 lectures/*/bom_test.txt
+lectures/*/examples/huffman_trace
+lectures/*/examples/entropy
+lectures/*/examples/c_entropy.txt
+lectures/*/examples/py_entropy.txt
+lectures/*/examples/out_*bit.wav
+lectures/*/examples/tone_*.wav
+lectures/*/examples/ref.wav
 team_projects/*/baseline/chat
+team_projects/*/starter/textlink
+team_projects/*/starter/test_codec
+team_projects/*/starter/out/
+team_projects/*/starter/received/
+team_projects/*/starter/samples/

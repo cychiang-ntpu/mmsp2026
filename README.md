@@ -34,7 +34,7 @@ mmsp2026/
 ├── samples_2025-python/    Python 正確實作——同學對答案用（高階寫法，
 │                           不透露 C 的實作方式）
 ├── team_projects/          三次 Team Project 的規格與 baseline
-│   ├── team1_textlink/     TextLink：文字與封包（評測 10/12）
+│   ├── team1_textlink/     TextLink：文字、封包與 Huffman 傳輸（評測 10/12）；starter/ 是可編譯的殼
 │   ├── team2_voicelink/    VoiceLink：即時語音管線（評測 11/9）
 │   └── team3_miniline/     MiniLINE：視訊與整合（評測 12/7）
 ├── lectures/               每週上課講義與範例（依日曆週編號，上完課陸續發布）
@@ -65,7 +65,7 @@ mmsp2026/
 ## 每週講義
 
 每週上課用的講義、範例程式與回家作業都在 [lectures/](lectures/README.md)，上課前先打開當週資料夾。
-本週：[第 2 週（9/14）文字表示、UTF-8、MP1 導讀、TCP 黏包](lectures/wk02_0914_text-utf8/README.md)。
+本週：[第 3 週（9/21）Huffman coding、WAV 與 PCM、分組與 Team 1 說明](lectures/wk03_0921_team1-kickoff/README.md)；上週：[第 2 週（9/14）文字表示、UTF-8、MP1 導讀、TCP 黏包](lectures/wk02_0914_text-utf8/README.md)。
 
 ## 第一堂課 checklist
 

@@ -7,7 +7,10 @@ Makefile text eol=lf
 *.yml    text eol=lf
 *.txt    text eol=lf
 *.sh     text eol=lf
+*.html   text eol=lf
+*.js     text eol=lf
 *.wav    binary
+*.bmp    binary
 *.pdf    binary
 *.bin    binary
 # 講義測試資料要逐 byte 保留（含刻意放入的 CRLF），不做換行轉換
