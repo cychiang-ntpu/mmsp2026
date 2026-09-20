@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>打開真實的 WAV 與 BMP</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1f2328; --dim:#6b7280; --line:#c9ccd1; --card:#ffffff; --soft:#f1f3f5; --on:#2457c5; --onfg:#fff; --wave:#2457c5; --proc:#d1242f; --warn:#b3261e;
+          --c0:#fde68a; --c1:#bfdbfe; --c2:#bbf7d0; --c3:#fecaca; --c4:#ddd6fe; --c5:#fed7aa; --c6:#a5f3fc; --c7:#fbcfe8; --cfg:#1f2328; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --fg:#e6e8eb; --dim:#9aa3ad; --line:#3a3f46; --card:#1d2024; --soft:#262a30; --on:#8ab0ff; --onfg:#10131a; --wave:#8ab0ff; --proc:#ff7b72; --warn:#ffb4ab;
+            --c0:#713f12; --c1:#1e3a8a; --c2:#14532d; --c3:#7f1d1d; --c4:#4c1d95; --c5:#7c2d12; --c6:#155e75; --c7:#831843; --cfg:#f1f5f9; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
+  header { padding:14px 16px 0; } h1 { margin:0 0 4px; font-size:21px; } .lead { margin:0 0 10px; color:var(--dim); }
+  nav { display:flex; gap:6px; padding:0 16px; border-bottom:1px solid var(--line); }
+  nav button { font:inherit; color:var(--fg); background:none; border:0; border-bottom:3px solid transparent; padding:8px 14px; cursor:pointer; } nav button.on { border-bottom-color:var(--on); font-weight:700; }
+  main { padding:12px 16px 28px; max-width:1200px; margin:0 auto; } .tab { display:none; } .tab.on { display:block; }
+  .grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:12px; } @media (max-width:980px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  h2 { font-size:17px; margin:0 0 8px; } .note { color:var(--dim); font-size:13.5px; margin:6px 0 0; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  select, button.b, input[type=file] { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:5px 10px; }
+  button.b { cursor:pointer; } button.b.p { background:var(--on); color:var(--onfg); border-color:var(--on); }
+  audio { width:100%; margin-top:8px; }
+  .hex { font:13.5px/1.75 ui-monospace,Consolas,monospace; overflow-x:auto; white-space:pre; margin:0; }
+  .hex span.f { border-radius:3px; padding:1px 0; color:var(--cfg); cursor:default; } .hex span.hi, tr.hi td { outline:2px solid var(--on); }
+  .k0{background:var(--c0)} .k1{background:var(--c1)} .k2{background:var(--c2)} .k3{background:var(--c3)} .k4{background:var(--c4)} .k5{background:var(--c5)} .k6{background:var(--c6)} .k7{background:var(--c7)}
+  table { border-collapse:collapse; width:100%; font-size:13.5px; } th,td { padding:3px 6px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  th { color:var(--dim); font-weight:600; } td.m { font-family:ui-monospace,Consolas,monospace; white-space:nowrap; } td.sw { width:14px; padding:0; }
+  canvas { display:block; max-width:100%; background:var(--soft); border-radius:6px; } .pix { image-rendering:pixelated; cursor:crosshair; }
+  .ctrl { display:grid; grid-template-columns:auto 1fr; gap:6px 10px; align-items:center; font-size:15px; margin-top:4px; } .ctrl select, .ctrl input { width:100%; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:2px 12px; font-size:14px; margin-top:8px; } .kv div:nth-child(odd) { color:var(--dim); }
+  .warn { color:var(--warn); font-weight:600; } .ok { color:#1f9d4d; font-weight:600; }
+  .legend { display:flex; gap:14px; font-size:13px; color:var(--dim); margin-top:4px; flex-wrap:wrap; } .legend i { display:inline-block; width:16px; height:3px; vertical-align:middle; margin-right:4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>打開真實的 WAV 與 BMP：檔案裡面到底放了什麼</h1>
+  <p class="lead">這一頁用的是真的檔案。每一個 byte 都看得到：前面幾十 bytes 是「說明書」（檔頭），後面就是一個接一個的 sample 或 pixel。也可以選自己電腦裡的 .wav 或 .bmp。</p>
+</header>
+<nav id="nav"><button data-t="wav" class="on">WAV（聲音）</button><button data-t="bmp">BMP（圖像）</button></nav>
+<main>
+
+<section class="tab on" id="tab-wav">
+  <div class="card"><div class="row">
+    <label for="wsel">檔案</label><select id="wsel"></select>
+    <label class="b" style="cursor:pointer;padding:5px 10px;border:1px solid var(--line);border-radius:6px">選自己的 .wav<input id="wfile" type="file" accept=".wav,audio/wav" style="display:none"></label>
+    <span id="wcredit" class="note" style="margin:0"></span></div>
+    <audio id="wplay" controls></audio></div>
+  <div class="grid">
+    <div>
+      <div class="card"><h2>檔頭：前 <span id="whn">44</span> bytes 逐欄解讀</h2>
+        <pre class="hex" id="whex"></pre>
+        <div style="overflow-x:auto"><table id="wtbl"></table></div>
+        <p class="note">所有數字都是 <b>little-endian</b>（低位的 byte 在前）：<code>40 1F 00 00</code> 是 0x00001F40 = 8000。滑鼠移到表格的某一列，上面對應的 bytes 會框起來。</p></div>
+      <div class="card"><h2>用公式驗算這個檔案</h2><div class="kv" id="wcalc"></div></div>
+    </div>
+    <div>
+      <div class="card"><h2>波形：整段，與放大 5 毫秒</h2>
+        <canvas id="wov" width="560" height="110"></canvas>
+        <input id="wpos" type="range" min="0" max="1000" value="300" style="width:100%" aria-label="放大的位置">
+        <canvas id="wzoom" width="560" height="200"></canvas>
+        <div class="legend"><span><i style="background:var(--wave)"></i>原始的 sample（每一根是一個 sample）</span><span><i style="background:var(--proc)"></i>改規格之後</span></div>
+        <p class="note">整段看起來像連續的曲線；放大到毫秒的尺度，才看得到它其實是一根一根的 sample。拖上面的拉桿換位置——找一段小聲的地方，bit depth 降低時差別最明顯。</p></div>
+      <div class="card"><h2>同一段聲音，換取樣率與 bit depth 再聽一次</h2>
+        <div class="ctrl">
+          <label for="wfs">取樣率</label><select id="wfs"></select>
+          <label for="waa">降取樣前</label><select id="waa"><option value="1">先低通濾波（anti-aliasing，正確做法）</option><option value="0">直接每 N 個取 1 個（會 aliasing）</option></select>
+          <label for="wbits">bit depth</label><select id="wbits"><option>16</option><option>12</option><option>10</option><option>8</option><option>6</option><option>4</option><option>3</option><option>2</option></select>
+        </div>
+        <div class="row" style="margin-top:8px"><button class="b p" id="wgo">▶ 播放改過的</button><button class="b" id="worig">▶ 播放原始的</button></div>
+        <audio id="wplay2" controls style="display:none"></audio>
+        <div class="kv" id="wres"></div>
+        <p class="note">降低取樣率 → 高頻不見，聲音變「悶」；不先濾波就降取樣 → 高頻折回來變成原本沒有的怪聲（aliasing）。
+          降低 bit depth → 多了「沙沙」的量化雜訊，小聲的地方最明顯；8 bits 以下，聲音小到一個程度會整個消失（被量化成 0）。
+          為了讓瀏覽器能播放，改過的聲音會再內插回原本的取樣率，但資訊已經少了。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="tab" id="tab-bmp">
+  <div class="card"><div class="row">
+    <label for="bsel">檔案</label><select id="bsel"></select>
+    <label class="b" style="cursor:pointer;padding:5px 10px;border:1px solid var(--line);border-radius:6px">選自己的 .bmp<input id="bfile" type="file" accept=".bmp,image/bmp" style="display:none"></label>
+    <span id="bcredit" class="note" style="margin:0"></span></div></div>
+  <div class="grid">
+    <div>
+      <div class="card"><h2>檔頭：前 54 bytes 逐欄解讀</h2>
+        <pre class="hex" id="bhex"></pre>
+        <div style="overflow-x:auto"><table id="btbl"></table></div>
+        <p class="note">BMP 也是 little-endian。檔頭之後就是 pixel：每個 pixel 3 bytes，順序是 <b>B、G、R</b>（不是 R、G、B）；
+          而且高度為正時，<b>第一列資料是圖的最下面一列</b>（由下往上存）。每一列的 bytes 數要補到 4 的倍數。</p></div>
+      <div class="card"><h2>用公式驗算這個檔案</h2><div class="kv" id="bcalc"></div></div>
+    </div>
+    <div>
+      <div class="card"><h2>這張圖（由檔案裡的 bytes 自己畫出來的）</h2>
+        <div class="row" style="align-items:flex-start">
+          <canvas id="bcan" class="pix" width="256" height="256" style="width:384px"></canvas>
+          <div><canvas id="bzoom" class="pix" width="9" height="9" style="width:144px;height:144px"></canvas><div class="note" id="bpix" style="max-width:190px">把滑鼠移到圖上，看那一個 pixel 的三個數字，以及它在檔案裡的位置。</div></div>
+        </div></div>
+      <div class="card"><h2>同一張圖，換解析度與 bit depth</h2>
+        <div class="ctrl">
+          <label for="bres">解析度</label><select id="bres"><option value="1">原始</option><option value="2">寬高各 ÷2</option><option value="4">÷4</option><option value="8">÷8</option><option value="16">÷16</option><option value="32">÷32</option></select>
+          <label for="bbits">每個顏色</label><select id="bbits"><option value="8">8 bits（256 階）</option><option value="6">6 bits（64 階）</option><option value="4">4 bits（16 階）</option><option value="3">3 bits（8 階）</option><option value="2">2 bits（4 階）</option><option value="1">1 bit（2 階）</option></select>
+          <label for="bgray">色彩</label><select id="bgray"><option value="0">RGB 三個數字</option><option value="1">灰階一個數字</option></select>
+        </div>
+        <div class="kv" id="bres2"></div>
+        <p class="note">圖像的「取樣」是空間上的：解析度就是取樣率，降低它，圖就變成一格一格（和聲音的取樣點一樣）。
+          每個顏色的 bits 就是 bit depth：降到 3–4 bits，天空、海洋這種緩慢變化的地方會出現一條一條的「色帶」——那就是看得見的量化誤差。</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script src="samples.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const hex2 = b => b.toString(16).toUpperCase().padStart(2, "0");
+const b64bytes = s => { const bin = atob(s), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; };
+const u16 = (d, o) => d[o] | (d[o + 1] << 8), u32 = (d, o) => (d[o] | (d[o + 1] << 8) | (d[o + 2] << 16) | (d[o + 3] << 24)) >>> 0, s32 = (d, o) => u32(d, o) | 0;
+const ascii = (d, o, n) => String.fromCharCode(...d.slice(o, o + n));
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// 把檔頭畫成彩色的 hex，並和欄位表互相連動
+function renderHeader(bytes, fields, hexId, tblId, total) {
+  const owner = new Array(total).fill(-1); fields.forEach((f, i) => { for (let k = 0; k < f.len; k++) if (f.off + k < total) owner[f.off + k] = i; });
+  let h = ""; for (let r = 0; r < total; r += 16) { h += r.toString(16).toUpperCase().padStart(8, "0") + "  ";
+    for (let c = r; c < Math.min(r + 16, total, bytes.length); c++) { const i = owner[c]; h += (i >= 0 ? `<span class="f k${i % 8}" data-f="${i}">${hex2(bytes[c])}</span>` : hex2(bytes[c])) + " "; } h += "\n"; }
+  $(hexId).innerHTML = h;
+  $(tblId).innerHTML = "<tr><th></th><th>位移</th><th>bytes</th><th>欄位</th><th>值</th><th>意義</th></tr>" + fields.map((f, i) =>
+    `<tr data-f="${i}"><td class="sw k${i % 8}"></td><td class="m">${f.off}</td><td class="m">${[...bytes.slice(f.off, f.off + f.len)].map(hex2).join(" ")}</td><td>${f.name}</td><td class="m">${f.val}</td><td>${f.note}</td></tr>`).join("");
+  const mark = (i, on) => { document.querySelectorAll(`#${hexId} [data-f="${i}"]`).forEach(e => e.classList.toggle("hi", on)); const tr = document.querySelector(`#${tblId} tr[data-f="${i}"]`); if (tr) tr.classList.toggle("hi", on); };
+  document.querySelectorAll(`#${hexId} [data-f], #${tblId} tr[data-f]`).forEach(e => { e.onmouseenter = () => mark(e.dataset.f, true); e.onmouseleave = () => mark(e.dataset.f, false); });
+}
+
+// ================================================================ WAV
+let W = null;                                         // { bytes, fmt, dataOff, dataLen, x: Float32Array(單聲道, −1..1), rate }
+function parseWav(d) {
+  if (d.length < 44 || ascii(d, 0, 4) !== "RIFF" || ascii(d, 8, 4) !== "WAVE") throw new Error("不是 RIFF/WAVE 檔");
+  let p = 12, fmtOff = -1, dataOff = -1, dataLen = 0; const chunks = [];
+  while (p + 8 <= d.length) { const id = ascii(d, p, 4), sz = u32(d, p + 4); chunks.push({ id, off: p, sz });
+    if (id === "fmt ") fmtOff = p; else if (id === "data") { dataOff = p + 8; dataLen = Math.min(sz, d.length - dataOff); break; } p += 8 + sz + (sz & 1); }
+  if (fmtOff < 0 || dataOff < 0) throw new Error("找不到 fmt 或 data chunk");
+  const f = { tag: u16(d, fmtOff + 8), ch: u16(d, fmtOff + 10), rate: u32(d, fmtOff + 12), byteRate: u32(d, fmtOff + 16), align: u16(d, fmtOff + 20), bits: u16(d, fmtOff + 22) };
+  if (f.tag !== 1 || (f.bits !== 16 && f.bits !== 8)) throw new Error(`這一頁只處理 8 或 16-bit 的 PCM（這個檔案是 format ${f.tag}、${f.bits} bits）`);
+  const frames = Math.floor(dataLen / f.align), x = new Float32Array(frames);
+  for (let n = 0; n < frames; n++) { let acc = 0; for (let c = 0; c < f.ch; c++) { const o = dataOff + n * f.align + c * (f.bits / 8);
+      acc += f.bits === 16 ? ((d[o] | (d[o + 1] << 8)) << 16 >> 16) / 32768 : (d[o] - 128) / 128; } x[n] = acc / f.ch; }
+  return { bytes: d, fmt: f, fmtOff, dataOff, dataLen, chunks, x, rate: f.rate, frames };
+}
+function wavFields(w) {
+  const d = w.bytes, o = w.fmtOff, f = w.fmt, dh = w.dataOff - 8;
+  return [ { off: 0, len: 4, name: "ChunkID", val: `"${ascii(d, 0, 4)}"`, note: "RIFF 容器的記號" },
+    { off: 4, len: 4, name: "ChunkSize", val: fmt(u32(d, 4)), note: `檔案大小 − 8 ＝ ${fmt(d.length)} − 8` },
+    { off: 8, len: 4, name: "Format", val: `"${ascii(d, 8, 4)}"`, note: "裡面裝的是 WAV" },
+    { off: o, len: 4, name: "Subchunk1ID", val: `"fmt "`, note: "格式 chunk（結尾有一個空白）" },
+    { off: o + 4, len: 4, name: "Subchunk1Size", val: fmt(u32(d, o + 4)), note: "PCM 為 16" },
+    { off: o + 8, len: 2, name: "AudioFormat", val: f.tag, note: "1 ＝ PCM（未壓縮）" },
+    { off: o + 10, len: 2, name: "NumChannels", val: f.ch, note: f.ch === 1 ? "單聲道" : f.ch === 2 ? "立體聲，資料左右交錯" : "多聲道" },
+    { off: o + 12, len: 4, name: "SampleRate", val: fmt(f.rate), note: "取樣率 f_s（Hz）" },
+    { off: o + 16, len: 4, name: "ByteRate", val: fmt(f.byteRate), note: `SampleRate × BlockAlign ＝ ${fmt(f.rate)} × ${f.align}` },
+    { off: o + 20, len: 2, name: "BlockAlign", val: f.align, note: "一個時間點所有聲道共幾 bytes" },
+    { off: o + 22, len: 2, name: "BitsPerSample", val: f.bits, note: "bit depth" },
+    { off: dh, len: 4, name: "Subchunk2ID", val: `"data"`, note: dh === 36 ? "資料 chunk" : `資料 chunk（前面還有別的 chunk，所以不在第 36 byte）` },
+    { off: dh + 4, len: 4, name: "Subchunk2Size", val: fmt(u32(d, dh + 4)), note: "PCM 資料的 bytes 數" },
+    { off: w.dataOff, len: f.bits / 8, name: "第一個 sample", val: f.bits === 16 ? ((d[w.dataOff] | (d[w.dataOff + 1] << 8)) << 16 >> 16) : d[w.dataOff] - 128, note: f.bits === 16 ? "16-bit 二補數" : "8-bit 無號，128 代表 0" } ];
+}
+function loadWav(bytes, credit) {
+  try { W = parseWav(bytes); } catch (e) { alert(e.message); return; }
+  $("wcredit").textContent = credit || ""; $("wplay").src = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+  const total = Math.min(W.dataOff + 4, 96); $("whn").textContent = W.dataOff;
+  renderHeader(bytes, wavFields(W), "whex", "wtbl", total);
+  const f = W.fmt, bps = f.rate * f.bits * f.ch, sec = W.frames / f.rate;
+  $("wcalc").innerHTML = `<div>位元率</div><div>${fmt(f.rate)} × ${f.bits} × ${f.ch} ＝ <b>${fmt(bps)} bits/s</b>（${(bps / 1000).toFixed(1)} kb/s）</div>` +
+    `<div>長度</div><div>${fmt(W.dataLen)} bytes ÷ ${f.align} ÷ ${fmt(f.rate)} ＝ <b>${sec.toFixed(3)} 秒</b>（${fmt(W.frames)} 個時間點）</div>` +
+    `<div>資料大小</div><div>位元率 × 秒數 ÷ 8 ＝ ${fmt(bps * sec / 8)} bytes</div>` +
+    `<div>加上檔頭</div><div>${W.dataOff} ＋ ${fmt(W.dataLen)} ＝ ${fmt(W.dataOff + W.dataLen)} bytes　` +
+    (W.dataOff + W.dataLen + (W.dataLen & 1) >= bytes.length - 1 ? `<span class="ok">＝ 檔案實際大小 ${fmt(bytes.length)} ✓</span>` : `檔案實際 ${fmt(bytes.length)} bytes（data 之後還有其他 chunk）`) + `</div>`;
+  const sel = $("wfs"); sel.innerHTML = ""; for (const k of [1, 2, 4, 8, 16]) { if (f.rate / k < 1000) break; const o = document.createElement("option"); o.value = k; o.textContent = `${fmt(f.rate / k)} Hz` + (k === 1 ? "（原始）" : `（÷${k}）`); sel.appendChild(o); }
+  $("wbits").value = "16"; $("wplay2").style.display = "none"; $("wres").innerHTML = ""; W.y = null; drawWave();
+}
+function lowpass(x, factor) {                         // windowed-sinc 低通，截止頻率 = 新的 Nyquist 的 0.9 倍
+  const taps = 16 * factor + 1, mid = (taps - 1) / 2, fc = 0.45 / factor, h = new Float32Array(taps); let sum = 0;
+  for (let i = 0; i < taps; i++) { const k = i - mid, s = k === 0 ? 2 * fc : Math.sin(2 * Math.PI * fc * k) / (Math.PI * k); h[i] = s * (0.54 - 0.46 * Math.cos(2 * Math.PI * i / (taps - 1))); sum += h[i]; }
+  const y = new Float32Array(x.length); for (let n = 0; n < x.length; n++) { let acc = 0; for (let i = 0; i < taps; i++) { const j = n + mid - i; if (j >= 0 && j < x.length) acc += h[i] * x[j]; } y[n] = acc / sum; } return y;
+}
+function processWav() {
+  const k = +$("wfs").value, aa = $("waa").value === "1", m = +$("wbits").value, src = k > 1 && aa ? lowpass(W.x, k) : W.x, y = new Float32Array(W.x.length), half = Math.pow(2, m - 1);
+  let pe = 0, ps = 0, zero = 0;
+  for (let n = 0; n < y.length; n++) {                // 每 k 個取 1 個 → 量化成 m bits → 線性內插回原本的取樣率
+    const a = Math.floor(n / k) * k, b = Math.min(a + k, Math.floor((y.length - 1) / k) * k), t = (n - a) / k;
+    const qa = Math.max(-half, Math.min(half - 1, Math.round(src[a] * half))) / half, qb = Math.max(-half, Math.min(half - 1, Math.round(src[b] * half))) / half;
+    y[n] = qa + (qb - qa) * t; ps += W.x[n] * W.x[n]; pe += (W.x[n] - y[n]) ** 2; if (n % k === 0 && qa === 0) zero++;
+  }
+  W.y = y;
+  const pcm = new Uint8Array(44 + y.length * 2), dv = new DataView(pcm.buffer); pcm.set([82, 73, 70, 70], 0); dv.setUint32(4, 36 + y.length * 2, true); pcm.set([87, 65, 86, 69, 102, 109, 116, 32], 8);
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, W.rate, true); dv.setUint32(28, W.rate * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+  pcm.set([100, 97, 116, 97], 36); dv.setUint32(40, y.length * 2, true); for (let n = 0; n < y.length; n++) dv.setInt16(44 + n * 2, Math.max(-32768, Math.min(32767, Math.round(y[n] * 32767))), true);
+  const a = $("wplay2"); a.style.display = "block"; a.src = URL.createObjectURL(new Blob([pcm], { type: "audio/wav" })); a.play().catch(() => {});
+  const newRate = W.rate / k, bps0 = W.rate * 16, bps1 = newRate * m, samples = Math.ceil(y.length / k);
+  $("wres").innerHTML = `<div>新的規格</div><div><b>${fmt(newRate)} Hz × ${m} bits</b>（單聲道）；能表示的最高頻率 ${fmt(newRate / 2)} Hz</div>` +
+    `<div>位元率</div><div>${fmt(bps1)} bits/s，是原本 ${fmt(bps0)} 的 <b>${(100 * bps1 / bps0).toFixed(1)}%</b></div>` +
+    `<div>與原始的差異</div><div>SNR ＝ 10·log₁₀(Σx²/Σe²) ＝ <b>${pe > 0 ? (10 * Math.log10(ps / pe)).toFixed(1) + " dB" : "∞（完全相同）"}</b></div>` +
+    `<div>量化等級</div><div>2<sup>${m}</sup> ＝ ${fmt(Math.pow(2, m))} 個；有 ${(100 * zero / samples).toFixed(0)}% 的 sample 被量化成 0</div>` +
+    (k > 1 && !aa ? `<div></div><div class="warn">沒有先濾波：${fmt(newRate / 2)} Hz 以上的成分折回低頻（aliasing）。</div>` : "");
+  drawWave();
+}
+function drawWave() {
+  if (!W) return; const wave = cssv("--wave"), proc = cssv("--proc"), dim = cssv("--line");
+  const ov = $("wov"), c = ov.getContext("2d"), w = ov.width, h = ov.height, x = W.x; c.clearRect(0, 0, w, h); c.strokeStyle = wave; c.beginPath();
+  for (let px = 0; px < w; px++) { const a = Math.floor(px / w * x.length), b = Math.floor((px + 1) / w * x.length); let lo = 1, hi = -1; for (let n = a; n < b; n++) { if (x[n] < lo) lo = x[n]; if (x[n] > hi) hi = x[n]; } c.moveTo(px + 0.5, h / 2 - hi * h / 2); c.lineTo(px + 0.5, h / 2 - lo * h / 2 + 1); } c.stroke();
+  const win = Math.max(8, Math.round(W.rate * 0.005)), start = Math.floor(+$("wpos").value / 1000 * Math.max(1, x.length - win));
+  c.fillStyle = "rgba(209,36,47,.25)"; c.fillRect(start / x.length * w - 1, 0, Math.max(3, win / x.length * w), h);
+  const z = $("wzoom"), g = z.getContext("2d"), zw = z.width, zh = z.height; g.clearRect(0, 0, zw, zh); let peak = 0.02; for (let n = start; n < start + win; n++) peak = Math.max(peak, Math.abs(x[n]), W.y ? Math.abs(W.y[n]) : 0); peak *= 1.15;
+  g.strokeStyle = dim; g.beginPath(); g.moveTo(0, zh / 2); g.lineTo(zw, zh / 2); g.stroke();
+  const X = n => (n - start + 0.5) / win * zw, Y = v => zh / 2 - v / peak * (zh / 2 - 6);
+  g.strokeStyle = wave; g.fillStyle = wave; for (let n = start; n < start + win; n++) { g.beginPath(); g.moveTo(X(n), zh / 2); g.lineTo(X(n), Y(x[n])); g.stroke(); g.beginPath(); g.arc(X(n), Y(x[n]), win > 120 ? 1.5 : 2.5, 0, 7); g.fill(); }
+  if (W.y) { g.strokeStyle = proc; g.lineWidth = 2; g.beginPath(); for (let n = start; n < start + win; n++) { n === start ? g.moveTo(X(n), Y(W.y[n])) : g.lineTo(X(n), Y(W.y[n])); } g.stroke(); g.lineWidth = 1; }
+  g.fillStyle = cssv("--dim"); g.font = "12px system-ui"; g.fillText(`${(start / W.rate).toFixed(3)} 秒起的 5 ms：${win} 個 sample；縱軸 ±${peak.toFixed(3)}`, 6, 14);
+}
+
+// ================================================================ BMP
+let B = null;
+function parseBmp(d) {
+  if (d.length < 54 || ascii(d, 0, 2) !== "BM") throw new Error("不是 BMP 檔");
+  const off = u32(d, 10), w = s32(d, 18), hh = s32(d, 22), bits = u16(d, 28), comp = u32(d, 30), h = Math.abs(hh);
+  if (comp !== 0 || (bits !== 24 && bits !== 32)) throw new Error(`這一頁只處理未壓縮的 24／32-bit BMP（這個檔案是 ${bits} bits、compression ${comp}）`);
+  const bpp = bits / 8, row = Math.ceil(w * bpp / 4) * 4, rgb = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) { const src = off + (hh > 0 ? h - 1 - y : y) * row; for (let x = 0; x < w; x++) { const s = src + x * bpp, t = (y * w + x) * 4; rgb[t] = d[s + 2]; rgb[t + 1] = d[s + 1]; rgb[t + 2] = d[s]; rgb[t + 3] = 255; } }
+  return { bytes: d, off, w, h, bottomUp: hh > 0, bits, bpp, row, rgb };
+}
+function bmpFields(b) { const d = b.bytes; return [
+  { off: 0, len: 2, name: "bfType", val: `"BM"`, note: "BMP 的記號" }, { off: 2, len: 4, name: "bfSize", val: fmt(u32(d, 2)), note: "整個檔案的 bytes 數" },
+  { off: 6, len: 4, name: "bfReserved", val: 0, note: "保留，填 0" }, { off: 10, len: 4, name: "bfOffBits", val: u32(d, 10), note: "pixel 資料從第幾 byte 開始" },
+  { off: 14, len: 4, name: "biSize", val: u32(d, 14), note: "這個資訊檔頭的大小（40）" }, { off: 18, len: 4, name: "biWidth", val: fmt(b.w), note: "寬（pixels）" },
+  { off: 22, len: 4, name: "biHeight", val: fmt(s32(d, 22)), note: b.bottomUp ? "高；正數＝由下往上存" : "高；負數＝由上往下存" }, { off: 26, len: 2, name: "biPlanes", val: u16(d, 26), note: "固定為 1" },
+  { off: 28, len: 2, name: "biBitCount", val: b.bits, note: "每個 pixel 幾 bits" }, { off: 30, len: 4, name: "biCompression", val: u32(d, 30), note: "0 ＝ 未壓縮（BI_RGB）" },
+  { off: 34, len: 4, name: "biSizeImage", val: fmt(u32(d, 34)), note: "pixel 資料的 bytes 數（未壓縮時可以填 0）" }, { off: 38, len: 8, name: "biX/YPelsPerMeter", val: `${u32(d, 38)}, ${u32(d, 42)}`, note: "列印用的解析度，通常不管" },
+  { off: 46, len: 8, name: "biClrUsed／Important", val: `${u32(d, 46)}, ${u32(d, 50)}`, note: "調色盤用，24-bit 為 0" },
+  { off: b.off, len: 3, name: "第一個 pixel", val: `B=${d[b.off]} G=${d[b.off + 1]} R=${d[b.off + 2]}`, note: b.bottomUp ? "圖的「左下角」，順序是 B、G、R" : "圖的左上角，順序是 B、G、R" } ]; }
+function loadBmp(bytes, credit) {
+  try { B = parseBmp(bytes); } catch (e) { alert(e.message); return; }
+  $("bcredit").textContent = credit || ""; renderHeader(bytes, bmpFields(B), "bhex", "btbl", Math.min(B.off + 10, 64));
+  const raw = B.w * B.h * B.bpp;
+  $("bcalc").innerHTML = `<div>pixel 數</div><div>${fmt(B.w)} × ${fmt(B.h)} ＝ <b>${fmt(B.w * B.h)}</b></div><div>公式</div><div>寬 × 高 × ${B.bits} ÷ 8 ＝ <b>${fmt(raw)} bytes</b></div>` +
+    `<div>每一列</div><div>${fmt(B.w)} × ${B.bpp} ＝ ${fmt(B.w * B.bpp)} bytes → 補到 4 的倍數 ＝ ${fmt(B.row)} bytes${B.row === B.w * B.bpp ? "（剛好，不用補）" : ""}</div>` +
+    `<div>加上檔頭</div><div>${B.off} ＋ ${fmt(B.row)} × ${fmt(B.h)} ＝ ${fmt(B.off + B.row * B.h)} bytes　` + (B.off + B.row * B.h === bytes.length ? `<span class="ok">＝ 檔案實際大小 ✓</span>` : `檔案實際 ${fmt(bytes.length)} bytes`) + `</div>`;
+  const c = $("bcan"); c.width = B.w; c.height = B.h; c.style.width = Math.min(384, B.w * Math.max(1, Math.floor(384 / B.w))) + "px"; drawBmp();
+}
+function drawBmp() {
+  if (!B) return; const k = +$("bres").value, m = +$("bbits").value, gray = $("bgray").value === "1", w = B.w, h = B.h, out = new Uint8ClampedArray(B.rgb.length), lv = Math.pow(2, m) - 1;
+  const q = v => Math.round(Math.round(v / 255 * lv) / lv * 255);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const sx = Math.min(w - 1, Math.floor(x / k) * k + (k >> 1)), sy = Math.min(h - 1, Math.floor(y / k) * k + (k >> 1)), s = (sy * w + sx) * 4, t = (y * w + x) * 4;
+    let r = B.rgb[s], g = B.rgb[s + 1], b = B.rgb[s + 2]; if (gray) r = g = b = Math.round(0.299 * r + 0.587 * g + 0.114 * b); out[t] = q(r); out[t + 1] = q(g); out[t + 2] = q(b); out[t + 3] = 255; }
+  B.out = out; $("bcan").getContext("2d").putImageData(new ImageData(out, w, h), 0, 0);
+  const nw = Math.ceil(w / k), nh = Math.ceil(h / k), bits = (gray ? 1 : 3) * m, size = nw * nh * bits / 8, orig = w * h * 3;
+  $("bres2").innerHTML = `<div>新的規格</div><div><b>${fmt(nw)} × ${fmt(nh)}</b>，每個 pixel ${gray ? "" : "3 × "}${m} ＝ <b>${bits} bits</b></div>` +
+    `<div>能表示的顏色</div><div>2<sup>${bits}</sup> ＝ ${fmt(Math.pow(2, bits))} 種</div><div>未壓縮大小</div><div>${fmt(nw * nh)} × ${bits} ÷ 8 ＝ <b>${fmt(size)} bytes</b>，是原本 ${fmt(orig)} 的 ${(100 * size / orig).toFixed(1)}%</div>`;
+}
+function inspect(ev) {
+  if (!B) return; const c = $("bcan"), r = c.getBoundingClientRect(), x = Math.max(0, Math.min(B.w - 1, Math.floor((ev.clientX - r.left) / r.width * B.w))), y = Math.max(0, Math.min(B.h - 1, Math.floor((ev.clientY - r.top) / r.height * B.h)));
+  const z = $("bzoom"), g = z.getContext("2d"), img = new ImageData(9, 9); for (let j = 0; j < 9; j++) for (let i = 0; i < 9; i++) { const sx = x + i - 4, sy = y + j - 4, t = (j * 9 + i) * 4;
+      if (sx >= 0 && sy >= 0 && sx < B.w && sy < B.h) { const s = (sy * B.w + sx) * 4; img.data[t] = B.out[s]; img.data[t + 1] = B.out[s + 1]; img.data[t + 2] = B.out[s + 2]; img.data[t + 3] = 255; } }
+  g.putImageData(img, 0, 0);
+  const s = (y * B.w + x) * 4, off = B.off + (B.bottomUp ? B.h - 1 - y : y) * B.row + x * B.bpp, d = B.bytes;
+  $("bpix").innerHTML = `pixel (${x}, ${y})<br>R ＝ ${B.rgb[s]}　G ＝ ${B.rgb[s + 1]}　B ＝ ${B.rgb[s + 2]}<br>在檔案的第 <b>${fmt(off)}</b> byte：<span style="font-family:ui-monospace,Consolas,monospace">${hex2(d[off])} ${hex2(d[off + 1])} ${hex2(d[off + 2])}</span>（B G R）` +
+    `<br>${B.bottomUp ? `第 ${y} 列存在檔案的倒數第 ${y + 1} 列` : ""}<br><span style="color:var(--dim)">左邊是它周圍 9×9 個 pixel 的放大</span>`;
+}
+
+// ================================================================ 啟動
+function init() {
+  document.querySelectorAll("#nav button").forEach(b => b.onclick = () => { document.querySelectorAll("#nav button").forEach(x => x.className = x === b ? "on" : "");
+    document.querySelectorAll(".tab").forEach(t => t.className = "tab" + (t.id === "tab-" + b.dataset.t ? " on" : "")); });
+  const S = window.SAMPLES || {}, wavs = Object.entries(S).filter(e => e[1].kind === "wav"), bmps = Object.entries(S).filter(e => e[1].kind === "bmp");
+  for (const [k, v] of wavs) { const o = document.createElement("option"); o.value = k; o.textContent = v.name; $("wsel").appendChild(o); }
+  for (const [k, v] of bmps) { const o = document.createElement("option"); o.value = k; o.textContent = v.name; $("bsel").appendChild(o); }
+  $("wsel").onchange = () => { const v = S[$("wsel").value]; loadWav(b64bytes(v.b64), v.credit); }; $("bsel").onchange = () => { const v = S[$("bsel").value]; loadBmp(b64bytes(v.b64), v.credit); };
+  const pick = (input, fn) => input.onchange = () => { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => fn(new Uint8Array(r.result), "你選的檔案：" + f.name); r.readAsArrayBuffer(f); };
+  pick($("wfile"), loadWav); pick($("bfile"), loadBmp);
+  $("wpos").oninput = drawWave; $("wgo").onclick = processWav; $("worig").onclick = () => $("wplay").play();
+  for (const id of ["bres", "bbits", "bgray"]) $(id).oninput = drawBmp; $("bcan").onmousemove = inspect;
+  if (wavs.length) $("wsel").onchange(); else $("wcredit").textContent = "找不到 samples.js：請先執行 python examples/make_samples_js.py，或用右邊的按鈕選自己的檔案。";
+  if (bmps.length) $("bsel").onchange();
+}
+init();
+</script>
+</body>
+</html>

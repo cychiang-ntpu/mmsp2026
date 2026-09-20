@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>沒有壓縮的多媒體有多大</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1f2328; --dim:#6b7280; --line:#c9ccd1; --card:#ffffff; --soft:#f1f3f5; --on:#2457c5; --onfg:#ffffff;
+          --text:#0e7490; --audio:#7c3aed; --image:#c2410c; --video:#be123c; --good:#1f9d4d; --bar:#94a3b8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --fg:#e6e8eb; --dim:#9aa3ad; --line:#3a3f46; --card:#1d2024; --soft:#262a30; --on:#8ab0ff; --onfg:#10131a;
+            --text:#22d3ee; --audio:#c4b5fd; --image:#fdba74; --video:#fda4af; --good:#3fcf73; --bar:#64748b; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
+  header { padding:14px 16px 0; } h1 { margin:0 0 4px; font-size:21px; } .lead { margin:0 0 10px; color:var(--dim); }
+  nav { display:flex; flex-wrap:wrap; gap:6px; padding:0 16px; border-bottom:1px solid var(--line); }
+  nav button { font:inherit; color:var(--fg); background:none; border:0; border-bottom:3px solid transparent; padding:8px 12px; cursor:pointer; }
+  nav button.on { border-bottom-color:var(--on); font-weight:700; }
+  main { padding:12px 16px 24px; max-width:1180px; margin:0 auto; }
+  .tab { display:none; } .tab.on { display:block; }
+  .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; } @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  h2 { font-size:17px; margin:0 0 8px; } h3 { font-size:15px; margin:12px 0 6px; }
+  .presets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .presets button, .unit button { font:inherit; font-size:14px; color:var(--fg); background:var(--soft); border:1px solid var(--line); border-radius:999px; padding:3px 11px; cursor:pointer; }
+  .presets button:hover { border-color:var(--on); }
+  .form { display:grid; grid-template-columns:auto 1fr; gap:6px 10px; align-items:center; font-size:15px; }
+  .form input, .form select { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:4px 8px; width:100%; min-width:0; }
+  .formula { font:14px/1.7 ui-monospace,Consolas,monospace; background:var(--soft); border-radius:8px; padding:8px 10px; margin:10px 0 0; overflow-x:auto; white-space:pre; }
+  .big { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .big div { flex:1 1 150px; background:var(--soft); border-radius:8px; padding:8px 10px; } .big b { display:block; font-size:21px; font-variant-numeric:tabular-nums; } .big span { font-size:13px; color:var(--dim); }
+  .bars { margin-top:6px; font-size:14px; } .bars .r { display:grid; grid-template-columns:190px 1fr 110px; gap:8px; align-items:center; margin:4px 0; }
+  .bars .t { background:var(--soft); border-radius:4px; height:16px; overflow:hidden; } .bars .f { height:100%; background:var(--bar); min-width:2px; } .bars .f.raw { background:var(--on); }
+  .bars .v { text-align:right; font-variant-numeric:tabular-nums; }
+  @media (max-width:600px) { .bars .r { grid-template-columns:120px 1fr 90px; } }
+  svg { display:block; max-width:100%; height:auto; }
+  table { border-collapse:collapse; width:100%; font-size:14px; } th, td { padding:5px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  th { color:var(--dim); font-weight:600; } .tw { overflow-x:auto; }
+  .tag { display:inline-block; font-size:12px; border-radius:4px; padding:0 6px; margin-right:4px; border:1px solid var(--line); color:var(--dim); }
+  .tag.ll { color:var(--good); border-color:var(--good); } .tag.ly { color:var(--video); border-color:var(--video); }
+  .pipe { display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin:6px 0 2px; font-size:13.5px; }
+  .pipe span { background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:2px 8px; } .pipe span.h { border-color:var(--on); color:var(--on); font-weight:700; }
+  .pipe span.q { border-color:var(--video); color:var(--video); } .pipe i { color:var(--dim); font-style:normal; }
+  .note { color:var(--dim); font-size:13.5px; } details { margin-top:8px; } summary { cursor:pointer; font-weight:600; }
+  .unit { display:flex; gap:6px; align-items:center; font-size:13.5px; color:var(--dim); margin-top:8px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>沒有壓縮的多媒體有多大？</h1>
+  <p class="lead">資料量＝「有幾個樣本」×「每個樣本幾 bits」。先會估這個數字，才知道為什麼一定要壓縮、要壓多少。</p>
+</header>
+<nav id="nav">
+  <button data-t="text" class="on">文字</button><button data-t="audio">音訊</button><button data-t="image">圖像</button>
+  <button data-t="video">影像（視訊）</button><button data-t="formats">常見格式</button><button data-t="methods">壓縮方法</button>
+</nav>
+<main>
+
+<!-- ============================ 文字 ============================ -->
+<section class="tab on" id="tab-text"><div class="grid">
+  <div>
+    <div class="card"><h2 style="color:var(--text)">文字：字元數 × 每個字元幾 bytes</h2>
+      <div class="presets" id="pt"></div>
+      <div class="form">
+        <label>中日韓字元數</label><input id="t_cjk" type="number" min="0" value="800">
+        <label>英數與半形符號</label><input id="t_ascii" type="number" min="0" value="100">
+        <label>emoji／罕用字</label><input id="t_emoji" type="number" min="0" value="0">
+        <label>編碼</label><select id="t_enc"><option value="utf8">UTF-8（1／3／4 bytes）</option><option value="big5">Big5（1／2 bytes；沒有 emoji）</option>
+          <option value="utf16">UTF-16（2／2／4 bytes）</option><option value="utf32">UTF-32（一律 4 bytes）</option></select>
+      </div>
+      <div class="formula" id="t_f"></div><div class="big" id="t_b"></div>
+    </div>
+    <div class="card"><h2>和其他媒體比一比</h2><div class="bars" id="t_bars"></div>
+      <p class="note">文字是最省的媒體：一整本小說比一張照片還小。所以文字通常用無失真壓縮（zip、gzip），而且一個字都不能錯。</p></div>
+  </div>
+  <div class="card"><h2>圖解</h2><div id="t_svg"></div>
+    <p class="note">每一格是一個 byte。同一句話，用不同的編碼存，大小可以差到 4 倍（第 2 週的內容）。</p>
+    <details><summary>練習</summary><ol>
+      <li>1000 個中文字，UTF-8 與 Big5 各幾 bytes？<span class="note">（3000、2000）</span></li>
+      <li>一則 LINE 訊息「好的，明天見 👋」（6 個中文字與全形標點、1 個空白、1 個 emoji），UTF-8 幾 bytes？<span class="note">（6×3 + 1 + 4 = 23）</span></li>
+      <li>一本 50 萬字的中文小說，UTF-8 大約多大？<span class="note">（1.5 MB 左右，比一張手機照片小）</span></li></ol></details>
+  </div>
+</div></section>
+
+<!-- ============================ 音訊 ============================ -->
+<section class="tab" id="tab-audio"><div class="grid">
+  <div>
+    <div class="card"><h2 style="color:var(--audio)">音訊：取樣率 × bit depth × 聲道數 × 秒數</h2>
+      <div class="presets" id="pa"></div>
+      <div class="form">
+        <label>取樣率（Hz）</label><input id="a_fs" type="number" min="1" value="44100">
+        <label>bit depth</label><select id="a_bits"><option>8</option><option selected>16</option><option>24</option><option>32</option></select>
+        <label>聲道數</label><select id="a_ch"><option value="1">1（單聲道）</option><option value="2" selected>2（立體聲）</option><option value="6">6（5.1 環繞）</option></select>
+        <label>長度（秒）</label><input id="a_sec" type="number" min="0" step="1" value="60">
+      </div>
+      <div class="formula" id="a_f"></div><div class="big" id="a_b"></div>
+    </div>
+    <div class="card"><h2>同樣長度，壓縮後大約多大</h2><div class="bars" id="a_bars"></div>
+      <p class="note">壓縮後的數字是各格式常用位元率的典型值，只供比較量級；實際大小依內容與設定而定。</p></div>
+    <div class="card"><h2>拿真的 WAV 檔驗算</h2><div id="a_real" class="note">（找不到 samples.js）</div></div>
+  </div>
+  <div class="card"><h2>圖解</h2><div id="a_svg"></div>
+    <p class="note">橫向的點越密＝取樣率越高；縱向的格線越密＝bit depth 越大。聲道數就是同時有幾條這樣的波形。
+      （示意圖：為了看得見，點與格線的數量都遠少於實際。）</p>
+    <details><summary>練習</summary><ol>
+      <li>一首 4 分鐘的 CD 音質歌曲，未壓縮幾 MB？<span class="note">（44100×16×2×240 ÷ 8 ≈ 40.4 MB）</span></li>
+      <li>電話語音 8 kHz、8 bits、單聲道，位元率是多少？<span class="note">（64 kb/s，這就是 G.711）</span></li>
+      <li>錄一小時 16 kHz、16-bit 單聲道的上課錄音要多少空間？<span class="note">（約 110 MB）</span></li></ol></details>
+  </div>
+</div></section>
+
+<!-- ============================ 圖像 ============================ -->
+<section class="tab" id="tab-image"><div class="grid">
+  <div>
+    <div class="card"><h2 style="color:var(--image)">圖像：寬 × 高 × 每個 pixel 幾 bits</h2>
+      <div class="presets" id="pi"></div>
+      <div class="form">
+        <label>寬（pixels）</label><input id="i_w" type="number" min="1" value="1024">
+        <label>高（pixels）</label><input id="i_h" type="number" min="1" value="768">
+        <label>色彩</label><select id="i_bpp"><option value="1">黑白（1 bit）</option><option value="8">灰階（8 bits）</option>
+          <option value="24" selected>RGB 全彩（8×3 = 24 bits）</option><option value="32">RGBA 含透明（32 bits）</option><option value="30">HDR 10-bit × 3（30 bits）</option></select>
+      </div>
+      <div class="formula" id="i_f"></div><div class="big" id="i_b"></div>
+    </div>
+    <div class="card"><h2>同一張圖，壓縮後大約多大</h2><div class="bars" id="i_bars"></div>
+      <p class="note">典型值。PNG 是無失真的，大小很看內容（截圖、線條圖壓得很好，照片壓不太動）；JPEG、HEIC、AVIF 是有失真的。</p></div>
+    <div class="card"><h2>拿真的 BMP 檔驗算</h2><div id="i_real" class="note">（找不到 samples.js）</div></div>
+  </div>
+  <div class="card"><h2>圖解</h2><div id="i_svg"></div>
+    <p class="note">一張圖就是一個 pixel 的方陣；全彩的每個 pixel 由 R、G、B 三個數字組成，各 8 bits（0–255）。
+      「1200 萬畫素」說的就是寬 × 高 ≈ 12,000,000。</p>
+    <details><summary>練習</summary><ol>
+      <li>1024×768 的全彩圖未壓縮多大？<span class="note">（2,359,296 bytes = 2.25 MB）</span></li>
+      <li>手機拍的 1200 萬畫素照片，未壓縮約多大？存成 JPEG 通常 3–4 MB，壓縮率大約多少？<span class="note">（約 34 MB；約 10:1）</span></li>
+      <li>同一張圖從全彩改成灰階，大小變幾分之幾？<span class="note">（1/3）</span></li></ol></details>
+  </div>
+</div></section>
+
+<!-- ============================ 影像 ============================ -->
+<section class="tab" id="tab-video"><div class="grid">
+  <div>
+    <div class="card"><h2 style="color:var(--video)">影像：一張圖的大小 × 每秒幾張 × 秒數</h2>
+      <div class="presets" id="pv"></div>
+      <div class="form">
+        <label>寬 × 高</label><div style="display:flex;gap:6px"><input id="v_w" type="number" min="1" value="1920"><input id="v_h" type="number" min="1" value="1080"></div>
+        <label>每個 pixel</label><select id="v_bpp"><option value="24" selected>24 bits（RGB）</option><option value="12">12 bits（YCbCr 4:2:0）</option><option value="30">30 bits（HDR）</option></select>
+        <label>每秒幾張（fps）</label><input id="v_fps" type="number" min="1" value="30">
+        <label>長度（秒）</label><input id="v_sec" type="number" min="0" value="60">
+      </div>
+      <div class="formula" id="v_f"></div><div class="big" id="v_b"></div>
+    </div>
+    <div class="card"><h2>位元率對照：未壓縮 vs 實際在用的</h2><div class="bars" id="v_bars"></div>
+      <p class="note">典型值。視訊的壓縮率常在 100:1 到 1000:1 之間——因為相鄰的畫面幾乎一樣，只要記「哪裡變了」。</p></div>
+  </div>
+  <div class="card"><h2>圖解</h2><div id="v_svg"></div>
+    <p class="note">視訊＝很多張圖連續播放（再加一條音軌）。所以公式只是圖像的公式再乘上 fps 與秒數。
+      「YCbCr 4:2:0」是把顏色的解析度降成 1/4（人眼對顏色比較不敏感），光這一步就省一半，這是第 12 週 JPEG 的內容。</p>
+    <details><summary>練習</summary><ol>
+      <li>720×480、24 bits、30 fps 的視訊，一分鐘未壓縮多大？<span class="note">（14,929,920,000 bits ≈ 1.74 GB）</span></li>
+      <li>Full HD 30 fps 未壓縮的位元率是多少？家裡 100 Mb/s 的網路傳得動嗎？<span class="note">（約 1.49 Gb/s；差 15 倍）</span></li>
+      <li>串流平台的 Full HD 大約 5 Mb/s，相當於壓縮了幾倍？<span class="note">（約 300 倍）</span></li></ol></details>
+  </div>
+</div></section>
+
+<!-- ============================ 常見格式 ============================ -->
+<section class="tab" id="tab-formats">
+  <div class="card"><h2>先分清楚三件事</h2>
+    <p style="margin:0"><b>編碼／codec</b>（資料怎麼壓：MP3、H.264、JPEG）≠ <b>容器／container</b>（把影像、聲音、字幕包成一個檔：MP4、MKV、MOV、AVI、WebM）≠ <b>副檔名</b>。
+      一個 <code>.mp4</code> 裡面常見的是 H.264 視訊＋AAC 音訊；WAV 也是容器（RIFF），裡面通常放未壓縮的 PCM。
+      <span class="tag ll">無失真</span>解開後逐 bit 相同；<span class="tag ly">有失真</span>丟掉人不容易察覺的部分，換取大得多的壓縮率。</p></div>
+  <div class="grid">
+    <div class="card"><h2 style="color:var(--text)">文字與一般資料</h2><div class="tw"><table>
+      <tr><th>格式</th><th>類型</th><th>裡面用什麼</th></tr>
+      <tr><td>TXT、CSV、JSON、HTML</td><td>未壓縮</td><td>字元編碼本身（UTF-8、Big5…）</td></tr>
+      <tr><td>ZIP、gzip、PNG 內部</td><td><span class="tag ll">無失真</span></td><td>DEFLATE ＝ LZ77（找重複的字串）＋ <b>Huffman</b></td></tr>
+      <tr><td>bzip2</td><td><span class="tag ll">無失真</span></td><td>Burrows–Wheeler 轉換 ＋ move-to-front ＋ <b>Huffman</b></td></tr>
+      <tr><td>7z（LZMA）、xz</td><td><span class="tag ll">無失真</span></td><td>LZ77 的變形 ＋ range coding（算術編碼的一種）</td></tr>
+      <tr><td>Zstandard、Brotli</td><td><span class="tag ll">無失真</span></td><td>LZ77 ＋ Huffman／ANS；網頁傳輸與系統套件常用</td></tr>
+      <tr><td>DOCX、XLSX、EPUB、APK、JAR</td><td><span class="tag ll">無失真</span></td><td>其實就是 ZIP 檔，改個副檔名而已</td></tr>
+      <tr><td>PDF</td><td>混合</td><td>文字與向量用 DEFLATE；內嵌的圖片可以是 JPEG</td></tr></table></div></div>
+    <div class="card"><h2 style="color:var(--audio)">音訊</h2><div class="tw"><table>
+      <tr><th>格式</th><th>類型</th><th>裡面用什麼</th><th>典型位元率</th></tr>
+      <tr><td>WAV、AIFF</td><td>未壓縮</td><td>PCM</td><td>CD：1411 kb/s</td></tr>
+      <tr><td>FLAC、ALAC</td><td><span class="tag ll">無失真</span></td><td>線性預測 ＋ 對預測誤差做 Rice 編碼</td><td>原來的 50–70%</td></tr>
+      <tr><td>MP3</td><td><span class="tag ly">有失真</span></td><td>濾波器組＋MDCT → 心理聲學模型 → 量化 → <b>Huffman</b></td><td>128–320 kb/s</td></tr>
+      <tr><td>AAC（.m4a）</td><td><span class="tag ly">有失真</span></td><td>MDCT ＋ 心理聲學 ＋ Huffman；MP3 的後繼者</td><td>96–256 kb/s</td></tr>
+      <tr><td>Opus、Vorbis（.ogg）</td><td><span class="tag ly">有失真</span></td><td>Opus：語音用線性預測、音樂用 MDCT，range coding；免授權金</td><td>語音 16–32、音樂 64–128 kb/s</td></tr>
+      <tr><td>G.711（電話）</td><td><span class="tag ly">有失真</span></td><td>8 kHz 取樣、μ-law／A-law 非均勻量化成 8 bits</td><td>64 kb/s</td></tr>
+      <tr><td>AMR、EVS（行動電話）</td><td><span class="tag ly">有失真</span></td><td>以人的發聲模型為基礎的語音編碼（CELP 家族）</td><td>5–24 kb/s</td></tr></table></div></div>
+    <div class="card"><h2 style="color:var(--image)">圖像</h2><div class="tw"><table>
+      <tr><th>格式</th><th>類型</th><th>裡面用什麼</th><th>適合</th></tr>
+      <tr><td>BMP</td><td>未壓縮</td><td>直接存 pixel（也可選 RLE）</td><td>教學、簡單的程式（第 11 週）</td></tr>
+      <tr><td>PNG</td><td><span class="tag ll">無失真</span></td><td>每列先做預測濾波（存差值）→ DEFLATE</td><td>截圖、圖示、線條圖、需要透明</td></tr>
+      <tr><td>GIF</td><td><span class="tag ll">無失真*</span></td><td>LZW；最多 256 色（*減色時已經失真）</td><td>簡單動畫</td></tr>
+      <tr><td>JPEG</td><td><span class="tag ly">有失真</span></td><td>YCbCr ＋ 色度降取樣 → 8×8 DCT → 量化 → zigzag ＋ RLE → <b>Huffman</b></td><td>照片；約 10:1 看不太出差別</td></tr>
+      <tr><td>WebP</td><td>兩者皆可</td><td>有失真模式來自 VP8 視訊的畫面內編碼</td><td>網頁</td></tr>
+      <tr><td>HEIC／HEIF</td><td><span class="tag ly">有失真</span></td><td>H.265 的畫面內編碼</td><td>iPhone 的照片；約為 JPEG 的一半大小</td></tr>
+      <tr><td>AVIF</td><td><span class="tag ly">有失真</span></td><td>AV1 的畫面內編碼；免授權金</td><td>網頁</td></tr>
+      <tr><td>TIFF、RAW（DNG、CR3…）</td><td>未壓縮或<span class="tag ll">無失真</span></td><td>感光元件的原始資料，每個 pixel 12–14 bits</td><td>攝影後製、印刷</td></tr></table></div></div>
+    <div class="card"><h2 style="color:var(--video)">影像（視訊）</h2><div class="tw"><table>
+      <tr><th>codec</th><th>年代</th><th>特色</th><th>典型位元率</th></tr>
+      <tr><td>Motion JPEG</td><td>1990s</td><td>每一張都獨立用 JPEG 壓，不利用畫面之間的相似；簡單、延遲低（<b>Team 3 要做的</b>）</td><td>Full HD 約 20–50 Mb/s</td></tr>
+      <tr><td>MPEG-2</td><td>1995</td><td>DVD、數位電視；開始用移動補償</td><td>DVD 4–9 Mb/s</td></tr>
+      <tr><td>H.264／AVC</td><td>2003</td><td>目前相容性最好；藍光、多數串流與視訊會議</td><td>Full HD 約 5–8 Mb/s</td></tr>
+      <tr><td>H.265／HEVC</td><td>2013</td><td>同畫質約省一半；4K、手機錄影</td><td>4K 約 15–25 Mb/s</td></tr>
+      <tr><td>VP9、AV1</td><td>2013、2018</td><td>免授權金；YouTube、Netflix 大量使用</td><td>與 HEVC 相當或更省</td></tr>
+      <tr><td>H.266／VVC</td><td>2020</td><td>再省約一半；8K</td><td>—</td></tr></table></div>
+      <p class="note">容器：MP4、MOV、MKV、AVI、WebM、TS。視訊會議與直播另外需要即時傳輸協定（RTP、WebRTC），那是「傳輸」的問題，不是「壓縮」的問題。</p></div>
+  </div>
+</section>
+
+<!-- ============================ 壓縮方法 ============================ -->
+<section class="tab" id="tab-methods">
+  <div class="card"><h2>壓縮靠的是這幾種「多餘」</h2><div class="tw"><table>
+    <tr><th>資料裡多餘的東西</th><th>怎麼利用</th><th>方法</th><th>類型</th></tr>
+    <tr><td>同一個值連續出現</td><td>記「值＋連續幾個」</td><td><b>Run-Length Encoding（RLE）</b></td><td><span class="tag ll">無失真</span></td></tr>
+    <tr><td>同一串內容重複出現</td><td>第二次出現時只記「往回多遠、抄多長」，或查字典給一個編號</td><td><b>Dictionary</b>：LZ77、LZ78、LZW</td><td><span class="tag ll">無失真</span></td></tr>
+    <tr><td>符號出現的機率不平均</td><td>常見的用短 code、少見的用長 code</td><td><b>Entropy coding</b>：Shannon-Fano、<b>Huffman</b>、arithmetic／range coding、ANS</td><td><span class="tag ll">無失真</span></td></tr>
+    <tr><td>相鄰的樣本很像</td><td>先預測，再只記「預測錯多少」；差值通常很小、很集中，接著用 entropy coding 就很有效</td><td><b>Predictive／differential</b>：DPCM、ADPCM、線性預測（FLAC、語音編碼）、PNG 的列濾波</td><td>兩者皆可</td></tr>
+    <tr><td>能量集中在少數頻率</td><td>換到頻率域，大部分係數接近 0</td><td><b>Transform</b>：DCT（JPEG、視訊）、MDCT（MP3、AAC）、wavelet（JPEG 2000）</td><td>轉換本身無失真</td></tr>
+    <tr><td>人感覺不出來的細節</td><td>用比較粗的階距去量化，或乾脆丟掉</td><td><b>Quantization ＋ 感知模型</b>：心理聲學（被大聲蓋住的聲音）、人眼對高頻與顏色不敏感</td><td><span class="tag ly">有失真</span>（失真主要發生在這一步）</td></tr>
+    <tr><td>相鄰的畫面幾乎一樣</td><td>找出每一小塊「從上一張的哪裡搬過來」，只記位移與剩下的差</td><td><b>Motion compensation</b>（畫面間預測）：I／P／B frame</td><td>視訊壓縮率的主要來源</td></tr>
+    <tr><td>編碼時才慢慢知道的統計特性</td><td>邊壓邊更新模型</td><td><b>Adaptive</b>：LZW 的字典、adaptive Huffman、CABAC</td><td>—</td></tr></table></div></div>
+  <div class="card"><h2>真正的格式，是把上面幾種串起來</h2>
+    <p class="note" style="margin-top:0">藍框是 Huffman（或同類的 entropy coding）出現的地方——幾乎每一條管線的最後一步都是它；紅框是「失真」發生的地方。</p>
+    <h3>ZIP／gzip／PNG（DEFLATE）</h3><div class="pipe"><span>原始 bytes</span><i>➜</i><span>（PNG：每列先存與鄰近 pixel 的差）</span><i>➜</i><span>LZ77 找重複字串</span><i>➜</i><span class="h">Huffman</span></div>
+    <h3>JPEG</h3><div class="pipe"><span>RGB → YCbCr</span><i>➜</i><span class="q">色度降取樣</span><i>➜</i><span>切成 8×8，做 DCT</span><i>➜</i><span class="q">量化</span><i>➜</i><span>zigzag 排列＋RLE</span><i>➜</i><span class="h">Huffman</span></div>
+    <h3>MP3／AAC</h3><div class="pipe"><span>PCM</span><i>➜</i><span>濾波器組＋MDCT</span><i>➜</i><span>心理聲學模型決定哪裡可以粗一點</span><i>➜</i><span class="q">量化</span><i>➜</i><span class="h">Huffman</span></div>
+    <h3>FLAC（無失真音訊）</h3><div class="pipe"><span>PCM</span><i>➜</i><span>線性預測</span><i>➜</i><span>預測誤差（很小、集中在 0 附近）</span><i>➜</i><span class="h">Rice coding（一種為這種分布特製的 entropy code）</span></div>
+    <h3>H.264／H.265／AV1</h3><div class="pipe"><span>畫面內預測或移動補償</span><i>➜</i><span>剩下的差做整數 DCT</span><i>➜</i><span class="q">量化</span><i>➜</i><span class="h">CAVLC／CABAC（變長碼／自適應算術編碼）</span></div>
+    <h3>電話（G.711）</h3><div class="pipe"><span>8 kHz 取樣</span><i>➜</i><span class="q">μ-law／A-law 非均勻量化成 8 bits</span><i>➜</i><span>64 kb/s，沒有 entropy coding</span></div>
+  </div>
+  <div class="card"><h2>和這門課的對應</h2><div class="tw"><table>
+    <tr><th>課程</th><th>用到的方法</th></tr>
+    <tr><td>MP3、MP4、Team 1</td><td>定長編碼 → Huffman（entropy coding）；Team 1 要量「符號怎麼定」對壓縮率的影響</td></tr>
+    <tr><td>MP2、第二節</td><td>取樣與量化：所有有失真壓縮的失真，本質上都是「量化」</td></tr>
+    <tr><td>Team 2</td><td>PCM 語音的即時傳輸；差值／預測是加分方向</td></tr>
+    <tr><td>第 11–13 週、Team 3</td><td>BMP → DCT → 量化 → Huffman（JPEG）→ 一張一張送（Motion JPEG）</td></tr></table></div></div>
+</section>
+<footer style="max-width:1180px;margin:0 auto;padding:0 16px 24px;color:var(--dim);font-size:13px">
+  素材：語音取自 Open Speech Repository；音樂為 John Philip Sousa〈Comrades of the Legion〉，"The President's Own" United States Marine Band 演奏（公有領域，經 Wikimedia Commons）；
+  圖像為 The Blue Marble，NASA／Apollo 17（公有領域，經 Wikimedia Commons）。未壓縮大小的算例取自 J. Burg,《The Science of Digital Media》第 1 章。各格式的位元率與壓縮率為常見設定下的典型值。
+</footer>
+</main>
+<script src="samples.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString("en-US");
+function size(bytes) {                                  // 檔案大小：2^10 進位（課程慣例）
+  const u = ["bytes", "KB", "MB", "GB", "TB"]; let i = 0, v = bytes;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (i === 0 ? fmt(v) : v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)) + " " + u[i];
+}
+function rate(bps) {                                    // 位元率：10^3 進位
+  const u = ["b/s", "kb/s", "Mb/s", "Gb/s"]; let i = 0, v = bps;
+  while (v >= 1000 && i < u.length - 1) { v /= 1000; i++; }
+  return (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)) + " " + u[i];
+}
+function dur(sec) { return sec < 1 ? (sec * 1000).toFixed(0) + " 毫秒" : sec < 90 ? sec.toFixed(1) + " 秒" : sec < 5400 ? (sec / 60).toFixed(1) + " 分鐘" : sec < 172800 ? (sec / 3600).toFixed(1) + " 小時" : (sec / 86400).toFixed(1) + " 天"; }
+const big = (id, items) => $(id).innerHTML = items.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join("");
+function bars(id, rows, unitFn) {
+  const max = Math.max(...rows.map(r => r[1]), 1);
+  $(id).innerHTML = rows.map(([label, v, raw]) => { const pct = v <= 0 ? 0 : Math.max(0.6, 100 * Math.log10(1 + v) / Math.log10(1 + max));
+    return `<div class="r"><div>${label}</div><div class="t"><div class="f${raw ? " raw" : ""}" style="width:${pct}%"></div></div><div class="v">${unitFn(v)}</div></div>`; }).join("") +
+    `<p class="note" style="margin:4px 0 0">（長條是對數刻度：每差一大截就是差很多倍。）</p>`;
+}
+const BPC = { utf8: [3, 1, 4], big5: [2, 1, 0], utf16: [2, 2, 4], utf32: [4, 4, 4] };      // [中日韓, ASCII, emoji]
+
+// ---------------------------------------------------------------- 計算（純函式，方便測試）
+function calcText(cjk, ascii, emoji, enc) { const b = BPC[enc]; return { bytes: cjk * b[0] + ascii * b[1] + emoji * b[2], chars: cjk + ascii + emoji, per: b }; }
+function calcAudio(fs, bits, ch, sec) { const bps = fs * bits * ch; return { bps, bits: bps * sec, bytes: bps * sec / 8, samples: fs * sec * ch }; }
+function calcImage(w, h, bpp) { return { pixels: w * h, bits: w * h * bpp, bytes: w * h * bpp / 8 }; }
+function calcVideo(w, h, bpp, fps, sec) { const frame = w * h * bpp, bps = frame * fps; return { frameBytes: frame / 8, bps, bits: bps * sec, bytes: bps * sec / 8, frames: fps * sec }; }
+
+// ---------------------------------------------------------------- 文字
+function drawText() {
+  const cjk = +$("t_cjk").value || 0, ascii = +$("t_ascii").value || 0, emoji = +$("t_emoji").value || 0, enc = $("t_enc").value;
+  const r = calcText(cjk, ascii, emoji, enc), b = r.per;
+  $("t_f").textContent = `bytes = 中日韓 × ${b[0]} + 英數 × ${b[1]} + emoji × ${b[2] || "（這個編碼沒有）"}\n      = ${fmt(cjk)} × ${b[0]} + ${fmt(ascii)} × ${b[1]} + ${fmt(emoji)} × ${b[2]}\n      = ${fmt(r.bytes)} bytes = ${fmt(r.bytes * 8)} bits`;
+  big("t_b", [[size(r.bytes), "未壓縮大小"], [fmt(r.chars), "字元數"], [r.chars ? (r.bytes / r.chars).toFixed(2) : "0", "平均 bytes／字元"], [dur(r.bytes * 8 / 1e6), "用 1 Mb/s 傳完"]]);
+  bars("t_bars", [["這段文字", r.bytes, 1], ["一本 50 萬字的小說（UTF-8）", 1.5e6], ["一張 1200 萬畫素照片（未壓縮）", 36e6], ["一分鐘 CD 音質（未壓縮）", 10584000], ["一分鐘 Full HD 視訊（未壓縮）", 11197440000]], size);
+  // 圖解：「多媒體 A😀」在四種編碼下各佔幾格
+  const sample = [["多", 0], ["媒", 0], ["體", 0], ["A", 1], ["😀", 2]], rows = [["UTF-8", "utf8"], ["Big5", "big5"], ["UTF-16", "utf16"], ["UTF-32", "utf32"]];
+  let s = `<svg viewBox="0 0 520 250" role="img" aria-label="同一句話在不同編碼下的大小">`, y = 30;
+  const col = ["var(--text)", "var(--good)", "var(--video)"];
+  for (const [name, key] of rows) {
+    let x = 74, total = 0; s += `<text x="4" y="${y + 17}" font-size="14" fill="currentColor"${key === enc ? ' font-weight="700"' : ""}>${name}</text>`;
+    for (const [ch, kind] of sample) { const n = BPC[key][kind];
+      if (n === 0) { s += `<text x="${x + 2}" y="${y + 17}" font-size="12" fill="var(--dim)">✕</text>`; x += 20; continue; }
+      for (let k = 0; k < n; k++) { s += `<rect x="${x}" y="${y}" width="17" height="24" rx="3" fill="${col[kind]}" opacity="${key === enc ? 0.9 : 0.4}"/>`; x += 19; }
+      s += `<text x="${x - n * 19 / 2 - 1}" y="${y + 40}" font-size="12" text-anchor="middle" fill="currentColor">${ch}</text>`; x += 6; total += n; }
+    s += `<text x="516" y="${y + 17}" font-size="13" text-anchor="end" fill="var(--dim)">${total} bytes</text>`; y += 54;
+  }
+  $("t_svg").innerHTML = s + "</svg>";
+}
+// ---------------------------------------------------------------- 音訊
+function drawAudio() {
+  const fs = +$("a_fs").value || 0, bits = +$("a_bits").value, ch = +$("a_ch").value, sec = +$("a_sec").value || 0, r = calcAudio(fs, bits, ch, sec);
+  $("a_f").textContent = `位元率 = 取樣率 × bit depth × 聲道數\n       = ${fmt(fs)} × ${bits} × ${ch} = ${fmt(r.bps)} bits/s\n大小   = 位元率 × 秒數 ÷ 8\n       = ${fmt(r.bps)} × ${fmt(sec)} ÷ 8 = ${fmt(r.bytes)} bytes`;
+  big("a_b", [[rate(r.bps), "位元率"], [size(r.bytes), `${dur(sec)}的大小`], [fmt(r.samples), "sample 總數"], [size(r.bps / 8 * 3600), "每小時"]]);
+  bars("a_bars", [["未壓縮 PCM（WAV）", r.bytes, 1], ["FLAC 無失真（約 60%）", r.bytes * 0.6], ["MP3 128 kb/s", 128000 * sec / 8], ["AAC 96 kb/s", 96000 * sec / 8], ["Opus 語音 24 kb/s", 24000 * sec / 8], ["AMR 電話 12.2 kb/s", 12200 * sec / 8]], size);
+  const W = 520, H = 230, n = Math.max(6, Math.min(64, Math.round(fs / 1000))), lv = Math.min(33, Math.pow(2, Math.min(5, Math.round(bits / 4))) + 1);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="取樣率與 bit depth 示意">`;
+  for (let c = 0; c < Math.min(ch, 2); c++) {
+    const top = 14 + c * (H / Math.min(ch, 2)), hh = H / Math.min(ch, 2) - 28, mid = top + hh / 2;
+    for (let k = 0; k < lv; k++) { const yy = top + k * hh / (lv - 1); s += `<line x1="30" x2="${W - 6}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="0.7"/>`; }
+    let d = ""; for (let i = 0; i <= 300; i++) { const t = i / 300, v = 0.62 * Math.sin(2 * Math.PI * (2.2 + c * 0.7) * t) + 0.3 * Math.sin(2 * Math.PI * 5.3 * t + c); d += (i ? "L" : "M") + (30 + t * (W - 36)).toFixed(1) + "," + (mid - v * hh / 2.2).toFixed(1); }
+    s += `<path d="${d}" fill="none" stroke="var(--audio)" stroke-width="1.6" opacity=".5"/>`;
+    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, v = 0.62 * Math.sin(2 * Math.PI * (2.2 + c * 0.7) * t) + 0.3 * Math.sin(2 * Math.PI * 5.3 * t + c);
+      const q = Math.round((v / 2.2 + 0.5) * (lv - 1)) / (lv - 1), yy = top + (1 - q) * hh, x = 30 + t * (W - 36);
+      s += `<line x1="${x}" x2="${x}" y1="${mid}" y2="${yy}" stroke="var(--audio)" stroke-width="1"/><circle cx="${x}" cy="${yy}" r="2.6" fill="var(--audio)"/>`; }
+    s += `<text x="4" y="${mid + 4}" font-size="12" fill="var(--dim)">${ch === 1 ? "" : c === 0 ? "L" : "R"}</text>`;
+  }
+  s += `<text x="${W - 6}" y="${H - 4}" font-size="12" text-anchor="end" fill="var(--dim)">時間 →　${ch > 2 ? `（共 ${ch} 個聲道，只畫 2 個）` : ""}</text>`;
+  $("a_svg").innerHTML = s + "</svg>";
+}
+// ---------------------------------------------------------------- 圖像
+function drawImage() {
+  const w = +$("i_w").value || 0, h = +$("i_h").value || 0, bpp = +$("i_bpp").value, r = calcImage(w, h, bpp);
+  $("i_f").textContent = `pixel 數 = 寬 × 高 = ${fmt(w)} × ${fmt(h)} = ${fmt(r.pixels)}（${(r.pixels / 1e6).toFixed(1)} 百萬畫素）\nbits     = pixel 數 × 每個 pixel 的 bits = ${fmt(r.pixels)} × ${bpp} = ${fmt(r.bits)}\nbytes    = bits ÷ 8 = ${fmt(r.bytes)}`;
+  big("i_b", [[size(r.bytes), "未壓縮大小"], [(r.pixels / 1e6).toFixed(1) + " MP", "百萬畫素"], [bpp + " bits", "每個 pixel"], [dur(r.bits / 100e6), "用 100 Mb/s 傳完"]]);
+  bars("i_bars", [["未壓縮（BMP）", r.bytes, 1], ["PNG 無失真（照片約 50–70%）", r.bytes * 0.6], ["JPEG 高畫質（約 10:1）", r.bytes / 10], ["HEIC／AVIF（約 20:1）", r.bytes / 20], ["JPEG 低畫質（約 30:1）", r.bytes / 30]], size);
+  const N = 10, cell = 20, ox = 8, oy = 8; let s = `<svg viewBox="0 0 520 250" role="img" aria-label="pixel 方陣與 RGB">`;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const R = Math.round(40 + 200 * x / (N - 1)), G = Math.round(60 + 170 * y / (N - 1)), B = Math.round(220 - 150 * (x + y) / (2 * N - 2));
+    const g = Math.round(0.3 * R + 0.59 * G + 0.11 * B), fill = bpp === 1 ? (g > 128 ? "#fff" : "#000") : bpp === 8 ? `rgb(${g},${g},${g})` : `rgb(${R},${G},${B})`;
+    s += `<rect x="${ox + x * cell}" y="${oy + y * cell}" width="${cell - 1}" height="${cell - 1}" fill="${fill}"/>`; }
+  s += `<rect x="${ox + 6 * cell - 1}" y="${oy + 3 * cell - 1}" width="${cell + 1}" height="${cell + 1}" fill="none" stroke="var(--fg)" stroke-width="2"/>`;
+  s += `<path d="M${ox + 7 * cell},${oy + 3.5 * cell} L250,60" stroke="var(--fg)" stroke-width="1" fill="none"/>`;
+  s += `<text x="${ox}" y="${oy + N * cell + 18}" font-size="13" fill="var(--dim)">← 寬 ${fmt(w)} pixels →　（這裡只畫 10×10）</text>`;
+  const px = { R: 173, G: 111, B: 157 }, chans = bpp === 24 || bpp === 30 ? [["R", "#e11d48"], ["G", "#16a34a"], ["B", "#2563eb"]] : bpp === 32 ? [["R", "#e11d48"], ["G", "#16a34a"], ["B", "#2563eb"], ["A", "#64748b"]] : [[bpp === 1 ? "黑／白" : "灰階", "#64748b"]];
+  const each = bpp === 30 ? 10 : bpp === 1 ? 1 : 8;
+  s += `<text x="250" y="40" font-size="14" fill="currentColor">一個 pixel ＝ ${chans.length} 個數字 × ${each} bits ＝ ${bpp} bits</text>`;
+  chans.forEach(([name, colr], k) => { const yy = 56 + k * 40, val = name === "A" ? 255 : px[name] || 140, bin = (each === 1 ? 1 : Math.min(val, Math.pow(2, each) - 1)).toString(2).padStart(each, "0");
+    s += `<rect x="250" y="${yy}" width="26" height="26" rx="4" fill="${colr}"/><text x="263" y="${yy + 18}" font-size="13" text-anchor="middle" fill="#fff">${name.length === 1 ? name : ""}</text>`;
+    s += `<text x="284" y="${yy + 18}" font-size="13" fill="currentColor" font-family="ui-monospace,Consolas,monospace">${name.length > 1 ? name + "  " : ""}${each === 1 ? "" : val + " = "}${bin}</text>`; });
+  $("i_svg").innerHTML = s + "</svg>";
+}
+// ---------------------------------------------------------------- 影像
+function drawVideo() {
+  const w = +$("v_w").value || 0, h = +$("v_h").value || 0, bpp = +$("v_bpp").value, fps = +$("v_fps").value || 0, sec = +$("v_sec").value || 0, r = calcVideo(w, h, bpp, fps, sec);
+  $("v_f").textContent = `一張   = 寬 × 高 × bits = ${fmt(w)} × ${fmt(h)} × ${bpp} = ${fmt(r.frameBytes * 8)} bits（${size(r.frameBytes)}）\n位元率 = 一張 × fps = ${fmt(r.frameBytes * 8)} × ${fps} = ${fmt(r.bps)} bits/s\n大小   = 位元率 × 秒數 ÷ 8 = ${fmt(r.bytes)} bytes`;
+  big("v_b", [[rate(r.bps), "位元率"], [size(r.bytes), `${dur(sec)}的大小`], [fmt(r.frames), "總共幾張"], [r.bytes > 0 ? dur(128 * Math.pow(2, 30) / (r.bps / 8)) : "—", "128 GB 的手機可以錄"]]);
+  bars("v_bars", [["未壓縮", r.bps, 1], ["Motion JPEG（約 10:1）", r.bps / 10], ["藍光 H.264", 30e6], ["串流 4K（H.265／AV1）", 18e6], ["串流 Full HD（H.264）", 5e6], ["視訊會議 720p", 1.5e6], ["家用光纖 100 Mb/s", 100e6], ["4G 行動網路（約 20 Mb/s）", 20e6]], rate);
+  let s = `<svg viewBox="0 0 520 250" role="img" aria-label="視訊是連續的畫面">`; const n = 6;
+  s += `<rect x="4" y="40" width="512" height="120" rx="6" fill="var(--soft)" stroke="var(--line)"/>`;
+  for (let i = 0; i < 26; i++) { s += `<rect x="${10 + i * 19.6}" y="45" width="10" height="7" rx="1.5" fill="var(--bg)"/><rect x="${10 + i * 19.6}" y="148" width="10" height="7" rx="1.5" fill="var(--bg)"/>`; }
+  for (let i = 0; i < n; i++) { const x = 12 + i * 84; s += `<rect x="${x}" y="58" width="76" height="84" rx="3" fill="var(--card)" stroke="var(--line)"/>`;
+    s += `<rect x="${x}" y="116" width="76" height="26" fill="var(--good)" opacity=".35"/><circle cx="${x + 14 + i * 9.5}" cy="${100 - 18 * Math.abs(Math.sin(i * 1.05))}" r="9" fill="var(--video)"/>`;
+    s += `<text x="${x + 38}" y="176" font-size="12" text-anchor="middle" fill="var(--dim)">第 ${i + 1} 張</text>`; }
+  s += `<text x="4" y="24" font-size="14" fill="currentColor">每秒 ${fps} 張；每一張都是 ${fmt(w)}×${fmt(h)} 的圖（${size(r.frameBytes)}）</text>`;
+  s += `<text x="4" y="206" font-size="13" fill="var(--dim)">相鄰兩張幾乎一樣：背景沒動，只有球移了一點。</text><text x="4" y="226" font-size="13" fill="var(--dim)">視訊壓縮的關鍵就是只記「哪裡變了、往哪裡移」（移動補償）。</text>`;
+  $("v_svg").innerHTML = s + "</svg>";
+}
+// ---------------------------------------------------------------- 範例按鈕
+const PRE = {
+  pt: [["一則訊息（20 字）", { t_cjk: 18, t_ascii: 1, t_emoji: 1 }], ["一頁 A4（約 800 字）", { t_cjk: 800, t_ascii: 100, t_emoji: 0 }], ["一篇 1 萬字的報告", { t_cjk: 9000, t_ascii: 1000, t_emoji: 0 }],
+       ["一本 50 萬字的小說", { t_cjk: 480000, t_ascii: 20000, t_emoji: 0 }], ["英文小說（120 萬字元）", { t_cjk: 0, t_ascii: 1200000, t_emoji: 0 }]],
+  pa: [["電話 8k／8-bit／mono", { a_fs: 8000, a_bits: 8, a_ch: 1, a_sec: 60 }], ["語音辨識 16k／16／mono", { a_fs: 16000, a_bits: 16, a_ch: 1, a_sec: 60 }], ["CD 44.1k／16／stereo 一分鐘", { a_fs: 44100, a_bits: 16, a_ch: 2, a_sec: 60 }],
+       ["一首歌 4 分鐘", { a_fs: 44100, a_bits: 16, a_ch: 2, a_sec: 240 }], ["Hi-Res 96k／24／stereo", { a_fs: 96000, a_bits: 24, a_ch: 2, a_sec: 240 }], ["電影 5.1 聲道 48k／24 兩小時", { a_fs: 48000, a_bits: 24, a_ch: 6, a_sec: 7200 }]],
+  pi: [["1024×768（投影片的例子）", { i_w: 1024, i_h: 768, i_bpp: 24 }], ["Full HD 1920×1080", { i_w: 1920, i_h: 1080, i_bpp: 24 }], ["4K 3840×2160", { i_w: 3840, i_h: 2160, i_bpp: 24 }],
+       ["手機 1200 萬畫素", { i_w: 4000, i_h: 3000, i_bpp: 24 }], ["手機 4800 萬畫素", { i_w: 8000, i_h: 6000, i_bpp: 24 }], ["A4 掃描 300 dpi 灰階", { i_w: 2480, i_h: 3508, i_bpp: 8 }]],
+  pv: [["DVD 720×480 一分鐘（投影片）", { v_w: 720, v_h: 480, v_bpp: 24, v_fps: 30, v_sec: 60 }], ["Full HD 30 fps 一分鐘", { v_w: 1920, v_h: 1080, v_bpp: 24, v_fps: 30, v_sec: 60 }], ["4K 60 fps 一分鐘", { v_w: 3840, v_h: 2160, v_bpp: 24, v_fps: 60, v_sec: 60 }],
+       ["8K 60 fps 一分鐘", { v_w: 7680, v_h: 4320, v_bpp: 24, v_fps: 60, v_sec: 60 }], ["兩小時的 Full HD 電影", { v_w: 1920, v_h: 1080, v_bpp: 24, v_fps: 24, v_sec: 7200 }], ["視訊會議 640×360 15 fps", { v_w: 640, v_h: 360, v_bpp: 12, v_fps: 15, v_sec: 60 }]] };
+// ---------------------------------------------------------------- 真實的檔案：讀檔頭 → 套公式 → 和實際大小比
+function realExamples() {
+  const S = window.SAMPLES; if (!S) return;
+  const bytesOf = s => { const bin = atob(s), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; };
+  const u16 = (d, o) => d[o] | (d[o + 1] << 8), u32 = (d, o) => (d[o] | (d[o + 1] << 8) | (d[o + 2] << 16) | (d[o + 3] << 24)) >>> 0;
+  let ah = "";
+  for (const key of ["speech", "music"]) { const it = S[key]; if (!it) continue; const d = bytesOf(it.b64), ch = u16(d, 22), fs = u32(d, 24), bits = u16(d, 34), data = u32(d, 40), sec = data / (fs * ch * bits / 8), r = calcAudio(fs, bits, ch, sec);
+    ah += `<p style="margin:8px 0 2px;color:var(--fg)"><b>${it.name}</b>　${it.credit}</p><audio controls src="data:audio/wav;base64,${it.b64}" style="width:100%"></audio>` +
+          `<div class="formula">檔頭寫的：${fmt(fs)} Hz、${bits} bits、${ch} 聲道；data 區 ${fmt(data)} bytes\n公式：${fmt(fs)} × ${bits} × ${ch} × ${sec.toFixed(3)} 秒 ÷ 8 = ${fmt(r.bytes)} bytes\n加上 44 bytes 檔頭 = ${fmt(r.bytes + 44)}；檔案實際 ${fmt(d.length)} bytes ${Math.round(r.bytes) + 44 === d.length ? "✓" : ""}</div>`; }
+  if (ah) $("a_real").innerHTML = ah + `<p class="note">想看檔頭的每一個 byte、換取樣率與 bit depth 再聽一次：<a href="wav_bmp_viewer.html">打開真實的 WAV 與 BMP</a>。</p>`;
+  const im = S.image; if (im) { const d = bytesOf(im.b64), w = u32(d, 18), h = u32(d, 22), bits = u16(d, 28), off = u32(d, 10), r = calcImage(w, h, bits);
+    $("i_real").innerHTML = `<p style="margin:0 0 6px;color:var(--fg)"><b>${im.name}</b>　${im.credit}</p><img alt="The Blue Marble" src="data:image/bmp;base64,${im.b64}" width="192" height="192" style="image-rendering:pixelated;border-radius:6px">` +
+      `<div class="formula">檔頭寫的：${w} × ${h}、每個 pixel ${bits} bits；pixel 資料從第 ${off} byte 開始\n公式：${w} × ${h} × ${bits} ÷ 8 = ${fmt(r.bytes)} bytes\n加上 ${off} bytes 檔頭 = ${fmt(r.bytes + off)}；檔案實際 ${fmt(d.length)} bytes ${r.bytes + off === d.length ? "✓" : ""}</div>` +
+      `<p class="note">想看每個 pixel 的 R、G、B 與它在檔案裡的位置：<a href="wav_bmp_viewer.html">打開真實的 WAV 與 BMP</a>。</p>`; }
+}
+const DRAW = { t: drawText, a: drawAudio, i: drawImage, v: drawVideo };
+function redraw() { drawText(); drawAudio(); drawImage(); drawVideo(); }
+function init() {
+  for (const [box, list] of Object.entries(PRE)) $(box).innerHTML = list.map((p, k) => `<button data-box="${box}" data-k="${k}">${p[0]}</button>`).join("");
+  document.querySelectorAll(".presets button").forEach(b => b.onclick = () => { const vals = PRE[b.dataset.box][+b.dataset.k][1]; for (const [id, v] of Object.entries(vals)) $(id).value = v; redraw(); });
+  document.querySelectorAll(".form input, .form select").forEach(e => e.oninput = redraw);
+  document.querySelectorAll("#nav button").forEach(b => b.onclick = () => { document.querySelectorAll("#nav button").forEach(x => x.className = x === b ? "on" : "");
+    document.querySelectorAll(".tab").forEach(t => t.className = "tab" + (t.id === "tab-" + b.dataset.t ? " on" : "")); });
+  redraw(); realExamples();
+}
+init();
+</script>
+</body>
+</html>

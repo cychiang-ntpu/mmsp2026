@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聲音怎麼變成數字：取樣、量化、編碼</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1f2328; --dim:#6b7280; --line:#c9ccd1; --card:#ffffff; --grid:#e3e5e8; --wave:#2457c5; --samp:#d1242f;
+          --quant:#1f9d4d; --err:#e08a00; --alias:#8250df; --on:#2457c5; --onfg:#ffffff; --warn:#b3261e; --warnbg:#fdecea; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --fg:#e6e8eb; --dim:#9aa3ad; --line:#3a3f46; --card:#1d2024; --grid:#2a2e34; --wave:#8ab0ff; --samp:#ff7b72;
+            --quant:#3fcf73; --err:#f0a63a; --alias:#c297ff; --on:#8ab0ff; --onfg:#10131a; --warn:#ffb4ab; --warnbg:#3a1d1b; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
+  header { padding:12px 16px 4px; }
+  h1 { margin:0 0 10px; font-size:20px; }
+  #pipe { display:flex; flex-wrap:wrap; gap:6px; align-items:stretch; }
+  .stage { flex:1 1 170px; border:2px solid var(--line); border-radius:10px; padding:6px 10px; background:var(--card); cursor:pointer; text-align:left; font:inherit; color:var(--fg); }
+  .stage b { display:block; font-size:15px; } .stage span { font-size:12.5px; color:var(--dim); }
+  .stage.on { border-color:var(--on); background:var(--on); color:var(--onfg); } .stage.on span { color:var(--onfg); opacity:.85; }
+  .stage.done { border-color:var(--on); }
+  .arrow { align-self:center; color:var(--dim); font-size:20px; }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:12px; padding:8px 16px 16px; }
+  @media (max-width:980px) { main { grid-template-columns:1fr; } .arrow { display:none; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  #explain { margin:0 0 8px; min-height:3em; }
+  #warn { display:none; margin:0 0 8px; padding:6px 10px; border-radius:6px; background:var(--warnbg); color:var(--warn); font-weight:600; }
+  .plot { overflow-x:auto; } svg { display:block; }
+  .axis { stroke:var(--fg); stroke-width:1.2; } .gridl { stroke:var(--grid); stroke-width:1; } .lvl { stroke:var(--line); stroke-width:1; stroke-dasharray:3 3; }
+  .wave { stroke:var(--wave); stroke-width:2.2; fill:none; } .wave.faint { opacity:.35; }
+  .alias { stroke:var(--alias); stroke-width:2; fill:none; stroke-dasharray:7 5; }
+  .stem { stroke:var(--samp); stroke-width:1.3; } .dot { fill:var(--samp); } .hollow { fill:var(--card); stroke:var(--samp); stroke-width:1.5; }
+  .qdot { fill:var(--quant); } .errseg { stroke:var(--err); stroke-width:3; } .errbar { fill:var(--err); }
+  .band { fill:var(--err); opacity:.12; }
+  text { fill:var(--fg); font-size:12px; } .dimt { fill:var(--dim); } .codet { font:12px ui-monospace,Consolas,monospace; fill:var(--quant); }
+  .ctrl { display:grid; grid-template-columns:auto 1fr auto; gap:6px 10px; align-items:center; font-size:14px; }
+  .ctrl output { font-variant-numeric:tabular-nums; min-width:74px; text-align:right; }
+  input[type=range] { width:100%; accent-color:var(--on); }
+  select, button.nav { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:5px 10px; }
+  button.nav { cursor:pointer; } button.nav.primary { background:var(--on); color:var(--onfg); border-color:var(--on); } button.nav:disabled { opacity:.4; cursor:default; }
+  #nav { display:flex; gap:8px; justify-content:center; align-items:center; margin-top:10px; }
+  h2 { font-size:15px; margin:0 0 6px; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:14px; } .kv div:nth-child(odd) { color:var(--dim); }
+  table { border-collapse:collapse; width:100%; font-size:13px; } th,td { padding:2px 6px; border-bottom:1px solid var(--line); text-align:right; }
+  td.mono, .mono { font-family:ui-monospace,Consolas,monospace; }
+  #bits { word-break:break-all; font-size:13px; margin-top:6px; }
+  .legend { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:13px; color:var(--dim); margin-top:6px; }
+  .legend i { display:inline-block; width:18px; height:3px; vertical-align:middle; margin-right:4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>聲音怎麼變成數字：取樣 → 量化 → 編碼（PCM）</h1>
+  <div id="pipe">
+    <button class="stage" data-s="0"><b>① 連續訊號</b><span>時間與振幅都有無限多種可能</span></button><div class="arrow">➜</div>
+    <button class="stage" data-s="1"><b>② 每 T 秒取樣</b><span>時間變有限；振幅仍是無限多種</span></button><div class="arrow">➜</div>
+    <button class="stage" data-s="2"><b>③ 量化成 M 個等級</b><span>時間與振幅都有限</span></button><div class="arrow">➜</div>
+    <button class="stage" data-s="3"><b>④ 二進位編碼</b><span>數位訊號：一串 0 與 1</span></button>
+  </div>
+</header>
+<main>
+  <section class="card">
+    <p id="explain"></p>
+    <p id="warn"></p>
+    <div class="plot" id="plot"></div>
+    <div class="plot" id="eplot"></div>
+    <div class="legend" id="legend"></div>
+    <div id="nav">
+      <button class="nav" id="prev">◀ 上一步</button>
+      <span id="stepno" style="color:var(--dim)"></span>
+      <button class="nav primary" id="next">下一步 ▶</button>
+    </div>
+  </section>
+  <aside>
+    <div class="card" style="margin-bottom:12px">
+      <h2>調調看</h2>
+      <div class="ctrl">
+        <label for="wave">波形</label>
+        <select id="wave" style="grid-column:span 2"><option value="sine">單一弦波</option><option value="mix">複合波（f、2f、3f 相加）</option></select>
+        <label for="f">頻率 f</label><input id="f" type="range" min="100" max="6000" step="50" value="500"><output id="fo"></output>
+        <label for="fs">取樣率 f<sub>s</sub></label><input id="fs" type="range" min="1000" max="16000" step="250" value="8000"><output id="fso"></output>
+        <label for="m">bit depth</label><input id="m" type="range" min="2" max="8" step="1" value="4"><output id="mo"></output>
+        <label for="a">振幅 A</label><input id="a" type="range" min="0.05" max="1" step="0.05" value="0.9"><output id="ao"></output>
+        <label for="enc">編碼</label>
+        <select id="enc" style="grid-column:span 2"><option value="sm">符號位＋大小（投影片的寫法）</option><option value="tc">二補數（WAV 實際用的）</option></select>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="nav" data-preset="ok">f=500、f<sub>s</sub>=8000</button>
+        <button class="nav" data-preset="alias">aliasing：f=5000</button>
+        <button class="nav" data-preset="coarse">2 bits</button>
+        <button class="nav" data-preset="quiet">音量太小</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px"><h2>數字</h2><div class="kv" id="stats"></div></div>
+    <div class="card"><h2 id="ttitle">前 12 個 sample</h2><table id="tbl"></table><div id="bits" class="mono"></div></div>
+    <div class="card" style="margin-top:12px"><h2>用真的聲音聽聽看</h2>
+      <p style="margin:0;font-size:14px">這一頁用的是數學式產生的波形。要聽「同一段真實的語音與音樂，換取樣率與 bit depth 之後變成什麼樣子」，
+        請開 <a href="wav_bmp_viewer.html" style="color:var(--on)">打開真實的 WAV 與 BMP</a>。</p>
+      <p style="margin:8px 0 0;font-size:12.5px;color:var(--dim)">四個步驟的圖解與 4-bit 編碼的例子改編自江振宇〈Analog to Digital Conversion：以聲音（語音）為例〉（NTPU MMSP 2023 Chapter 2）。</p></div>
+  </aside>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const WIN = 0.004;                                   // 畫面顯示 4 ms
+let stage = 0;
+
+function params() {
+  return { wave: $("wave").value, f: +$("f").value, fs: +$("fs").value, m: +$("m").value, A: +$("a").value, enc: $("enc").value };
+}
+function sig(p, t) {                                  // 連續訊號 x_c(t)，範圍約在 [−A, A]
+  if (p.wave === "sine") return p.A * Math.sin(2 * Math.PI * p.f * t);
+  return p.A * (0.6 * Math.sin(2 * Math.PI * p.f * t) + 0.3 * Math.sin(2 * Math.PI * 2 * p.f * t + 0.5) + 0.2 * Math.sin(2 * Math.PI * 3 * p.f * t + 1.1)) / 1.0;
+}
+function fmax(p) { return p.wave === "sine" ? p.f : 3 * p.f; }
+function quantize(p, x) {                             // 均勻量化：Δ = 1 / 2^(m−1)，q = round(x/Δ)，再限制在可表示的範圍
+  const half = 1 << (p.m - 1), delta = 1 / half;
+  let q = Math.floor(x / delta + 0.5);
+  const hi = half - 1, lo = p.enc === "sm" ? -(half - 1) : -half;
+  const clipped = q > hi || q < lo;
+  q = Math.max(lo, Math.min(hi, q));
+  return { q, xq: q * delta, delta, clipped, hi, lo };
+}
+function code(p, q) {
+  if (p.enc === "sm") return (q < 0 ? "1" : "0") + Math.abs(q).toString(2).padStart(p.m - 1, "0");
+  return ((q + (1 << p.m)) % (1 << p.m)).toString(2).padStart(p.m, "0");
+}
+function sqnr(p) {                                    // 用很多個 sample 照定義量：10·log10(Σx² / Σe²)
+  let ps = 0, pe = 0, clip = 0; const N = 4000;
+  for (let n = 0; n < N; n++) { const x = sig(p, n / p.fs + 1e-4 * n / N), r = quantize(p, x); ps += x * x; pe += (x - r.xq) ** 2; if (r.clipped) clip++; }
+  return { db: pe > 0 ? 10 * Math.log10(ps / pe) : Infinity, clip: clip / N };
+}
+function aliasFreq(p) { const k = Math.round(p.f / p.fs); return p.f - k * p.fs; }   // 取樣後「看起來的」頻率（可為負＝反相）
+
+function render() {
+  const p = params(), W = 900, H = 340, L = 56, R = 16, T = 18, B = 34, pw = W - L - R, ph = H - T - B;
+  const X = t => L + t / WIN * pw, Y = v => T + (1 - v) / 2 * ph;
+  const half = 1 << (p.m - 1), delta = 1 / half;
+  $("fo").textContent = p.f + " Hz"; $("fso").textContent = p.fs + " Hz"; $("mo").textContent = p.m + " bits"; $("ao").textContent = p.A.toFixed(2);
+  document.querySelectorAll(".stage").forEach(b => { const s = +b.dataset.s; b.className = "stage" + (s === stage ? " on" : s < stage ? " done" : ""); });
+  $("stepno").textContent = `${stage + 1} ／ 4`; $("prev").disabled = stage === 0; $("next").disabled = stage === 3;
+
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="波形">`;
+  // 量化等級格線
+  if (stage >= 2) {
+    const q0 = quantize(p, 0);
+    for (let q = q0.lo; q <= q0.hi; q++) {
+      s += `<line class="lvl" x1="${L}" x2="${W - R}" y1="${Y(q * delta)}" y2="${Y(q * delta)}"/>`;
+      if (p.m <= 5) s += `<text class="dimt" x="${L - 6}" y="${Y(q * delta) + 4}" text-anchor="end">${q}</text>`;
+    }
+  } else {
+    for (const v of [-1, -0.5, 0.5, 1]) { s += `<line class="gridl" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="dimt" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`; }
+  }
+  s += `<line class="axis" x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}"/><line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/>`;
+  s += `<text x="${L - 40}" y="${T + 4}">電壓</text><text x="${W - R}" y="${H - 8}" text-anchor="end">時間（ms）</text>`;
+  for (let ms = 0; ms <= 4; ms++) s += `<text class="dimt" x="${X(ms / 1000)}" y="${H - B + 16}" text-anchor="middle">${ms}</text>`;
+  // 連續波形
+  let d = ""; for (let i = 0; i <= 900; i++) { const t = i / 900 * WIN; d += (i ? "L" : "M") + X(t).toFixed(1) + "," + Y(sig(p, t)).toFixed(1); }
+  s += `<path class="wave${stage >= 2 ? " faint" : ""}" d="${d}"/>`;
+  // aliasing：畫出通過同一組取樣點的低頻弦波
+  const under = p.fs <= 2 * fmax(p), fa = aliasFreq(p);
+  if (stage >= 1 && under && p.wave === "sine") {
+    let da = ""; for (let i = 0; i <= 900; i++) { const t = i / 900 * WIN; da += (i ? "L" : "M") + X(t).toFixed(1) + "," + Y(p.A * Math.sin(2 * Math.PI * fa * t)).toFixed(1); }
+    s += `<path class="alias" d="${da}"/>`;
+  }
+  // 取樣點
+  const rows = []; let nShown = Math.floor(WIN * p.fs + 1e-9);
+  if (stage >= 1) for (let n = 0; n <= nShown; n++) {
+    const t = n / p.fs, x = sig(p, t), r = quantize(p, x), cx = X(t);
+    rows.push({ n, x, r });
+    if (stage === 1) { s += `<line class="stem" x1="${cx}" x2="${cx}" y1="${Y(0)}" y2="${Y(x)}"/><circle class="dot" cx="${cx}" cy="${Y(x)}" r="4"/>`; }
+    else {
+      s += `<line class="errseg" x1="${cx}" x2="${cx}" y1="${Y(x)}" y2="${Y(r.xq)}"/><circle class="hollow" cx="${cx}" cy="${Y(x)}" r="3.5"/><circle class="qdot" cx="${cx}" cy="${Y(r.xq)}" r="4.5"/>`;
+      if (stage === 3 && nShown <= 40) { const ty = Y(r.xq) + (r.q >= 0 ? -8 : 8 + p.m * 7); s += `<text class="codet" transform="translate(${cx + 4},${ty}) rotate(-90)">${code(p, r.q)}</text>`; }
+    }
+  }
+  if (stage >= 1 && nShown >= 1) { const x0 = X(0), x1 = X(1 / p.fs); s += `<path d="M${x0},${H - B + 22} L${x1},${H - B + 22}" stroke="var(--samp)" stroke-width="2"/><text x="${(x0 + x1) / 2}" y="${H - B + 32}" text-anchor="middle" style="fill:var(--samp)">T</text>`; }
+  $("plot").innerHTML = s + "</svg>";
+
+  // 量化誤差圖
+  if (stage >= 2) {
+    const EH = 110, et = 12, eb = 20, eph = EH - et - eb, scale = Math.max(delta, 1e-9), YE = v => et + (1 - v / scale) / 2 * eph;
+    let e = `<svg width="${W}" height="${EH}" viewBox="0 0 ${W} ${EH}" role="img" aria-label="量化誤差">`;
+    e += `<rect class="band" x="${L}" width="${pw}" y="${YE(0.5 * delta)}" height="${YE(-0.5 * delta) - YE(0.5 * delta)}"/>`;
+    e += `<line class="axis" x1="${L}" x2="${W - R}" y1="${YE(0)}" y2="${YE(0)}"/>`;
+    e += `<text class="dimt" x="${L - 6}" y="${YE(0.5 * delta) + 4}" text-anchor="end">+Δ/2</text><text class="dimt" x="${L - 6}" y="${YE(-0.5 * delta) + 4}" text-anchor="end">−Δ/2</text>`;
+    e += `<text x="${L + 4}" y="${et}" class="dimt">量化誤差 e[n] = x[n] − Q(x[n])　（色帶是 ±Δ/2；超出去的就是 clipping）</text>`;
+    for (const { n, x, r } of rows) { const v = Math.max(-scale, Math.min(scale, x - r.xq)), cx = X(n / p.fs); e += `<rect class="errbar" x="${cx - 2.5}" width="5" y="${Math.min(YE(0), YE(v))}" height="${Math.abs(YE(v) - YE(0))}"/>`; }
+    $("eplot").innerHTML = e + "</svg>";
+  } else $("eplot").innerHTML = "";
+
+  // 說明
+  const q = sqnr(p), txt = [
+    `麥克風把聲音變成電壓，得到一條<b>連續</b>的波形：任何時刻都有值，值也可以是任何實數。電腦存不下「無限」，所以要做兩件事：取樣與量化。`,
+    `每隔 <b>T = 1/f<sub>s</sub> = ${(1000 / p.fs).toFixed(3)} ms</b> 量一次電壓：x[n] = x<sub>c</sub>(nT)。時間上只剩有限個點（紅點），但每個紅點的高度仍然可以是任何實數。` +
+      `　Nyquist：f<sub>s</sub> 要<b>大於</b>訊號最高頻率的兩倍（這裡 2·f<sub>max</sub> = ${2 * fmax(p)} Hz）。`,
+    `用 ${p.m} bits 表示一個 sample，只有 <b>L = 2<sup>${p.m}</sup> = ${1 << p.m}</b> 個等級（虛線），階距 Δ = ${delta.toFixed(4)}。每個紅點被移到最近的等級（綠點）：Q(x) = Δ·⌊x/Δ + ½⌋。` +
+      `橘色線段就是<b>量化誤差</b>，正常情況下不超過 Δ/2。`,
+    `每個等級寫成 ${p.m} bits 的二進位數（綠點旁直寫的數字），一個接一個存下來——這就是 <b>PCM</b>，WAV 檔的 data 區放的就是這串數字。` +
+      `資料率 = f<sub>s</sub> × bits = ${p.fs} × ${p.m} = <b>${(p.fs * p.m).toLocaleString()} bits/s</b>。`
+  ];
+  $("explain").innerHTML = txt[stage];
+  const w = $("warn"); let msg = "";
+  if (stage >= 1 && under) msg = p.wave === "sine"
+    ? `取樣不足（f<sub>s</sub> = ${p.fs} ≤ 2f = ${2 * p.f}）：紅點同時也落在紫色虛線那個 <b>${Math.abs(fa)} Hz</b>${fa < 0 ? "（反相）" : ""} 的弦波上。只看紅點，再也分不出原本是 ${p.f} Hz 還是 ${Math.abs(fa)} Hz——這就是 aliasing。`
+    : `取樣不足：複合波的最高頻率是 3f = ${3 * p.f} Hz，f<sub>s</sub> 至少要大於 ${6 * p.f} Hz，否則高頻成分會 aliasing。`;
+  else if (stage >= 2 && q.clip > 0) msg = `有 ${(100 * q.clip).toFixed(1)}% 的 sample 超出可表示的範圍（clipping）：最大的等級是 ${quantize(p, 0).hi}×Δ = ${(quantize(p, 0).hi * delta).toFixed(3)}，比它大的值只能被壓在那裡，誤差超過 Δ/2。`;
+  w.style.display = msg ? "block" : "none"; w.innerHTML = msg;
+
+  $("legend").innerHTML = `<span><i style="background:var(--wave)"></i>連續訊號 x<sub>c</sub>(t)</span>` +
+    (stage >= 1 ? `<span><i style="background:var(--samp)"></i>取樣值 x[n]</span>` : "") +
+    (stage >= 1 && under && p.wave === "sine" ? `<span><i style="background:var(--alias)"></i>冒充的低頻弦波</span>` : "") +
+    (stage >= 2 ? `<span><i style="background:var(--quant)"></i>量化值 Q(x[n])</span><span><i style="background:var(--err)"></i>量化誤差</span>` : "");
+
+  // 數字
+  const th = 6.02 * p.m + 1.76 + 20 * Math.log10(p.A);
+  $("stats").innerHTML =
+    `<div>取樣週期 T</div><div>${(1000 / p.fs).toFixed(3)} ms</div><div>Nyquist frequency</div><div>f<sub>s</sub>/2 = ${p.fs / 2} Hz</div>` +
+    `<div>訊號最高頻率</div><div>${fmax(p)} Hz ${under ? "⚠ 超過了" : "✓"}</div>` +
+    (stage >= 2 ? `<div>等級數 L = 2<sup>m</sup></div><div>${1 << p.m}</div><div>階距 Δ</div><div>${delta.toFixed(5)}</div>` +
+      `<div>SQNR（實際量）</div><div><b>${isFinite(q.db) ? q.db.toFixed(2) : "∞"} dB</b></div><div>6.02m</div><div>${(6.02 * p.m).toFixed(2)} dB</div>` +
+      (p.wave === "sine" ? `<div>6.02m+1.76+20log₁₀A</div><div>${th.toFixed(2)} dB</div>` : "") : "") +
+    (stage >= 3 ? `<div>資料率</div><div>${(p.fs * p.m).toLocaleString()} bits/s</div><div>一分鐘</div><div>${(p.fs * p.m * 60 / 8 / 1024).toFixed(0)} KB</div>` : "");
+
+  // 表格
+  let tb = "";
+  if (stage === 0) { $("ttitle").textContent = "sample"; tb = `<tr><td style="text-align:left;color:var(--dim)">還沒有取樣：連續訊號沒有「第幾個」的概念。</td></tr>`; $("bits").textContent = ""; }
+  else {
+    $("ttitle").textContent = "前 12 個 sample";
+    tb = "<tr><th>n</th><th>x[n]</th>" + (stage >= 2 ? "<th>等級 q</th><th>Q(x)</th><th>e[n]</th>" : "") + (stage >= 3 ? "<th>code</th>" : "") + "</tr>";
+    for (const { n, x, r } of rows.slice(0, 12))
+      tb += `<tr><td>${n}</td><td>${x.toFixed(4)}</td>` + (stage >= 2 ? `<td>${r.q}</td><td>${r.xq.toFixed(4)}</td><td>${(x - r.xq).toFixed(4)}</td>` : "") +
+            (stage >= 3 ? `<td class="mono">${code(p, r.q)}</td>` : "") + "</tr>";
+    $("bits").textContent = stage >= 3 ? "位元流：" + rows.slice(0, 24).map(o => code(p, o.r.q)).join(" ") + (rows.length > 24 ? " …" : "") : "";
+  }
+  $("tbl").innerHTML = tb;
+}
+
+function setStage(v) { stage = Math.max(0, Math.min(3, v)); render(); }
+document.querySelectorAll(".stage").forEach(b => b.onclick = () => setStage(+b.dataset.s));
+$("prev").onclick = () => setStage(stage - 1); $("next").onclick = () => setStage(stage + 1);
+for (const id of ["wave", "f", "fs", "m", "a", "enc"]) $(id).oninput = render;
+const PRESETS = { ok: { wave: "sine", f: 500, fs: 8000, m: 4, a: 0.9, st: 1 }, alias: { wave: "sine", f: 5000, fs: 8000, m: 4, a: 0.9, st: 1 },
+                  coarse: { wave: "sine", f: 500, fs: 8000, m: 2, a: 0.9, st: 2 }, quiet: { wave: "sine", f: 500, fs: 8000, m: 4, a: 0.1, st: 2 } };
+document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => {
+  const c = PRESETS[b.dataset.preset]; $("wave").value = c.wave; $("f").value = c.f; $("fs").value = c.fs; $("m").value = c.m; $("a").value = c.a; setStage(Math.max(stage, c.st));
+});
+document.onkeydown = e => { if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); setStage(stage + 1); } else if (e.key === "ArrowLeft") setStage(stage - 1); };
+render();
+</script>
+</body>
+</html>

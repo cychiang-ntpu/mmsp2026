@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Huffman 建樹逐步示範</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1f2328; --dim:#6b7280; --line:#c9ccd1; --card:#ffffff; --leaf:#e8f0fe; --leafb:#5b8def;
+          --node:#f1f3f5; --nodeb:#8a9099; --pick:#ffe2b8; --pickb:#e08a00; --new:#d3f5dc; --newb:#1f9d4d; --accent:#2457c5; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --fg:#e6e8eb; --dim:#9aa3ad; --line:#3a3f46; --card:#1d2024; --leaf:#1d2b45; --leafb:#6f9cf5;
+            --node:#262a30; --nodeb:#7b838d; --pick:#4a3510; --pickb:#f0a63a; --new:#143822; --newb:#3fcf73; --accent:#8ab0ff; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui, "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+  header { padding:12px 16px 8px; border-bottom:1px solid var(--line); }
+  h1 { margin:0 0 8px; font-size:20px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  select, input[type=text], button { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
+  input[type=text] { flex:1 1 260px; min-width:0; }
+  button { cursor:pointer; } button:hover { border-color:var(--accent); } button:disabled { opacity:.4; cursor:default; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  main { display:grid; grid-template-columns: minmax(0,1fr) 340px; gap:12px; padding:12px 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  #stage { overflow-x:auto; }
+  svg { display:block; margin:0 auto; }
+  .edge { stroke:var(--nodeb); stroke-width:1.6; fill:none; }
+  .bit { font-size:14px; font-weight:700; fill:var(--accent); }
+  .n rect { fill:var(--node); stroke:var(--nodeb); stroke-width:1.5; }
+  .n.leaf rect { fill:var(--leaf); stroke:var(--leafb); }
+  .n.pick rect { fill:var(--pick); stroke:var(--pickb); stroke-width:3; }
+  .n.new rect { fill:var(--new); stroke:var(--newb); stroke-width:3; }
+  .n text { fill:var(--fg); text-anchor:middle; dominant-baseline:middle; }
+  .n .w { font-size:15px; font-weight:700; } .n .s { font-size:14px; }
+  .code { font:13px ui-monospace, Consolas, monospace; fill:var(--accent); text-anchor:middle; }
+  #controls { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+  #stepno { color:var(--dim); min-width:90px; text-align:center; }
+  #title { font-size:18px; font-weight:700; margin:0 0 6px; }
+  #explain { margin:0; min-height:4.5em; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { padding:3px 6px; border-bottom:1px solid var(--line); text-align:right; }
+  th:first-child, td:first-child { text-align:left; }
+  tr.pick td { background:var(--pick); } tr.new td { background:var(--new); }
+  .mono { font-family: ui-monospace, Consolas, monospace; }
+  .msg { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .msg span { border:1px solid var(--line); border-radius:4px; padding:1px 5px; text-align:center; font-size:13px; }
+  .msg b { display:block; font-size:15px; }
+  .dim { color:var(--dim); font-size:13px; }
+  h2 { font-size:15px; margin:0 0 6px; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:14px; }
+  .kv div:nth-child(odd) { color:var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Huffman 建樹逐步示範</h1>
+  <div class="row">
+    <select id="preset" aria-label="範例">
+      <option value="f:black:100,white:100,yellow:20,blue:20,orange:5,red:5,purple:3,green:3">投影片的 8 色影像（256 個 pixel）</option>
+      <option value="t:ABRACADABRA">ABRACADABRA</option>
+      <option value="t:多媒體訊號處理：把系統做出來，把多媒體系統做出來">中文句子（符號＝字元）</option>
+      <option value="f:A:1,B:1,C:1,D:1,E:1,F:1,G:1,H:1">8 種符號機率相同（Huffman 沒得省）</option>
+      <option value="f:A:64,B:32,C:16,D:8,E:4,F:2,G:1,H:1">機率都是 2 的負次方（L 剛好等於 H）</option>
+      <option value="t:AAAAAAAA">只有一種符號</option>
+    </select>
+    <input id="input" type="text" spellcheck="false" aria-label="輸入文字或頻率表">
+    <button id="go" class="primary">重新開始</button>
+  </div>
+  <div class="dim" style="margin-top:4px">第一個例子（8 種顏色、256 個 pixel 的頻率表）取自 J. Burg,《The Science of Digital Media》第 1 章。</div>
+  <div class="dim" style="margin-top:4px">輸入一段文字（每個字元是一個符號），或頻率表 <span class="mono">名稱:次數,名稱:次數,…</span>。鍵盤 ← → 換步，Home／End 跳到頭尾。最多 24 種符號。</div>
+</header>
+<main>
+  <section class="card">
+    <div id="title"></div>
+    <p id="explain"></p>
+    <div id="stage"></div>
+    <div id="controls">
+      <button id="first" title="回到第一步">⏮</button>
+      <button id="prev" title="上一步（←）">◀ 上一步</button>
+      <span id="stepno"></span>
+      <button id="next" class="primary" title="下一步（→）">下一步 ▶</button>
+      <button id="last" title="跳到最後">⏭</button>
+      <button id="play" title="自動播放">▶ 自動</button>
+    </div>
+  </section>
+  <aside>
+    <div class="card" style="margin-bottom:12px">
+      <h2 id="qtitle">佇列（依次數由小到大）</h2>
+      <table id="queue"></table>
+    </div>
+    <div class="card">
+      <h2>數字</h2>
+      <div class="kv" id="stats"></div>
+    </div>
+  </aside>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const show = s => ({" ":"␠", "\n":"↵", "\t":"⇥", "\r":"␍"})[s] || s;
+let M = null, step = 0, timer = null;
+
+function parse(raw) {
+  let freq = new Map(), seq = null;
+  if (/^[^:,]+:\s*\d+(\s*,\s*[^:,]+:\s*\d+)*\s*$/.test(raw)) {
+    for (const item of raw.split(",")) { const [k, v] = item.split(":"); freq.set(k.trim(), (freq.get(k.trim()) || 0) + parseInt(v, 10)); }
+  } else {
+    seq = Array.from(raw);
+    for (const ch of seq) freq.set(ch, (freq.get(ch) || 0) + 1);
+  }
+  for (const [k, v] of freq) if (v <= 0) freq.delete(k);
+  return { freq, seq };
+}
+
+function build(raw) {
+  const { freq, seq } = parse(raw);
+  if (freq.size === 0) return { error: "請輸入一段文字，或像 a:5,b:2 這樣的頻率表。" };
+  if (freq.size > 24) return { error: `有 ${freq.size} 種符號，畫面放不下；請縮短到 24 種以內。` };
+  const total = [...freq.values()].reduce((a, b) => a + b, 0);
+  // 葉：依符號排序（與 huffman_demo.py 相同的平手規則：次數相同時，先進佇列的先取）
+  const nodes = [...freq.keys()].sort().map((s, i) => ({ id: i, w: freq.get(s), sym: s, l: null, r: null, born: 0, h: 0 }));
+  const merges = [];
+  let alive = nodes.map(n => n.id), t = 0;
+  while (alive.length > 1) {
+    alive.sort((a, b) => nodes[a].w - nodes[b].w || a - b);
+    const before = alive.slice(), [a, b] = alive;
+    const p = { id: nodes.length, w: nodes[a].w + nodes[b].w, sym: null, l: a, r: b, born: ++t, h: Math.max(nodes[a].h, nodes[b].h) + 1 };
+    nodes.push(p);
+    alive = alive.slice(2).concat(p.id);
+    merges.push({ a, b, p: p.id, before });
+  }
+  const root = nodes.length - 1;
+  // 葉的左右順序用最後那棵樹的中序走訪；建樹過程中每個節點的位置固定不動，樹是「由下往上長」
+  const order = [], codes = new Map();
+  (function walk(id, code) {
+    const n = nodes[id];
+    if (n.l === null) { order.push(id); codes.set(n.sym, code === "" ? "0" : code); return; }
+    walk(n.l, code + "0"); walk(n.r, code + "1");
+  })(root, "");
+  const gap = 78, vgap = 78, padX = 50, padTop = 34, maxH = nodes[root].h;
+  order.forEach((id, i) => { nodes[id].x = padX + i * gap; });
+  (function place(id) { const n = nodes[id]; if (n.l === null) return n.x; n.x = (place(n.l) + place(n.r)) / 2; return n.x; })(root);
+  nodes.forEach(n => { n.y = padTop + (maxH - n.h) * vgap; });
+  // canonical code：依（長度, 符號）排序，從 0 開始每次 +1，長度變長就左移補 0
+  const canon = new Map(); let cur = 0, prev = 0;
+  for (const s of [...codes.keys()].sort((x, y) => codes.get(x).length - codes.get(y).length || (x < y ? -1 : 1))) {
+    const len = codes.get(s).length; cur = cur * Math.pow(2, len - prev); prev = len;
+    canon.set(s, cur.toString(2).padStart(len, "0")); cur += 1;
+  }
+  let H = 0, bits = 0;
+  for (const [s, c] of freq) { const p = c / total; H += p * Math.log2(1 / p); bits += c * codes.get(s).length; }
+  const flc = Math.max(1, Math.ceil(Math.log2(freq.size)));
+  return { freq, seq, total, nodes, merges, root, codes, canon, H, bits, L: bits / total, flc,
+           width: padX * 2 + (order.length - 1) * gap, height: padTop + maxH * vgap + 86, steps: merges.length + 3 };
+}
+
+function render() {
+  const m = M, K = m.merges.length, s = step;
+  const phase = s === 0 ? "count" : s <= K ? "merge" : s === K + 1 ? "codes" : "encode";
+  const mg = phase === "merge" ? m.merges[s - 1] : null, bornMax = phase === "merge" ? s : K;
+  const visible = n => phase === "count" ? n.l === null : n.born <= bornMax;
+  const withBits = phase === "codes" || phase === "encode";
+
+  let svg = `<svg width="${m.width}" height="${m.height}" viewBox="0 0 ${m.width} ${m.height}" role="img" aria-label="Huffman tree">`;
+  for (const n of m.nodes) {
+    if (n.l === null || !visible(n)) continue;
+    for (const [cid, bit] of [[n.l, "0"], [n.r, "1"]]) {
+      const c = m.nodes[cid];
+      svg += `<path class="edge" d="M${n.x},${n.y + 17} L${c.x},${c.y - 17}"/>`;
+      if (withBits) svg += `<text class="bit" x="${(n.x + c.x) / 2 + (bit === "0" ? -11 : 11)}" y="${(n.y + c.y) / 2 + 2}" text-anchor="middle">${bit}</text>`;
+    }
+  }
+  for (const n of m.nodes) {
+    if (!visible(n)) continue;
+    const leaf = n.l === null, label = leaf ? show(n.sym) : "";
+    const w = Math.max(46, 16 + 9 * Math.max(String(n.w).length, label.length * (/[^\x00-\xff]/.test(label) ? 1.8 : 1)));
+    const cls = "n" + (leaf ? " leaf" : "") + (mg && (n.id === mg.a || n.id === mg.b) ? " pick" : "") + (mg && n.id === mg.p ? " new" : "");
+    svg += `<g class="${cls}"><rect x="${n.x - w / 2}" y="${n.y - 17}" width="${w}" height="34" rx="8"/>`;
+    svg += `<text class="w" x="${n.x}" y="${n.y + 1}">${n.w}</text></g>`;
+    if (leaf) {
+      svg += `<text class="n s" x="${n.x}" y="${n.y + 32}" text-anchor="middle" style="fill:var(--fg)">${label.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</text>`;
+      if (withBits) svg += `<text class="code" x="${n.x}" y="${n.y + 52}">${m.codes.get(n.sym)}</text>`;
+    }
+  }
+  $("stage").innerHTML = svg + "</svg>";
+
+  // 說明文字
+  const name = id => { const n = m.nodes[id]; return n.l === null ? `「${show(n.sym)}」` : "合併節點"; };
+  let title, text;
+  if (phase === "count") {
+    title = "第 0 步：統計每個符號出現的次數";
+    text = `共 ${m.total} 個符號、${m.freq.size} 種。每種符號是一個葉節點，數字是次數。` +
+           `熵 H = Σ p·log₂(1/p) = <b>${m.H.toFixed(3)} bits／符號</b>：不管怎麼編，平均每個符號至少要這麼多 bits。`;
+  } else if (phase === "merge") {
+    const a = m.nodes[mg.a], b = m.nodes[mg.b];
+    title = `第 ${s} 步（共 ${K} 步）：取出最小的兩個，合併`;
+    text = `佇列裡次數最小的兩個是 ${name(mg.a)}[${a.w}] 與 ${name(mg.b)}[${b.w}]（橘色）。` +
+           `合併成新節點 [${a.w} + ${b.w} = <b>${a.w + b.w}</b>]（綠色）放回佇列。` +
+           `這兩個節點底下的每個符號，code 都會多 1 bit——越早被合併（次數越小）的符號，code 越長。`;
+  } else if (phase === "codes") {
+    title = "讀出 code：左分支 0、右分支 1";
+    text = K === 0 ? "只有一種符號：code 長度定為 1（不能是 0，否則解碼端不知道有幾個符號）。"
+      : `佇列只剩一個節點，就是根 [${m.nodes[m.root].w}]。從根走到每個葉，把路上的 0／1 串起來就是它的 code。` +
+        `所有符號都在葉上，所以<b>沒有任何 code 是另一個 code 的開頭</b>（prefix code）：位元流不需要分隔符號就能唯一解碼。`;
+  } else {
+    title = "編碼，並和熵、定長編碼比較";
+    text = `平均碼長 L = Σ p·len = ${m.bits} ÷ ${m.total} = <b>${m.L.toFixed(3)} bits／符號</b>，熵 H = ${m.H.toFixed(3)}：` +
+           (m.freq.size === 1 ? `只有一種符號時 H = 0，但 code 長度不能是 0，所以 L = 1——這是「H ≤ L &lt; H+1」唯一的例外。`
+                               : `H ≤ L &lt; H+1 成立。`) + `定長編碼每個符號要 ${m.flc} bits，共 ${m.flc * m.total} bits；Huffman 共 <b>${m.bits} bits</b>` +
+           `（${(100 * m.bits / (m.flc * m.total)).toFixed(1)}%）。注意：解碼端還需要 codebook，這裡還沒算它的大小。`;
+    if (m.seq) {
+      const shown = m.seq.slice(0, 36).map(ch => `<span><b>${show(ch).replace(/</g, "&lt;")}</b><span class="mono">${m.codes.get(ch)}</span></span>`).join("");
+      text += `<div class="msg">${shown}${m.seq.length > 36 ? "<span>…</span>" : ""}</div>`;
+    }
+  }
+  $("title").innerHTML = title; $("explain").innerHTML = text;
+  $("stepno").textContent = `${s + 1} ／ ${m.steps}`;
+  $("prev").disabled = $("first").disabled = s === 0;
+  $("next").disabled = $("last").disabled = s === m.steps - 1;
+
+  // 右側：佇列或 codebook
+  let rows;
+  if (withBits) {
+    $("qtitle").textContent = "codebook";
+    rows = "<tr><th>符號</th><th>次數</th><th>p</th><th>log₂(1/p)</th><th>長度</th><th>code</th><th>canonical</th></tr>";
+    for (const sym of [...m.freq.keys()].sort((x, y) => m.freq.get(y) - m.freq.get(x) || (x < y ? -1 : 1))) {
+      const c = m.freq.get(sym), p = c / m.total;
+      rows += `<tr><td>${show(sym)}</td><td>${c}</td><td>${p.toFixed(3)}</td><td>${Math.log2(1 / p).toFixed(2)}</td>` +
+              `<td>${m.codes.get(sym).length}</td><td class="mono">${m.codes.get(sym)}</td><td class="mono">${m.canon.get(sym)}</td></tr>`;
+    }
+  } else {
+    $("qtitle").textContent = phase === "merge" ? "合併前的佇列（由小到大）" : "佇列（由小到大）";
+    const ids = phase === "merge" ? mg.before : m.nodes.filter(n => n.l === null).map(n => n.id).sort((a, b) => m.nodes[a].w - m.nodes[b].w || a - b);
+    rows = "<tr><th>節點</th><th>次數</th></tr>";
+    const leavesOf = id => { const n = m.nodes[id]; return n.l === null ? show(n.sym) : leavesOf(n.l) + "+" + leavesOf(n.r); };
+    ids.forEach((id, i) => { rows += `<tr class="${phase === "merge" && i < 2 ? "pick" : ""}"><td>${leavesOf(id)}</td><td>${m.nodes[id].w}</td></tr>`; });
+    if (phase === "merge") rows += `<tr class="new"><td>→ 放回：${leavesOf(mg.p)}</td><td>${m.nodes[mg.p].w}</td></tr>`;
+  }
+  $("queue").innerHTML = rows;
+  $("stats").innerHTML =
+    `<div>符號個數 N</div><div>${m.total}</div><div>符號種類 K</div><div>${m.freq.size}</div>` +
+    `<div>熵 H</div><div>${m.H.toFixed(4)} bits／符號</div>` +
+    (withBits ? `<div>平均碼長 L</div><div>${m.L.toFixed(4)} bits／符號</div><div>效率 H÷L</div><div>${(100 * m.H / m.L).toFixed(1)}%</div>` +
+                `<div>定長編碼</div><div>${m.flc} bits × ${m.total} = ${m.flc * m.total} bits</div><div>Huffman</div><div>${m.bits} bits</div>`
+              : `<div>平均碼長 L</div><div class="dim">建完樹才知道</div>`);
+}
+
+function start() {
+  stop();
+  const r = build($("input").value);
+  if (r.error) { $("title").textContent = "無法建樹"; $("explain").textContent = r.error; $("stage").innerHTML = ""; $("queue").innerHTML = ""; $("stats").innerHTML = ""; M = null; return; }
+  M = r; step = 0; render();
+}
+function go(d) { if (!M) return; step = Math.max(0, Math.min(M.steps - 1, d)); render(); }
+function stop() { if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ 自動"; } }
+
+$("preset").onchange = () => { $("input").value = $("preset").value.slice(2); start(); };
+$("go").onclick = start;
+$("input").onkeydown = e => { if (e.key === "Enter") start(); e.stopPropagation(); };
+$("first").onclick = () => { stop(); go(0); };
+$("prev").onclick = () => { stop(); go(step - 1); };
+$("next").onclick = () => { stop(); go(step + 1); };
+$("last").onclick = () => { stop(); go(M ? M.steps - 1 : 0); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (M && step === M.steps - 1) go(0);
+  $("play").textContent = "⏸ 暫停";
+  timer = setInterval(() => { if (!M || step >= M.steps - 1) stop(); else go(step + 1); }, 1800);
+};
+document.onkeydown = e => {
+  if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); stop(); go(step + 1); }
+  else if (e.key === "ArrowLeft") { stop(); go(step - 1); }
+  else if (e.key === "Home") { stop(); go(0); }
+  else if (e.key === "End") { stop(); go(M ? M.steps - 1 : 0); }
+};
+$("input").value = $("preset").value.slice(2);
+start();
+</script>
+</body>
+</html>
