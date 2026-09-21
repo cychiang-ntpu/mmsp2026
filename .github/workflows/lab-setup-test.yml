@@ -38,8 +38,8 @@ jobs:
           cd "$env:RUNNER_TEMP\mmsp2026\lectures\wk03_0921_team1-kickoff\examples"
           mingw32-make check;                                   if ($LASTEXITCODE) { exit 1 }
           .\huffman_trace.exe "MISSISSIPPI RIVER" | Select-Object -Last 3
-          python quantize_demo.py | Select-Object -First 6;      if ($LASTEXITCODE) { exit 1 }
-          python wav_info.py ..\data\speech_osr_8k.wav | Select-Object -First 6; if ($LASTEXITCODE) { exit 1 }
+          python quantize_demo.py | Out-Null;                      if ($LASTEXITCODE) { exit 1 }
+          python wav_info.py ..\data\speech_osr_8k.wav | Out-Null; if ($LASTEXITCODE) { exit 1 }
           python ..\..\..\samples_2025-python\mini_project_2\wavegen.py 8000 16 1 sine 440 1.0 1 s.wav; if ($LASTEXITCODE) { exit 1 }
           cd ..\..\..\team_projects\team1_textlink\starter
           mingw32-make;                                         if ($LASTEXITCODE) { exit 1 }
