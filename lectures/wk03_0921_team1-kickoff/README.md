@@ -3,6 +3,8 @@
 對應：Team 1、MP2（並為 MP3、MP4 鋪路）
 時間：13:10–16:00，三節。
 
+> **用電腦教室公用電腦的同學：一開機先做 [setup_first.md](setup_first.md)**（貼一行指令，約 5 分鐘，自動裝好 Git、gcc、make、Python 並抓下課程 repo）。
+>
 > **課前準備（同學）**：在 `mmsp2026` 資料夾打 `git pull` 拿到本週內容；確認第 2 週裝好的 gcc、make、Python 3 還能用。
 > 指令一樣分兩欄：左邊 macOS／Linux／WSL，右邊 Windows 的 VSCode PowerShell（`python3` 在 Windows 通常叫 `python`）。
 > 本講義的指令都從本週資料夾出發：`cd lectures/wk03_0921_team1-kickoff`。

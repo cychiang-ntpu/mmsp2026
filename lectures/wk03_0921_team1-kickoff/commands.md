@@ -8,6 +8,8 @@
 
 ## 0. 開始之前：拿到本週內容
 
+**電腦教室的公用電腦**：先做 [setup_first.md](setup_first.md)（貼一行指令裝好 Git、gcc、make、Python，並把課程 repo 抓到桌面），做完直接從下表的第 3 列 `cd …examples` 開始（資料夾在桌面的 `mmsp2026` 裡）。自己的筆電照下表：
+
 | macOS / Linux / WSL | Windows PowerShell |
 |---|---|
 | `cd mmsp2026` | `cd mmsp2026` |
