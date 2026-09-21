@@ -1,0 +1,47 @@
+# 測試 tools/setup/lab_setup.ps1（電腦教室公用電腦的一鍵安裝）：在乾淨的 Windows 上從頭裝一次，確認裝得起來、範例編得過。
+# 只在安裝腳本有變動或手動觸發時才跑。
+name: lab-setup-test
+
+on:
+  push:
+    paths:
+      - "tools/setup/**"
+      - ".github/workflows/lab-setup-test.yml"
+  workflow_dispatch:
+
+jobs:
+  fresh-install:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run lab_setup.ps1 as if nothing were installed (Windows PowerShell 5.1, like the classroom PCs)
+        shell: powershell
+        run: |
+          # runner 上本來就有 git／gcc／python：從 PATH 拿掉，並用 MMSP_FORCE 要腳本全部自己裝
+          $env:Path = ($env:Path -split ';' | Where-Object { $_ -and ($_ -notmatch 'Git|msys|mingw|Python|python|Strawberry|WindowsApps') }) -join ';'
+          $env:MMSP_FORCE = '1'
+          $env:MMSP_ROOT = 'C:\mmsp-tools'
+          $env:MMSP_REPO_DIR = "$env:RUNNER_TEMP\mmsp2026"
+          & .\tools\setup\lab_setup.ps1 *>&1 | Tee-Object -FilePath setup.log
+          Write-Host "---- where the tools come from ----"
+          foreach ($c in 'git','gcc','mingw32-make','make','python') { "{0,-13} {1}" -f $c, (Get-Command $c -ErrorAction SilentlyContinue).Source }
+          if (-not (Select-String -Path setup.log -Pattern 'ALL SET' -Quiet)) { Write-Error 'setup did not finish with ALL SET'; exit 1 }
+          foreach ($c in 'git','gcc','mingw32-make','python') {
+            $src = (Get-Command $c -ErrorAction SilentlyContinue).Source
+            if (-not $src -or -not $src.StartsWith('C:\mmsp-tools')) { Write-Error "$c is not the one installed by the script: $src"; exit 1 }
+          }
+      - name: Use the freshly installed tools the way the class will
+        shell: powershell
+        run: |
+          $env:Path = 'C:\mmsp-tools\git\cmd;C:\mmsp-tools\msys64\ucrt64\bin;C:\mmsp-tools\python\tools;C:\mmsp-tools\python\tools\Scripts;C:\Windows\System32;C:\Windows;C:\Windows\System32\WindowsPowerShell\v1.0'
+          $env:PYTHONUTF8 = '1'
+          cd "$env:RUNNER_TEMP\mmsp2026\lectures\wk03_0921_team1-kickoff\examples"
+          mingw32-make check;                                   if ($LASTEXITCODE) { exit 1 }
+          .\huffman_trace.exe "多媒體多媒多" | Select-Object -Last 3
+          python quantize_demo.py | Select-Object -First 6;      if ($LASTEXITCODE) { exit 1 }
+          python wav_info.py ..\data\speech_osr_8k.wav | Select-Object -First 6; if ($LASTEXITCODE) { exit 1 }
+          python ..\..\..\samples_2025-python\mini_project_2\wavegen.py 8000 16 1 sine 440 1.0 1 s.wav; if ($LASTEXITCODE) { exit 1 }
+          cd ..\..\..\team_projects\team1_textlink\starter
+          mingw32-make;                                         if ($LASTEXITCODE) { exit 1 }
+          .\textlink.exe 2>&1 | Select-Object -First 2
+          python ..\python_ref\textlink.py inspect ..\..\..\lectures\wk03_0921_team1-kickoff\data\speech_osr_8k.wav; if ($LASTEXITCODE) { exit 1 }
