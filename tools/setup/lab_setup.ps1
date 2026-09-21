@@ -160,7 +160,7 @@ Write-Host ''
 Say 'checking...'
 $fail = 0
 foreach ($c in @(@('git', '--version'), @('gcc', '--version'), @('mingw32-make', '--version'), @('python', '--version'))) {
-    try { $v = (& $c[0] $c[1] 2>&1 | Select-Object -First 1); if ($LASTEXITCODE -ne 0) { throw 'x' }; Good ("{0,-13} {1}" -f $c[0], $v) }
+    try { $all = @(& $c[0] $c[1] 2>&1); if ($LASTEXITCODE -ne 0 -or $all.Count -eq 0) { throw 'x' }; Good ("{0,-13} {1}" -f $c[0], $all[0]) }
     catch { Bad "$($c[0]) does not run"; $fail++ }
 }
 $ex = Join-Path $repo 'lectures\wk03_0921_team1-kickoff\examples'
