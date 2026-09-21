@@ -43,5 +43,4 @@ jobs:
           python ..\..\..\samples_2025-python\mini_project_2\wavegen.py 8000 16 1 sine 440 1.0 1 s.wav; if ($LASTEXITCODE) { exit 1 }
           cd ..\..\..\team_projects\team1_textlink\starter
           mingw32-make;                                         if ($LASTEXITCODE) { exit 1 }
-          .\textlink.exe 2>&1 | Select-Object -First 2
           python ..\python_ref\textlink.py inspect ..\..\..\lectures\wk03_0921_team1-kickoff\data\speech_osr_8k.wav; if ($LASTEXITCODE) { exit 1 }

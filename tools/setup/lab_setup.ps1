@@ -24,6 +24,9 @@ $force = ($env:MMSP_FORCE -eq '1')
 function Say($msg)  { Write-Host "[mmsp] $msg" -ForegroundColor Cyan }
 function Good($msg) { Write-Host "[ ok ] $msg" -ForegroundColor Green }
 function Bad($msg)  { Write-Host "[FAIL] $msg" -ForegroundColor Red }
+# Windows PowerShell 5.1 turns whatever a program writes to stderr into an error when it is redirected;
+# run external programs through this so that harmless progress messages do not stop the script.
+function Native([scriptblock]$sb) { $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'; try { & $sb } finally { $ErrorActionPreference = $old } }
 function Have($cmd) { if ($force) { return $false }; return [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 
 function Download($url, $dest) {
@@ -96,11 +99,11 @@ else {
     $env:MSYSTEM = 'UCRT64'
     $env:CHERE_INVOKING = '1'
     Say 'MSYS2: first start (creates its settings)'
-    & $bash -lc ' ' 2>&1 | Out-Null
+    Native { & $bash -lc ' ' 2>&1 | Out-Null }
     if (-not (Test-Path "$msys\ucrt64\bin\gcc.exe") -or -not (Test-Path "$msys\ucrt64\bin\mingw32-make.exe")) {
         Say 'MSYS2: installing gcc and make with pacman (downloads about 80 MB, 2-5 minutes)'
-        & $bash -lc 'pacman -Sy --noconfirm --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make' 2>&1 |
-            ForEach-Object { if ($_ -match 'error|installing mingw-w64-ucrt-x86_64-(gcc|make)\b|Total') { Write-Host "       $_" } }
+        Native { & $bash -lc 'pacman -Sy --noconfirm --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-make' 2>&1 |
+            ForEach-Object { if ("$_" -match 'error|installing mingw-w64-ucrt-x86_64-(gcc|make)\b|Total') { Write-Host "       $_" } } }
         if (-not (Test-Path "$msys\ucrt64\bin\gcc.exe")) { throw 'pacman could not install gcc (network problem?) -- run the script again' }
     }
     # so that plain "make" also works, like on macOS / Linux
@@ -111,7 +114,7 @@ else {
 
 # ---------------------------------------------------------------- 3. Python 3 + numpy
 $pyOk = $false
-if (Have python) { try { & python -c "import sys; assert sys.version_info >= (3, 8)" 2>$null; $pyOk = ($LASTEXITCODE -eq 0) } catch { $pyOk = $false } }
+if (Have python) { try { Native { & python -c "import sys; assert sys.version_info >= (3, 8)" 2>&1 | Out-Null }; $pyOk = ($LASTEXITCODE -eq 0) } catch { $pyOk = $false } }
 if ($pyOk) { Good "python already here: $((Get-Command python).Source)" }
 else {
     $pyDir = Join-Path $root 'python'
@@ -127,14 +130,15 @@ else {
     Add-ToPath "$pyDir\tools"
     Good 'python installed'
 }
+$ErrorActionPreference = 'Continue'          # from here on only external programs run; their stderr chatter is not an error
 try {
-    & python -c "import numpy" 2>$null
+    & python -c "import numpy" 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Say 'Python: installing numpy (needed only by the MP2 reference program)'
         & python -m ensurepip --upgrade 2>&1 | Out-Null
         & python -m pip install --quiet --disable-pip-version-check --no-warn-script-location numpy 2>&1 | Out-Null
     }
-    & python -c "import numpy" 2>$null
+    & python -c "import numpy" 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) { Good 'numpy ready' } else { Bad 'numpy is not installed (only wavegen.py needs it; everything else works)' }
 } catch { Bad "numpy step skipped: $($_.Exception.Message)" }
 
