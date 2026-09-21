@@ -14,6 +14,12 @@ on:
 
 jobs:
   rehearsal:
+    strategy:
+      fail-fast: false
+      matrix:
+        # reuse-msys2：電腦上已經有 C:\msys64（只是不在 PATH）；nothing-installed：什麼都沒有，MSYS2 也要從頭裝
+        pc: [reuse-msys2, nothing-installed]
+    name: rehearsal (${{ matrix.pc }})
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -23,6 +29,7 @@ jobs:
         run: |
           $env:Path = ($env:Path -split ';' | Where-Object { $_ -and ($_ -notmatch 'Git|msys|mingw|Python|python|Strawberry|WindowsApps') }) -join ';'
           foreach ($c in 'git','gcc','make','python') { if (Get-Command $c -ErrorAction SilentlyContinue) { Write-Error "$c is still on PATH; the PC is not 'clean'"; exit 1 } }
+          if ('${{ matrix.pc }}' -eq 'nothing-installed') { $env:MMSP_FORCE = '1' }
           $env:REHEARSAL_SOURCE = "$env:GITHUB_WORKSPACE"
           & .\tools\ci\class_rehearsal.ps1 wk03_0921_team1-kickoff
           exit $LASTEXITCODE
