@@ -6,6 +6,8 @@
 > **課前準備（同學）**：在 `mmsp2026` 資料夾打 `git pull` 拿到本週內容；確認第 2 週裝好的 gcc、make、Python 3 還能用。
 > 指令一樣分兩欄：左邊 macOS／Linux／WSL，右邊 Windows 的 VSCode PowerShell（`python3` 在 Windows 通常叫 `python`）。
 > 本講義的指令都從本週資料夾出發：`cd lectures/wk03_0921_team1-kickoff`。
+>
+> **上課跟著打指令，請開 [commands.md（一頁版指令表）](commands.md)**：依上課順序列出每一個指令，macOS／Linux 與 Windows PowerShell 各一欄，可以直接複製貼上。
 
 ## 本週目標
 
@@ -940,6 +942,7 @@ length = type 與 payload 的總 bytes 數；合法範圍 1 到 16,777,216（16 
 
 | 檔案 | 用途 | 執行 |
 |---|---|---|
+| [commands.md](commands.md) | **上課跟著打的指令（一頁版）**：依上課順序、兩種作業系統各一欄，含常見錯誤訊息的處理 | 上課時開著 |
 | [slides/media_size.html](slides/media_size.html) | 未壓縮資料量與位元率的計算機：文字、音訊、圖像、影像四個分頁（圖解、範例、即時算式、與壓縮後的對照），另有「常見格式」與「壓縮方法」兩個分頁 | 瀏覽器開啟 |
 | [slides/huffman_steps.html](slides/huffman_steps.html) | Huffman 建樹的逐步動畫：樹由下往上長、佇列同步更新；可輸入任何文字或頻率表 | 瀏覽器開啟；鍵盤 ← → |
 | [slides/a2d_steps.html](slides/a2d_steps.html) | A/D 四步驟的互動動畫：取樣 → 量化 → 編碼；可調頻率、取樣率、bit depth、振幅；會畫出 aliasing 的低頻弦波、量化誤差與即時 SQNR | 瀏覽器開啟；鍵盤 ← → |
