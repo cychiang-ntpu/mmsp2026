@@ -1,0 +1,28 @@
+# 上課彩排：在一台乾淨的 Windows 上，照同學的做法從頭走一遍——
+#   貼 setup_first.md 的那一行安裝指令 → 依序執行 commands.md 裡 Windows PowerShell 欄的每一個指令 → 兩個視窗的傳檔與聊天。
+# 結果表會出現在這次執行的 Summary 頁。手動觸發：Actions → class-rehearsal → Run workflow。
+name: class-rehearsal
+
+on:
+  push:
+    paths:
+      - "tools/ci/class_rehearsal.ps1"
+      - "tools/setup/**"
+      - "lectures/wk03_0921_team1-kickoff/commands.md"
+      - ".github/workflows/class-rehearsal.yml"
+  workflow_dispatch:
+
+jobs:
+  rehearsal:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rehearse the class on a PC with no git / gcc / make / python (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          $env:Path = ($env:Path -split ';' | Where-Object { $_ -and ($_ -notmatch 'Git|msys|mingw|Python|python|Strawberry|WindowsApps') }) -join ';'
+          foreach ($c in 'git','gcc','make','python') { if (Get-Command $c -ErrorAction SilentlyContinue) { Write-Error "$c is still on PATH; the PC is not 'clean'"; exit 1 } }
+          $env:REHEARSAL_SOURCE = "$env:GITHUB_WORKSPACE"
+          & .\tools\ci\class_rehearsal.ps1 wk03_0921_team1-kickoff
+          exit $LASTEXITCODE
