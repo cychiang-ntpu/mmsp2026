@@ -22,9 +22,11 @@ Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/cychiang
 $mins = [math]::Round(((Get-Date) - $t0).TotalMinutes, 1)
 foreach ($c in 'git', 'gcc', 'mingw32-make', 'make', 'python') {
     $src = (Get-Command $c -ErrorAction SilentlyContinue).Source
-    Note ([bool]$src -and $src -like '*mmsp-tools*') "installed: $c" $src
+    # a PC that already has C:\msys64 (just not on PATH) is reused by the installer, so accept that location too
+    Note ([bool]$src -and ($src -like '*mmsp-tools*' -or $src -like 'C:\msys64\*')) "installed: $c" $src
 }
 Note $true 'install time (minutes)' $mins
+Note (-not $env:MSYSTEM) 'the installer leaves no MSYSTEM variable behind in this window' "MSYSTEM='$env:MSYSTEM'"
 
 $repo = Join-Path ([Environment]::GetFolderPath('Desktop')) 'mmsp2026'
 if ($env:MMSP_REPO_DIR) { $repo = $env:MMSP_REPO_DIR }
@@ -93,11 +95,11 @@ $same = (Test-Path .\received\textlink.py) -and ((Get-FileHash .\received\textli
 Note ($sendCode -eq 0 -and $same -and $out -match 'STATS') 'window A recv + window B send --huff: received file is byte-identical, STATS printed' (($out -split "`n" | Where-Object { $_ -match 'STATS' }) -join '')
 
 # window A: Python chat server (stdin kept open by a silent ping)   window B: chunk_send
-$srv = Start-Process cmd -ArgumentList '/c', 'ping -n 25 127.0.0.1 >nul | python textlink.py chat server 5000 > chat.log 2>&1' -PassThru -WindowStyle Hidden
+$srv = Start-Process cmd -ArgumentList '/c', 'ping -n 14 127.0.0.1 >nul | python -u textlink.py chat server 5000 > chat.log 2>&1' -PassThru -WindowStyle Hidden
 Start-Sleep -Seconds 4
 $out = (python "..\..\..\lectures\$Week\examples\chunk_send.py" 127.0.0.1 5000 2>&1 | Out-String)
 $csCode = $LASTEXITCODE
-Start-Sleep -Seconds 3
+[void]$srv.WaitForExit(40000)          # let the server end by itself (stdin closes when ping ends) so its output is complete
 $log = ''
 if (Test-Path chat.log) { $log = [IO.File]::ReadAllText((Resolve-Path chat.log), [Text.Encoding]::UTF8) }
 $nRaw = ([regex]::Matches($log, 'RAW \d+ B')).Count

@@ -106,6 +106,10 @@ else {
             ForEach-Object { if ("$_" -match 'error|installing mingw-w64-ucrt-x86_64-(gcc|make)\b|Total') { Write-Host "       $_" } } }
         if (-not (Test-Path "$msys\ucrt64\bin\gcc.exe")) { throw 'pacman could not install gcc (network problem?) -- run the script again' }
     }
+    # IMPORTANT: do not leave these in the student's window. The course Makefiles look at MSYSTEM to tell
+    # "inside an MSYS2 shell" from "PowerShell / cmd"; a leftover value makes 'mingw32-make check' and 'clean' fail.
+    Remove-Item Env:MSYSTEM -ErrorAction SilentlyContinue
+    Remove-Item Env:CHERE_INVOKING -ErrorAction SilentlyContinue
     # so that plain "make" also works, like on macOS / Linux
     if (-not (Test-Path "$msys\ucrt64\bin\make.exe")) { Copy-Item "$msys\ucrt64\bin\mingw32-make.exe" "$msys\ucrt64\bin\make.exe" }
     Add-ToPath "$msys\ucrt64\bin"
