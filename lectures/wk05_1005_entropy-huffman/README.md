@@ -22,7 +22,8 @@
 3. 寫出一個 bit writer 與 bit reader（一個累加器＋一個計數器，各十行以內），並說出「位元順序兩端不一致」是什麼樣的 bug。
 4. 做出 MP3 的定長編碼：排序規則、7-bit code、`codebook.csv` 的每一欄、EOF；說出它和 Huffman **只差「code 怎麼指派」**，其餘的程式可以共用。
 5. 說出 K 很大時的建樹做法（先排序一次＋兩個佇列）與 canonical Huffman 的指派規則，並解釋為什麼 Team 1 的 codebook 只要傳「符號＋長度」。
-6. 用 `codebook_check.py` 檢查自己的 codebook（prefix code、Kraft、H ≤ L < H + 1、bin 大小），讀懂 CI 的每一條錯誤訊息；Team 1 剩一週：把 `--huff` 接上傳輸、量測、寫報告。
+6. 用 `codebook_check.py` 檢查自己的 codebook（prefix code、Kraft、H ≤ L < H + 1、bin 大小），讀懂 CI 的每一條錯誤訊息。
+7. **Team 1**：把今天的工具對到 starter 的 TODO 4、5——用 `block_dump.py` 逐欄讀懂一個「自帶 codebook、可以獨立解碼」的區塊、用 `canon_decode_trace` 看只有長度怎麼重建 code 與解碼（以及哪些壞輸入要拒絕）、用 `huffman_build --sym s16` 算出報告表的每一欄；剩一週：接上 `--huff`、兩台電腦量測、寫報告。
 
 ## 時程
 
@@ -30,7 +31,7 @@
 |---|---|---|---|
 | 1 | 13:10–14:00 | **從作業到 bytes**：回家作業對答案；bit writer／reader；解碼端怎麼知道該停；MP3 的定長編碼逐欄看 | [examples/bitio_trace.c](examples/bitio_trace.c)、[data/mississippi_river.txt](data/mississippi_river.txt)、[flc_codec.py](../../samples_2025-python/mini_project_3/flc_codec.py) |
 | 2 | 14:10–15:00 | **Huffman 的 C 實作**：大 K 的建樹（兩個佇列）；由長度指派 canonical code；解碼的三種寫法；MP4 規格與 CI 逐條 | [examples/huffman_build.c](examples/huffman_build.c)、[examples/codebook_check.py](examples/codebook_check.py)、[huffman_codec.py](../../samples_2025-python/mini_project_4/huffman_codec.py) |
-| 3 | 15:10–16:00 | **Team 1 收尾**：codebook 的二進位格式寫進 `interface.md`；壞輸入；`--huff` 接上傳輸；量測與報告的表；10/11 登錄、10/12 評測怎麼跑 | [Team 1 規格](../../team_projects/team1_textlink/README.md)、[starter/src/huffman.c](../../team_projects/team1_textlink/starter/src/huffman.c)、[python_ref/textlink.py](../../team_projects/team1_textlink/python_ref/textlink.py) |
+| 3 | 15:10–16:00 | **Team 1 收尾**：codebook 的二進位格式寫進 `interface.md`；壞輸入；`--huff` 接上傳輸；量測與報告的表；10/11 登錄、10/12 評測怎麼跑 | [examples/block_dump.py](examples/block_dump.py)、[examples/canon_decode_trace.c](examples/canon_decode_trace.c)、`huffman_build --sym s16`、[Team 1 規格](../../team_projects/team1_textlink/README.md)、[starter/src/huffman.c](../../team_projects/team1_textlink/starter/src/huffman.c)、[python_ref/textlink.py](../../team_projects/team1_textlink/python_ref/textlink.py) |
 
 先把本週的範例編譯起來：
 
@@ -39,7 +40,7 @@
 | `cd examples` | `cd examples` |
 | `make` | `mingw32-make` |
 
-會產生 `bitio_trace` 與 `huffman_build` 兩支程式（Windows 多 `.exe`）。
+會產生 `bitio_trace`、`huffman_build`、`canon_decode_trace` 三支程式（Windows 多 `.exe`）。
 
 ---
 
@@ -351,6 +352,25 @@ mr4.csv：MP4 Huffman 格式，K = 9 種符號（含 EOF），N = 18 個
 本週是 Team 1 規格「建議時程」的第 3 週：**Huffman 接上傳輸路徑（`--huff`）、壞輸入測試、量測、畫圖、投影片，10/11（日）18:00 前登錄 SHA，10/12 評測。**
 先確認上一週的目標：`make test` 離線的 Huffman round-trip（三種符號）是不是都 PASS 了？沒有的話，今天前兩節的東西就是你們缺的。
 
+### 3.0 路線圖：starter 的 TODO ↔ 今天的工具（5 分鐘）
+
+starter 把「編碼」挖空成 TODO 4（`huff_encode`）與 TODO 5（`huff_decode`），註解裡列了建議的內部步驟。今天每一步都有一個可以跑、可以對答案的東西：
+
+| TODO 的哪一步 | 要做什麼 | 今天的哪裡 | 拿什麼對答案 |
+|---|---|---|---|
+| 4-0 切符號 | byte／UTF-8 字元／16-bit sample；WAV 逐個 chunk 找 `data`，不是 WAV 或不是 16-bit PCM → `TL_ERR_DATA` | `huffman_build.c` 的 `--sym byte／char／s16`：三種切法與 RIFF chunk 走訪都是 C | `--sym s16` 印的 N、K 要和 `python_ref inspect` 一樣（語音檔 268,985、12,343） |
+| 4-1 統計 | 以符號值為索引的計數表（`calloc`） | `huffman_build.c` 步驟 0；第 3 週 `entropy.c` | 同上 |
+| 4-2 建樹 | K 可以上萬：先排序一次＋兩個佇列 | 2.1 | `make check`：H、L、總 bits 和 Python 相同 |
+| 4-3 codebook | 只留長度、依符號值遞增存「符號＋長度」 | 2.2；3.1 的 `block_dump.py` 看實際的 bytes | `block_dump.py --out` 產生的區塊；`make test` 的「以字元／sample 為符號要比 byte 小」 |
+| 4-4 位元打包 | bit writer：`acc`、`nbits`、補 0 | 1.2 `bitio_trace.c` | `bitio_trace` 的 bytes |
+| 5-0 讀檔頭與 codebook | 每一欄先問「夠不夠讀、合不合理」再用；先檢查再 `malloc` | 3.2；starter TODO 5 的清單 | `make test` 的截半與 `max_out − 1`；`canon_decode_trace --lens A:1,B:1,C:1` |
+| 5-1 重建 code | canonical：`first[len]`、`count[len]` | 3.2 `canon_decode_trace.c` | 它印的表 |
+| 5-2 解碼 | 逐 bit 累積查 `first`／`count`；解到第 N 個就停；資料用完 → 錯 | 2.3、3.2 | `canon_decode_trace --n 20` 被拒絕 |
+| 5-3 還原 bytes | 字元 → UTF-8 1–4 bytes；sample → 2 bytes little-endian；head、tail 原樣接回 | 第 3 週 `entropy.c` 的 `put_utf8`；`block_dump.py` 的 head／tail 欄 | round-trip 逐 byte 相同 |
+
+這一週的節奏（10/11 18:00 登錄）：**今天**就用 byte 符號把 `--huff` 接上傳輸、兩台電腦傳一個檔案逐 byte 相同（3.3）；10/6–10/8 補上 char 與 s16、`make test` 全 PASS、壞輸入（3.2）；
+10/9 兩台電腦量測、原始數據 CSV；10/10 圖、報告、投影片、`interface.md` 定稿；10/11 登錄 SHA。P、D、V 的分工見規格；**每個人都要有 C 的 commit**。
+
 ### 3.1 把區塊格式寫進 interface.md（10 分鐘）
 
 `huff_encode` 產生的那一塊資料要「自己帶 codebook、可以獨立解碼」（starter `huffman.c` 的註解）。今天學的東西剛好填滿每一格——以 python_ref 的格式為例（你們可以不同，但每一欄都要寫進 `docs/interface.md`）：
@@ -368,6 +388,34 @@ mr4.csv：MP4 Huffman 格式，K = 9 種符號（含 EOF），N = 18 個
 K = 0（空輸入）、K = 1（只有一種符號、長度 1）、長度超過 56、符號值不合法（char 超過 U+10FFFF、重複）都要在格式裡有明確的答案。
 **encode 和 decode 常常是不同人寫的**：先在紙上把這張表畫好、兩個人各自照表寫，才接得起來。
 
+**先看一個真的區塊長什麼樣子**。[examples/block_dump.py](examples/block_dump.py) 呼叫 python_ref 的 `huff_encode`，把回傳的區塊逐欄拆開（和第 3 週 2.6 逐欄讀 WAV 檔頭是同一件事）：
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `python3 block_dump.py` | `python block_dump.py` |
+
+```
+輸入 11 bytes，符號 = char → 區塊 44 bytes（400.00%）
+   offset  bytes                       意思
+        0  01                          kind = 1（char）
+        1  00 00 00 00 00 00 00 0B     原始長度 = 11（big-endian）→ 解碼端先和 max_out 比
+        9  00 00 00 00 00 00 00 0B     符號個數 N = 11 → 解碼的停止條件（講義 1.3 (a)）
+       17  00 00 00 05                 符號種類數 K = 5 → 後面有 K 組 codebook
+  ----- codebook：K × （符號 3 bytes ＋ 長度 1 byte）= 20 bytes，依符號值遞增；沒有 code
+       21  00 00 41 01                 符號 U+0041 'A'，長度 1
+       25  00 00 42 03                 符號 U+0042 'B'，長度 3
+       …
+  ----- 解碼端用同一條規則重建的 code：A=0  B=100  C=101  D=110  R=111
+       41  4E AC 9C                    bitstream 3 bytes = ⌈23 bits ÷ 8⌉；最後 1 個 0 是補位
+  合計 44 bytes = 檔頭 21 + codebook 20 + bitstream 3
+```
+
+11 bytes 的訊息變成 44 bytes——短訊息的 codebook 成本（第 3 週 1.7；報告第 2 題「訊息要多長才划算」就從這裡算）。
+再對真實的語音檔跑一次：`python3 block_dump.py --file ../../wk03_0921_team1-kickoff/data/speech_osr_8k.wav`，看 `kind = 2`、K = 12,343 組「2 bytes 的 sample 值＋1 byte 長度」、
+head 44 bytes（RIFF 檔頭與 fmt 原樣保留）、tail 0、bitstream 396,290 bytes；合計 433,392 bytes（80.55%）。
+`--out block.bin` 可以把區塊存成檔案：**如果你們採用 python_ref 的格式，這個檔案就是你們 `huff_decode` 的現成測資**，解出來要和原檔逐 byte 相同；
+就算格式不同，照著這個樣子把你們自己的區塊印出來逐欄對，也是找 encode／decode 對不起來的最快方法。
+
 ### 3.2 壞輸入：把 in 當成陌生人填的表單（10 分鐘）
 
 `huff_decode` 的每一步都先問兩個問題：「剩下的 bytes 夠不夠讀這個欄位？」「這個數字合理嗎？」（starter TODO 5 的清單）。對照今天的內容：
@@ -381,7 +429,31 @@ K = 0（空輸入）、K = 1（只有一種符號、長度 1）、長度超過 5
 V 角色請從第 3 週的 `chunk_send.py` 延伸：**改掉區塊的第一個 byte、中間換一個 byte、只留 1 個 byte、長度欄填 `FF FF FF FF`**，程式可以回報錯誤，不可以當掉、不可以卡住。
 評測第 6 項「codebook 被改壞」就是這些。
 
-### 3.3 接上 `--huff`、量測、報告的表（12 分鐘）
+**解碼端的核心只有一張小表**。[examples/canon_decode_trace.c](examples/canon_decode_trace.c) 模擬接收端：只拿到「符號＋長度」，重建 canonical code，再用 2.3 的第 (2) 種寫法解碼：
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `./canon_decode_trace` | `.\canon_decode_trace.exe` |
+| `./canon_decode_trace --lens A:1,B:1,C:1` | `.\canon_decode_trace.exe --lens A:1,B:1,C:1` |
+| `./canon_decode_trace --n 20` | `.\canon_decode_trace.exe --n 20` |
+
+```
+步驟 1｜Kraft：Σ 2^(−len) = 1.000000 ≤ 1，可以
+步驟 2｜每個長度只要記 first（第一個 code）、count（幾個）、first_index（排序表的起點）
+  len  count  first  這個長度的符號與 code
+  1    1      0      A=0
+  3    4      100    B=100 C=101 D=110 R=111
+步驟 3｜位元流 01001110 10101100 10011100   要解出 11 個符號
+  0→A 100→B 111→R 0→A 101→C 0→A 110→D 0→A 100→B 111→R 0→A
+  解出 11 個符號；用了 23 bits，剩下 1 bits 是補位（不去碰）
+```
+
+- 不建樹：每個長度兩個整數加一個排好的符號陣列，K = 65,536 也一樣大小。逐 bit 讀進來，`value − first[len] < count[len]` 就命中。
+- Kraft 用整數算（全部乘 2⁵⁶），沒有浮點誤差；`--lens A:1,B:1,C:1` 會在步驟 1 就被拒絕，不會走到解碼。
+- `--n 20`：資料讀完了符號數還沒到 → 拒絕；「不可以讀超過 `in[in_len−1]`」就是這一行 `if`。
+- 它和 2.1 的 `huffman_build` 合起來，就是 python_ref 的 `code_lengths` → `canonical_codes` → 解碼那一段的 C 版；你們的 `huff_encode`／`huff_decode` 要做的是把它們接上區塊格式、三種符號與錯誤碼。
+
+### 3.3 接上 `--huff`、量測、報告的表（10 分鐘）
 
 接線很短：`transfer.c` 已經把流程寫好——`huff_encode(整個檔案, 依副檔名決定 sym)`；回傳 `TL_ERR_DATA` 就改用 `SYM_BYTE` 再呼叫一次（內容不是 UTF-8 的 `.txt`、不是 16-bit PCM 的 `.wav` 自動退回）；
 輸出切成多個 `FILE_DATA` frame；對方收齊後 `huff_decode(整塊, max_out = 宣稱的原始大小)`。**今天就接，不要等全部做完**：先用 byte 符號在兩台電腦之間傳一個 WAV 逐 byte 相同，再換 s16。
@@ -390,7 +462,7 @@ V 角色請從第 3 週的 `chunk_send.py` 延伸：**改掉區塊的第一個 b
 
 | 欄位 | 從哪裡來 |
 |---|---|
-| N、K、H、L | 你們的 C 程式印出來（`huffman_build --summary` 的那一行就是範本）；用 `python_ref inspect` 對答案（語音檔：s16 符號 K = 12,343） |
+| N、K、H、L | 你們的 C 程式印出來；`make report`（= `huffman_build --file 語音.wav --sym s16` 與 `--sym byte`）印的那一列就是範本，數字和 `python_ref inspect` 相同（s16：K = 12,343、80.55%；byte：83.45%） |
 | 理論壓縮率 H × N ÷ 8 ÷ 原始 bytes、純編碼壓縮率 L × N ÷ 8 ÷ 原始 bytes | 不含 codebook |
 | codebook bytes | 3.1 的格式算得出來：K × （符號 bytes ＋ 1） |
 | 實際壓縮率（`huff_encode` 輸出 ÷ 原始）、傳輸壓縮率（`wire_bytes ÷ file_bytes`） | `STATS` 的 `ratio`；再含 frame 標頭 |
@@ -421,7 +493,7 @@ V 角色請從第 3 週的 `chunk_send.py` 延伸：**改掉區塊的第一個 b
    再用 canonical 規則對同一組長度重新指派 code，確認 L 不變。
 2. **MP3 做完**：個人 repo 的 `mp3/` push 上去，`bash ../mmsp2026/tools/ci/run_tests.sh mp3` 全綠。
 3. **MP4 的 encoder**：`codebook_check.py codebook.csv encoded.bin --bits` 沒有 ❌；能的話連 decoder 一起，`run_tests.sh mp4` 全綠。
-4. **Team 1**（10/11 18:00 登錄 SHA）：`docs/interface.md` 有 3.1 那張表；`make test` 全部 PASS（目標 82 個）；兩台電腦之間 `--huff` 傳一個 WAV 逐 byte 相同；量測的 CSV 與三張圖；`slides.pdf`。
+4. **Team 1**（10/11 18:00 登錄 SHA）：`docs/interface.md` 有 3.1 那張表（照 `block_dump.py` 的樣子逐欄寫）；`make test` 全部 PASS（目標 82 個）；`huff_decode` 要拒絕 3.2 示範的兩種壞輸入；兩台電腦之間 `--huff` 傳一個 WAV 逐 byte 相同；報告表用 `make report` 對過；量測的 CSV 與三張圖；`slides.pdf`。
 5. `TEAM_LOG.md` 記下這一週的討論與分工；每個人都要有 C 程式的 commit。
 
 ## 範例程式（examples/、data/）
@@ -430,7 +502,9 @@ V 角色請從第 3 週的 `chunk_send.py` 延伸：**改掉區塊的第一個 b
 |---|---|---|
 | [commands.md](commands.md) | **上課跟著打的指令（一頁版）**：依上課順序、兩種作業系統各一欄 | 上課時開著 |
 | [bitio_trace.c](examples/bitio_trace.c) | bit writer 把 code 塞進 byte 的每一步（acc、nbits、吐出的 byte）、補位；bit reader 逐 bit 走樹讀回來；`--no-stop` 看補位的 0 被解成符號 | `./bitio_trace`、`./bitio_trace --no-stop`、`./bitio_trace "字串" --codes A:0,B:10,…` |
-| [huffman_build.c](examples/huffman_build.c) | K 很大時的建樹（先排序一次＋兩個佇列，逐輪印出 Q1、Q2）、只留長度、canonical code、H／L／Kraft；`--file` 讀整個檔案、`--eof` 加 EOF 符號、`--summary` 一行數字 | `make trace`、`./huffman_build "字串"`、`./huffman_build --file 檔案 --eof` |
+| [huffman_build.c](examples/huffman_build.c) | K 很大時的建樹（先排序一次＋兩個佇列，逐輪印出 Q1、Q2）、只留長度、canonical code、H／L／Kraft；`--file` 讀整個檔案、`--sym byte／char／s16`（含 C 的 RIFF chunk 走訪）、`--eof` 加 EOF 符號、`--summary` 一行數字；給檔案時印 Team 1 報告表的一列 | `make trace`、`make report`、`./huffman_build --file 檔案.wav --sym s16` |
+| [canon_decode_trace.c](examples/canon_decode_trace.c) | Team 1 接收端的核心：只有「符號＋長度」→ Kraft 檢查 → `first`／`count` 表 → 逐 bit 解碼；壞的長度表與不夠的位元流都會拒絕 | `./canon_decode_trace`、`--lens A:1,B:1,C:1`、`--n 20` |
+| [block_dump.py](examples/block_dump.py) | 呼叫 python_ref 的 `huff_encode`，把區塊逐 byte、逐欄位印出來（檔頭、codebook、head／tail、bitstream、補位）；`--out` 存成檔案當 `huff_decode` 的測資 | `python3 block_dump.py`、`python3 block_dump.py --file 某.wav --out block.bin` |
 | [codebook_check.py](examples/codebook_check.py) | 檢查 MP3／MP4 的 `codebook.csv`（格式、prefix code、Kraft、H ≤ L < H + 1、預期 bin 大小），有 bin 就依 codebook 解一遍、`--bits` 印出位元流與補位 | `python3 codebook_check.py codebook.csv encoded.bin --bits` |
 | [Makefile](examples/Makefile) | `make`、`make trace`、`make check`（C 的 huffman_build 與 Python 參考實作＋codebook_check 的 N、K、H、L、bits 逐 byte 相同）、`make clean` | — |
 | [data/mississippi_river.txt](data/mississippi_river.txt) | 第 3 週回家作業的字串（17 bytes，沒有換行），給 MP3／MP4 的參考實作與 `make check` 用 | — |

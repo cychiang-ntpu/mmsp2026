@@ -60,6 +60,22 @@
 
 ## 3. 第三節｜Team 1 收尾
 
+先在 `examples` 裡（3.0–3.3 的工具）：
+
+| 做什麼（講義章節） | macOS / Linux / WSL | Windows PowerShell |
+|---|---|---|
+| 逐欄拆開 python_ref 的區塊：ABRACADABRA 44 bytes（3.1） | `python3 block_dump.py` | `python block_dump.py` |
+| 真實語音的 s16 區塊（檔頭、codebook 12,343 組、head、bitstream） | `python3 block_dump.py --file ../../wk03_0921_team1-kickoff/data/speech_osr_8k.wav` | `python block_dump.py --file ..\..\wk03_0921_team1-kickoff\data\speech_osr_8k.wav` |
+| 把區塊存成檔案，拿去餵自己的 `huff_decode` | `python3 block_dump.py --file 某.txt --out block.bin` | `python block_dump.py --file 某.txt --out block.bin` |
+| 只有長度怎麼重建 code、怎麼解碼（3.2） | `./canon_decode_trace` | `.\canon_decode_trace.exe` |
+| 壞的長度表要拒絕 | `./canon_decode_trace --lens A:1,B:1,C:1` | `.\canon_decode_trace.exe --lens A:1,B:1,C:1` |
+| 位元流不夠也要拒絕 | `./canon_decode_trace --n 20` | `.\canon_decode_trace.exe --n 20` |
+| 報告表：語音檔以 s16、以 byte 為符號（3.3） | `make report` | `mingw32-make report` |
+| 自己的檔案（.txt 用 char） | `./huffman_build --file 某.txt` | `.\huffman_build.exe --file 某.txt` |
+| 自己的 WAV | `./huffman_build --file 某.wav --sym s16` | `.\huffman_build.exe --file 某.wav --sym s16` |
+
+然後到 starter：
+
 | 做什麼（講義章節） | macOS / Linux / WSL | Windows PowerShell |
 |---|---|---|
 | 到 starter | `cd ../../../team_projects/team1_textlink/starter` | `cd ..\..\..\team_projects\team1_textlink\starter` |

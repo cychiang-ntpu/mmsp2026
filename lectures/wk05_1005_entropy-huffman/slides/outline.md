@@ -10,6 +10,9 @@
 | [../examples/bitio_trace.c](../examples/bitio_trace.c) | 第一節 1.2、1.3 | `./bitio_trace`；`--no-stop`；`--codes` 換一組 code |
 | [../examples/huffman_build.c](../examples/huffman_build.c) | 第二節 2.1、2.2 | `./huffman_build`；`make trace`；`--file … --eof` |
 | [../examples/codebook_check.py](../examples/codebook_check.py) | 第一節 1.4、第二節 2.5 | `python3 codebook_check.py 某.csv 某.bin --bits`；現場把 CSV 改壞一個 code 再跑 |
+| [../examples/block_dump.py](../examples/block_dump.py) | 第三節 3.1 | `python3 block_dump.py`（44 bytes 逐欄）；`--file 語音.wav`（s16：codebook 12,343 組、head 44） |
+| [../examples/canon_decode_trace.c](../examples/canon_decode_trace.c) | 第三節 3.2 | `./canon_decode_trace`；`--lens A:1,B:1,C:1`（拒絕）；`--n 20`（拒絕） |
+| `huffman_build --sym s16／byte` | 第三節 3.3 | `make report`：報告表兩列，和 python_ref inspect 的數字相同 |
 | 第 3 週 [huffman_steps.html](../../wk03_0921_team1-kickoff/slides/huffman_steps.html) | 第二節 2.1 對照 | 8 色影像走一遍，和兩個佇列的輸出並排 |
 | 第 3 週 `huffman_trace` | 第一節 1.1 | `huffman_trace "MISSISSIPPI RIVER"` 對回家作業 |
 
@@ -42,10 +45,10 @@
 
 ## 第三節：Team 1 收尾
 
-21. **這一週該在哪裡**：規格時程第 3 週；上一週的 `make test` round-trip 過了嗎
-22. **interface.md 的表**：符號種類、原始長度、N、K、codebook（符號＋長度）、s16 保留的 bytes、bitstream；K = 0／1、長度 > 56 的答案
-23. **壞輸入**：先檢查再 `malloc`；Kraft > 1 在 canonical 重建時「溢出」；截半、`max_out − 1`；V 的四種破壞；評測第 6 項
-24. **接上 `--huff`**：transfer.c 的流程；退回 byte；今天就接、先 byte 再 s16
-25. **壓縮率分析表**：每一欄從哪裡來；`127.0.0.1` 上 `--huff` 比較慢是正常的；損益平衡頻寬
+21. **路線圖**：五個 TODO ↔ 今天的工具（表）；這一週每天做什麼；上一週的 `make test` round-trip 過了嗎
+22. **interface.md 的表**〔`python3 block_dump.py`：44 bytes 一欄一欄讀；再 `--file 語音.wav` 看 12,343 組 codebook 與 head 44〕：符號種類、原始長度、N、K、codebook（符號＋長度）、s16 保留的 bytes、bitstream；K = 0／1、長度 > 56 的答案
+23. **壞輸入**〔`./canon_decode_trace`：first／count 表；`--lens A:1,B:1,C:1` 與 `--n 20` 被拒絕〕：先檢查再 `malloc`；Kraft > 1；截半、`max_out − 1`；V 的四種破壞；評測第 6 項
+24. **接上 `--huff`**：transfer.c 的流程；退回 byte；今天就接、先 byte 再 s16；`block_dump --out` 的區塊可以餵自己的 decoder
+25. **壓縮率分析表**〔`make report`〕：每一欄從哪裡來；C 版算出的 K = 12,343、80.55% 和 python_ref 相同；`127.0.0.1` 上 `--huff` 比較慢是正常的；損益平衡頻寬
 26. **10/11 18:00 登錄、10/12 評測流程**：repo 必備；每組 12 分鐘 P → D → V → 口試；口試題目就是今天的內容；今天回去就兩台電腦傳一次
 27. **收尾**：MP 截止 10/23；10/12 評測、10/19 Team 2＋MP5；期中考 11/2 範圍到第 7 週

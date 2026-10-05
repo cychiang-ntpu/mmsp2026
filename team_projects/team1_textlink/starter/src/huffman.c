@@ -54,6 +54,11 @@
  *      同一週 examples/huffman_trace.c   用兩個陣列表示樹與佇列、建樹、由樹讀出 code（沒有位元打包、codebook、解碼）
  *      同一週 examples/entropy.c         byte 與 UTF-8 字元兩種符號的 histogram
  *      同一週 examples/wav_info.py       逐個 chunk 走訪 WAV
+ *      第 5 週講義（lectures/wk05_1005_entropy-huffman/）第三節 3.0 有「TODO 的每一步 ↔ 工具」的對照表：
+ *          examples/bitio_trace.c          bit writer／reader（步驟 4、5 的位元打包與逐 bit 讀）
+ *          examples/huffman_build.c        三種符號的切法（含 C 的 RIFF chunk 走訪）、兩個佇列建樹、只留長度、canonical code；--sym s16 印報告表
+ *          examples/canon_decode_trace.c   接收端：只有「符號＋長度」怎麼重建 code、first／count 表解碼、哪些壞輸入要拒絕
+ *          examples/block_dump.py          把 python_ref 的區塊逐欄印出來；--out 存成檔案，可當 huff_decode 的測資
  *      ../python_ref/textlink.py --probe inspect 檔案   每一步的中間結果，拿來對你們 C 程式算出來的 N、K 與 code 長度
  *
  *  【這個檔案會用到、而你可能還不熟的 C】

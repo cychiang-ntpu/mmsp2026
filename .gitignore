@@ -44,6 +44,7 @@ lectures/*/examples/c_entropy.txt
 lectures/*/examples/py_entropy.txt
 lectures/*/examples/bitio_trace
 lectures/*/examples/huffman_build
+lectures/*/examples/canon_decode_trace
 lectures/*/examples/*_encoded.bin
 lectures/*/examples/py_*.txt
 lectures/*/examples/c_*.txt

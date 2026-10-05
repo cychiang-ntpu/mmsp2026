@@ -251,9 +251,9 @@ STATS role=recv mode=huff file_bytes=1048576 wire_bytes=743210 ratio=0.7088 deco
 |---|---|---|
 | 1 | 9/21–9/27 | 建 team repo；frame 收發（用 starter 的話就是 TODO 1、2；`send_all`／`recv_all` 殼裡已經有）；`send`／`recv` 的 `--raw` 檔案傳輸能逐 byte 還原；**兩台電腦連線成功**；定 `docs/interface.md` 初稿 |
 | 2 | 9/28–10/4（9/28 停課） | 先離線完成 Huffman：`檔案 → 編碼 → 解碼 → 檔案` 逐 byte 相同，含邊界測試。先做 byte（最單純），再加 UTF-8 字元與 16-bit sample；聊天改走 frame |
-| 3 | 10/5–10/11 | Huffman 接上傳輸路徑（`--huff`）；壞輸入測試；量測、畫圖、投影片；**10/11 18:00 前登錄 SHA** |
+| 3 | 10/5–10/11 | Huffman 接上傳輸路徑（`--huff`）；壞輸入測試；量測、畫圖、投影片；**10/11 18:00 前登錄 SHA**。[第 5 週講義第三節](../../lectures/wk05_1005_entropy-huffman/README.md#第三節team-1-收尾剩一週)有「TODO ↔ 工具」的路線圖與這一週每天的節奏 |
 
-10/5 上課會講 Huffman 實作細節（建樹、位元打包）；第 2 週請先依 9/21 的概念與 MP4 規格動手，不要等到 10/5 才開始。
+10/5 上課講 Huffman 實作細節（[第 5 週講義](../../lectures/wk05_1005_entropy-huffman/README.md)：bit writer／reader、大 K 的建樹、canonical codebook、解碼與壞輸入；`block_dump.py`、`canon_decode_trace`、`huffman_build --sym s16` 三個對答案的工具）；第 2 週請先依 9/21 的概念與 MP4 規格動手，不要等到 10/5 才開始。
 
 ## starter/：會動的殼＋五個 place holder（建議從這裡開始）
 

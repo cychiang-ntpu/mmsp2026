@@ -36,7 +36,9 @@ TEXT1 = ../data/mississippi_river.txt
 TEXT2 = ../../wk02_0914_text-utf8/data/sample_zh_en.txt
 MP4PY = ../../../samples_2025-python/mini_project_4/huffman_codec.py
 
-all: bitio_trace$(EXE) huffman_build$(EXE)
+WAV   = ../../wk03_0921_team1-kickoff/data/speech_osr_8k.wav
+
+all: bitio_trace$(EXE) huffman_build$(EXE) canon_decode_trace$(EXE)
 
 bitio_trace$(EXE): bitio_trace.c
 	$(CC) $(CFLAGS) bitio_trace.c -o $@ $(LIBS)
@@ -44,8 +46,16 @@ bitio_trace$(EXE): bitio_trace.c
 huffman_build$(EXE): huffman_build.c
 	$(CC) $(CFLAGS) huffman_build.c -o $@ $(LIBS)
 
+canon_decode_trace$(EXE): canon_decode_trace.c
+	$(CC) $(CFLAGS) canon_decode_trace.c -o $@
+
 trace: huffman_build$(EXE)
 	$(RUN)huffman_build$(EXE) --freq black:100,white:100,yellow:20,blue:20,orange:5,red:5,purple:3,green:3
+
+# make report：Team 1 報告「壓縮率分析表」的兩列（第 3 週的真實語音檔，符號 = s16 與 byte）；數字和 python_ref inspect 相同
+report: huffman_build$(EXE)
+	$(RUN)huffman_build$(EXE) --file $(WAV) --sym s16
+	$(RUN)huffman_build$(EXE) --file $(WAV) --sym byte
 
 check: huffman_build$(EXE)
 	$(PY) $(MP4PY) encode $(TEXT1) mr_codebook.csv mr_encoded.bin
@@ -58,6 +68,6 @@ check: huffman_build$(EXE)
 	$(DIFF) c_zh.txt py_zh.txt
 
 clean:
-	-$(RM_F) bitio_trace bitio_trace.exe huffman_build huffman_build.exe mr_codebook.csv mr_encoded.bin zh_codebook.csv zh_encoded.bin py_mr.txt c_mr.txt py_zh.txt c_zh.txt
+	-$(RM_F) bitio_trace bitio_trace.exe huffman_build huffman_build.exe canon_decode_trace canon_decode_trace.exe mr_codebook.csv mr_encoded.bin zh_codebook.csv zh_encoded.bin py_mr.txt c_mr.txt py_zh.txt c_zh.txt
 
-.PHONY: all trace check clean
+.PHONY: all trace report check clean
