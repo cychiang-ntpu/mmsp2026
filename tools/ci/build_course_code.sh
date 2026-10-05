@@ -41,6 +41,19 @@ run "wav_info.py 讀真實的 WAV" $PY $D/wav_info.py lectures/wk03_0921_team1-k
 run "make_samples_js.py 可重現 samples.js" $PY $D/make_samples_js.py
 if git diff --quiet -- lectures/wk03_0921_team1-kickoff/slides/samples.js 2>/dev/null; then ok "samples.js 與 data/ 裡的檔案一致"; else bad "samples.js 與 data/ 不一致：請重跑 make_samples_js.py 後 commit"; fi
 
+echo "== 第 5 週範例 =="
+D=lectures/wk05_1005_entropy-huffman/examples
+run "make" $MAKE -B -C $D all; nowarn "wk05 examples"
+run "make check（C 的 huffman_build 與 Python 參考實作＋codebook_check 的 N、K、H、L、bits 相同）" $MAKE -C $D check
+run "huffman_build：8 色影像（兩個佇列）" $MAKE -C $D trace
+if grep -q "536 ÷ 256 = 2.0938" "$ROOT/.ci_out/last.log"; then ok "huffman_build 的平均碼長 = 2.0938（與第 3 週 huffman_trace 相同）"; else bad "huffman_build 的數字不對"; fi
+run "bitio_trace：ABRACADABRA 打包成 3 bytes" $D/bitio_trace$EXE
+if grep -q "6E 8A DC" "$ROOT/.ci_out/last.log" && grep -q "解出 11 個符號" "$ROOT/.ci_out/last.log"; then ok "bitio_trace：23 bits → 6E 8A DC，讀回 11 個符號"; else bad "bitio_trace 的結果不對"; fi
+run "bitio_trace --no-stop：補位的 0 被多解成一個符號" $D/bitio_trace$EXE --no-stop
+if grep -q "多解出 1 個" "$ROOT/.ci_out/last.log"; then ok "bitio_trace --no-stop 示範正確"; else bad "bitio_trace --no-stop 的結果不對"; fi
+run "codebook_check.py：MP3 定長格式也能檢查" bash -c "$PY samples_2025-python/mini_project_3/flc_codec.py encode $D/../data/mississippi_river.txt '$ROOT/.ci_out/mp3.csv' '$ROOT/.ci_out/mp3.bin' && $PY $D/codebook_check.py '$ROOT/.ci_out/mp3.csv' '$ROOT/.ci_out/mp3.bin' --bits"
+if grep -q "解出 17 個符號後遇到 EOF" "$ROOT/.ci_out/last.log"; then ok "codebook_check 解出 17 個符號＋EOF"; else bad "codebook_check 的 MP3 結果不對"; fi
+
 echo "== Team 1 baseline（chat.c）=="
 run "make" $MAKE -B -C team_projects/team1_textlink/baseline; nowarn "baseline chat.c"
 

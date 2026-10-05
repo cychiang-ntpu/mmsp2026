@@ -65,7 +65,7 @@ mmsp2026/
 ## 每週講義
 
 每週上課用的講義、範例程式與回家作業都在 [lectures/](lectures/README.md)，上課前先打開當週資料夾。
-本週：[第 3 週（9/21）Huffman coding、WAV 與 PCM、分組與 Team 1 說明](lectures/wk03_0921_team1-kickoff/README.md)；上週：[第 2 週（9/14）文字表示、UTF-8、MP1 導讀、TCP 黏包](lectures/wk02_0914_text-utf8/README.md)。
+本週：[第 5 週（10/5）位元打包、定長編碼、Huffman 的 C 實作、Team 1 收尾](lectures/wk05_1005_entropy-huffman/README.md)；上次上課：[第 3 週（9/21）Huffman coding、WAV 與 PCM、分組與 Team 1 說明](lectures/wk03_0921_team1-kickoff/README.md)（9/28 停課）。
 
 ## 第一堂課 checklist
 

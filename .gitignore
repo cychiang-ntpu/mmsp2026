@@ -42,6 +42,11 @@ lectures/*/examples/huffman_trace
 lectures/*/examples/entropy
 lectures/*/examples/c_entropy.txt
 lectures/*/examples/py_entropy.txt
+lectures/*/examples/bitio_trace
+lectures/*/examples/huffman_build
+lectures/*/examples/*_encoded.bin
+lectures/*/examples/py_*.txt
+lectures/*/examples/c_*.txt
 lectures/*/examples/out_*bit.wav
 lectures/*/examples/tone_*.wav
 lectures/*/examples/ref.wav
