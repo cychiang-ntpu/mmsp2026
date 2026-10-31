@@ -116,6 +116,12 @@ H.264／H.265      畫面內預測或移動補償 → 整數 DCT → 量化     
 （移動補償），不是靠 Huffman；(3) **Huffman 不只是文字壓縮**：你每天用的 ZIP、PNG、JPEG、MP3 裡面都有它，第 12 週做 JPEG、Team 3 做 Motion JPEG 時會再遇到。
 今天先把這最後一步學起來。
 
+**兩個名詞（上課口頭講過，補在這裡）**：
+
+- **Source coding（信源編碼）**：依資料本身的統計特性（哪些符號常出現、熵多大）把 **redundancy（冗餘：不講也猜得到的部分）拿掉**，用最少的 bits 表示——就是「壓縮」。RLE、Huffman、JPEG、MP3 都是。本課程做的全部是這一種。
+- **Channel coding（通道編碼）**：依通道的錯誤特性**故意加上受控的 redundancy**，讓傳輸造成的錯誤可以被偵測（checksum、CRC）或更正（FEC）。它在管線裡**最靠近通道**的地方——TCP 的 checksum 與重傳、乙太網路／Wi-Fi 的 CRC、實體層的編碼——不在我們的應用程式裡。
+- 兩者目的相反（一個拿掉、一個加上）卻能**分開設計**，是 Shannon 的 source–channel separation 定理：先壓到接近熵，再依通道獨立加保護，整體仍可逼近最佳。所以多媒體課只管壓縮、通訊課只管編碼，而 TextLink 的 Huffman（source coding）可以直接放在 TCP（含 channel coding）上面。
+
 ### 1.2 暖身：Run-Length Encoding（4 分鐘）
 
 最簡單的 lossless 壓縮。灰階影像每個 pixel 1 byte（0–255），依「列」的順序一個一個存。假設前 20 個 pixel 是：
@@ -359,6 +365,12 @@ file: ../../wk02_0914_text-utf8/data/sample_zh_en.txt  (162 bytes)
 **別忘了 codebook。** 解碼端要有同一張 code 表才解得開，這張表也要佔空間。`ABRACADABRA` 11 bytes 經 Huffman 只剩 23 bits（3 bytes），
 但加上「A、B、C、D、R 各自的 code」之後，整包反而比原文大。資料越短、符號種類越多，codebook 越不划算——
 這正是 Team 1 聊天訊息要你們面對的設計問題，也是報告裡壓縮率一定要「含 codebook」的原因。
+
+**Side information（附帶資訊）與 codebook 的關係（上課口頭講過，補在這裡）**：解碼端要還原資料，**必須知道、但本身不是資料內容**的一切，叫 side information：
+codebook、符號種類（byte／字元／sample）、原始長度、最後補了幾個 0、WAV 的其他 chunk……**codebook 是其中最大、也最重要的一項**，而且 Huffman 的 codebook 由資料算出來、每個檔案不同，非傳不可
+（定長編碼若雙方約定好規則，codebook 幾乎可以不傳：side information 可以用「約定」換掉一部分，Huffman 不行）。
+Team 1 的區塊 `kind | orig_len | n_syms | K | codebook | bitstream` 裡，只有 `bitstream` 是資料，其餘全是 side information；
+壓縮率 = wire_bytes ÷ file_bytes 之所以要算進 side information，是因為少了它對方就解不開——它是傳這個檔案真正付出的成本。
 
 **和作業的關係**：MP3 做定長編碼（FLC）＋位元打包；MP4 做 Huffman 編、解碼（以 UTF-8 字元為符號）；
 Team 1 要再加上 sample 與 byte 兩種符號，並經由網路傳輸。第 5 週（10/5）講 C 的實作細節（建樹、bit writer／reader）；
