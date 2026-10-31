@@ -55,7 +55,7 @@ run "voicelink_raw devices（沒有音訊裝置也要正常結束）" $D/voiceli
 run "make smoke（本機 UDP：send → recv 逐 byte 相同）" $MAKE -C $D smoke
 
 echo "== Team 2 python_ref：驗收 1–7（本機 UDP，經 udp_impair.py）=="
-run "run_mock_tests.py（python_ref 對 python_ref）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$PY team_projects/team2_voicelink/python_ref/voicelink.py" "$PY team_projects/team2_voicelink/python_ref/voicelink.py" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5390
+run "run_mock_tests.py（python_ref 對 python_ref）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$PY team_projects/team2_voicelink/python_ref/voicelink.py" "$PY team_projects/team2_voicelink/python_ref/voicelink.py" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5390 --buffer 200
 
 echo "== Team 1 baseline（chat.c）=="
 run "make" $MAKE -B -C team_projects/team1_textlink/baseline; nowarn "baseline chat.c"

@@ -132,7 +132,10 @@ def run_once(cfg, out_wav, impair_opts=None, recv_opts=(), send_opts=(), before_
     r = Run()
     recv_port, impair_port = cfg.port, cfg.port + 1
     send_to = impair_port if impair_opts is not None else recv_port
-    recv_argv = cfg.recv + [str(recv_port), out_wav, "--timeout", str(recv_timeout_ms)] + list(recv_opts)
+    recv_opts = list(recv_opts)
+    if "--buffer" not in recv_opts:                       # 沒指定就用 --buffer 的預設（CI 慢機器可放大）
+        recv_opts += ["--buffer", str(cfg.buffer)]
+    recv_argv = cfg.recv + [str(recv_port), out_wav, "--timeout", str(recv_timeout_ms)] + recv_opts
     impair = None
     recv = popen(recv_argv)
     if impair_opts is not None:
@@ -197,7 +200,7 @@ def test_loss(cfg, out):
 
 
 def test_reorder(cfg, out):
-    r = run_once(cfg, out, impair_opts=["--reorder", "0.1", "--jitter", "20"], recv_opts=["--buffer", "100"])
+    r = run_once(cfg, out, impair_opts=["--reorder", "0.1", "--jitter", "20"], recv_opts=["--buffer", str(max(100, cfg.buffer))])
     if r.recv_rc is None or r.recv_rc != 0 or r.stats is None:
         return need(r, [])
     ok, why = same_pcm(cfg.src, r.pcm)
@@ -252,14 +255,14 @@ def test_garbage(cfg, out):
 
 
 def test_stats(cfg, out):
-    r = run_once(cfg, out, impair_opts=["--loss", "0.05", "--jitter", "30", "--reorder", "0.1", "--dup", "0.02"], recv_opts=["--buffer", "60"])
+    r = run_once(cfg, out, impair_opts=["--loss", "0.05", "--jitter", "30", "--reorder", "0.1", "--dup", "0.02"], recv_opts=["--buffer", str(cfg.buffer)])
     if r.recv_rc is None or r.recv_rc != 0 or r.stats is None:
         return need(r, [])
     s = r.stats
     played = s["received"] - s["late"] - s["dup"] - s["overflow"]
     lines = [ln for ln in r.recv_err.splitlines() if ln.startswith("STATS ")]
     return need(r, [(len(lines) == 1, f"stderr 恰好一行 STATS"),
-                    (s["buffer_ms"] == 60 and s["plc"] == "repeat", "buffer_ms／plc 與參數一致"),
+                    (s["buffer_ms"] == cfg.buffer and s["plc"] == "repeat", "buffer_ms／plc 與參數一致"),
                     (s["frames_out"] == played + s["concealed"], f"frames_out={s['frames_out']} = ({s['received']}−{s['late']}−{s['dup']}−{s['overflow']}) + {s['concealed']}"),
                     (s["frames_out"] == n_frames(len(cfg.src)), f"frames_out 等於輸入的 frame 數 {n_frames(len(cfg.src))}"),
                     (0 <= s["avg_delay_ms"] <= s["max_delay_ms"], f"avg_delay={s['avg_delay_ms']} ≤ max_delay={s['max_delay_ms']}"),
@@ -275,6 +278,7 @@ def main():
     ap = argparse.ArgumentParser(description="mock 模式的自動化驗收（README 第 1–7 項）")
     ap.add_argument("send_cmd", help='例如 "python ../python_ref/voicelink.py send"')
     ap.add_argument("recv_cmd", help='例如 "python ../python_ref/voicelink.py recv"')
+    ap.add_argument("--buffer", type=int, default=60, help="recv 的 --buffer（預設 60；CI 的機器很慢時可以放大到 200）")
     ap.add_argument("wav", help="16 kHz／16-bit／單聲道的 WAV")
     ap.add_argument("--port", type=int, default=5004, help="recv 聽這個 port，udp_impair.py 聽 port+1（預設 5004）")
     ap.add_argument("--keep", action="store_true", help="留下輸出的 WAV")

@@ -335,7 +335,9 @@ static int cmd_call(int my_port, const char *peer_ip, int peer_port) {
     fflush(stdout);
 
     char line[16];
-    (void)fgets(line, sizeof(line), stdin);       /* 等 Enter（stdin 被關掉時 fgets 立刻回傳 NULL，也算結束） */
+    if (fgets(line, sizeof(line), stdin) == NULL) { /* 等 Enter（stdin 被關掉時 fgets 立刻回傳 NULL，也算結束） */
+        line[0] = ' ';
+    }
 
     c.running = 0;
     audio_stop();                                 /* 之後 audio_cb 不會再被叫 */
