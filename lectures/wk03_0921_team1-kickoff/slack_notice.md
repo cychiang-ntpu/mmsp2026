@@ -22,6 +22,8 @@ irm https://raw.githubusercontent.com/cychiang-ntpu/mmsp2026/main/tools/setup/la
 
 • 圖文說明：https://github.com/cychiang-ntpu/mmsp2026/blob/main/lectures/wk03_0921_team1-kickoff/setup_first.md
 • 今天（10/19，第 7 週）的講義：https://github.com/cychiang-ntpu/mmsp2026/blob/main/lectures/wk07_1019_audio-pcm/README.md
+• 今天上課要打的指令（一頁版，請開著）：https://github.com/cychiang-ntpu/mmsp2026/blob/main/lectures/wk07_1019_audio-pcm/commands.md
+• 今天第二節要聽掉封包的聲音，有耳機的請帶耳機。
 • 用自己筆電、已經裝好環境的同學：在 mmsp2026 資料夾打 git pull 就可以了。macOS／Linux 的同學不用跑上面那一行。
 ```
 

@@ -52,5 +52,13 @@ team_projects/*/starter/out/
 team_projects/*/starter/received/
 team_projects/*/starter/samples/
 
+# 第 7 週與 Team 2 執行時產生的檔案
+lectures/*/examples/*.spec.txt
+lectures/*/examples/*.ref.txt
+team_projects/*/baseline/voicelink_raw
+team_projects/*/baseline/*.wav
+team_projects/*/python_ref/*.wav
+team_projects/*/tests/_work/
+
 # Python 的快取
 __pycache__/

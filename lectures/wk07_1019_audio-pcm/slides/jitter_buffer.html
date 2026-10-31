@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jitter buffer 動畫：Team 2 接收端怎麼「永遠不等」</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1f2328; --dim:#6b7280; --line:#c9ccd1; --card:#ffffff; --grid:#e3e5e8; --pkt:#2457c5; --pktfg:#ffffff; --ok:#1f9d4d;
+          --lost:#b3261e; --late:#e08a00; --dup:#8250df; --plc:#d1242f; --on:#2457c5; --onfg:#ffffff; --net:#f1f3f5; --buf:#e8f0fe; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --fg:#e6e8eb; --dim:#9aa3ad; --line:#3a3f46; --card:#1d2024; --grid:#2a2e34; --pkt:#8ab0ff; --pktfg:#10131a; --ok:#3fcf73;
+            --lost:#ff7b72; --late:#f0a63a; --dup:#c297ff; --plc:#ff7b72; --on:#8ab0ff; --onfg:#10131a; --net:#262a30; --buf:#1d2b45; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
+  header { padding:12px 16px 4px; } h1 { margin:0 0 6px; font-size:20px; } header p { margin:0 0 6px; font-size:14px; color:var(--dim); }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:12px; padding:8px 16px 16px; }
+  @media (max-width:980px) { main { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:12px; }
+  canvas, svg { display:block; max-width:100%; }
+  .ctrl { display:grid; grid-template-columns:auto 1fr auto; gap:6px 10px; align-items:center; font-size:14px; }
+  .ctrl output { font-variant-numeric:tabular-nums; min-width:70px; text-align:right; }
+  input[type=range] { width:100%; accent-color:var(--on); } input[type=number] { width:100%; font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:3px 6px; }
+  select, button.nav { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:5px 10px; }
+  button.nav { cursor:pointer; } button.nav.primary { background:var(--on); color:var(--onfg); border-color:var(--on); } button.nav:disabled { opacity:.4; cursor:default; }
+  #nav { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; margin-top:10px; }
+  h2 { font-size:15px; margin:0 0 6px; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:1px 10px; font-size:14px; font-variant-numeric:tabular-nums; } .kv div:nth-child(odd) { color:var(--dim); font-family:ui-monospace,Consolas,monospace; }
+  .mono { font:12.5px ui-monospace,Consolas,monospace; word-break:break-all; margin-top:8px; padding:6px; border-radius:6px; background:var(--net); }
+  #log { font-size:13px; color:var(--dim); margin:6px 0 0; min-height:5.5em; } #log div { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .legend { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:13px; color:var(--dim); margin-top:6px; } .legend i { display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:middle; margin-right:4px; }
+  #explain { margin:0 0 8px; font-size:14.5px; }
+  text { fill:var(--fg); font-size:12px; } .dimt { fill:var(--dim); } .axis { stroke:var(--fg); stroke-width:1.2; } .gridl { stroke:var(--grid); }
+</style>
+</head>
+<body>
+<noscript><p style="padding:16px;color:#b3261e">這一頁需要 JavaScript：封包的動畫與 jitter buffer 的模擬都在瀏覽器裡跑。</p></noscript>
+<header>
+  <h1>jitter buffer 動畫：Team 2 接收端怎麼「永遠不等」</h1>
+  <p>送端每 20 ms 送一包（seq 0, 1, 2, …），網路隨機延遲／遺失／亂序／重複；收端的播放時鐘<b>照樣每 20 ms 交出一個 frame</b>——有就播、沒有就 PLC 補。計數規則照 Team 2 README 的 STATS；JS 裡每條規則旁邊都有註解，可以對照你們的 C。</p>
+</header>
+<main>
+  <section>
+    <div class="card">
+      <p id="explain"></p>
+      <canvas id="anim" width="900" height="330" aria-label="封包動畫"></canvas>
+      <div class="legend"><span><i style="background:var(--pkt)"></i>封包（在路上／在 buffer）</span><span><i style="background:var(--ok)"></i>播出</span><span><i style="background:var(--plc)"></i>PLC 補的</span><span><i style="background:var(--late)"></i>遲到丟掉</span><span><i style="background:var(--dup)"></i>重複丟掉</span><span><i style="background:var(--lost)"></i>網路弄丟</span></div>
+      <div id="log"></div>
+      <div id="nav">
+        <button class="nav" id="reset">↺ 重設</button>
+        <button class="nav primary" id="play">▶ 播放</button>
+        <button class="nav" id="step">單步（一拍 20 ms）▶</button>
+        <span id="tnow" style="color:var(--dim);font-variant-numeric:tabular-nums"></span>
+      </div>
+      <p style="font-size:12.5px;color:var(--dim);margin:6px 0 0">鍵盤：空白鍵 播放／暫停、→ 單步、R 重設、S 掃描。</p>
+    </div>
+    <div class="card">
+      <h2>buffer 掃描：同一個 seed，buffer 從 0 掃到 200 ms</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><button class="nav" id="sweep">執行 sweep</button><span style="font-size:13px;color:var(--dim)">用目前的 jitter／loss／reorder／dup／seed，每個 buffer 值完整跑一次，畫 late、concealed、avg_delay_ms。</span></div>
+      <div id="sweepplot"></div>
+    </div>
+  </section>
+  <aside>
+    <div class="card">
+      <h2>網路與 buffer</h2>
+      <div class="ctrl">
+        <label for="N">封包數 N</label><input id="N" type="range" min="20" max="300" step="10" value="60"><output id="No"></output>
+        <label for="jitter">抖動 jitter</label><input id="jitter" type="range" min="0" max="200" step="5" value="40"><output id="jittero"></output>
+        <label for="loss">遺失 loss</label><input id="loss" type="range" min="0" max="0.3" step="0.01" value="0.05"><output id="losso"></output>
+        <label for="reorder">亂序 reorder</label><input id="reorder" type="range" min="0" max="0.3" step="0.01" value="0.05"><output id="reordero"></output>
+        <label for="dup">重複 dup</label><input id="dup" type="range" min="0" max="0.3" step="0.01" value="0.02"><output id="dupo"></output>
+        <label for="buffer">--buffer</label><input id="buffer" type="range" min="0" max="200" step="20" value="60"><output id="buffero"></output>
+        <label for="plc">--plc</label><select id="plc" style="grid-column:span 2"><option value="repeat">repeat（重複上一個 frame）</option><option value="zero">zero（補 320 個 0）</option></select>
+        <label for="speed">動畫速度</label><input id="speed" type="range" min="50" max="1000" step="50" value="400"><output id="speedo"></output>
+        <label for="seed">seed</label><input id="seed" type="number" value="7" min="0" step="1" style="grid-column:span 2">
+      </div>
+      <p style="font-size:12.5px;color:var(--dim);margin:6px 0 0">改任何參數都會重新產生同一個 seed 的隨機序列並重設。網路延遲 = uniform(0, jitter)；reorder = 這一包額外再多等 30 ms；dup = 多送一份、各自有延遲。</p>
+    </div>
+    <div class="card"><h2>STATS（即時）</h2><div class="kv" id="stats"></div><div class="mono" id="statsline"></div></div>
+  </aside>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const TICK = 20;                                             // 一個 frame = 20 ms
+// 固定 seed 的 PRNG（mulberry32）：同一個 seed → 同一串亂數 → 同一個結果。
+function mulberry32(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+// ── 搗蛋的網路（相當於 udp_impair.py）：先把每一包的命運算好 ──
+// 回傳 [{seq, type, sendT, arrT, lost, dup}]；lost 的包 arrT = null。
+function makeNetwork(cfg) {
+  const rnd = mulberry32(cfg.seed), pk = [];
+  const impair = (seq, type, sendT) => {
+    const base = { seq, type, sendT };
+    if (rnd() < cfg.loss) { pk.push({ ...base, lost: true, arrT: null }); return; }
+    let d = rnd() * cfg.jitter; if (rnd() < cfg.reorder) d += 30;          // 亂序：這一包多等 30 ms，通常會落到下一包之後
+    pk.push({ ...base, lost: false, arrT: sendT + d });
+    if (type === "AUDIO" && rnd() < cfg.dup) pk.push({ ...base, lost: false, dup: true, arrT: sendT + rnd() * cfg.jitter });
+  };
+  for (let s = 0; s < cfg.N; s++) impair(s, "AUDIO", s * TICK);
+  for (let i = 0; i < 3; i++) impair(cfg.N + i, "BYE", (cfg.N + i) * TICK);   // 最後一包之後送 3 次 BYE
+  return pk;
+}
+
+// ── 接收端：jitter buffer ＋ 固定節奏的播放時鐘 ──
+class Receiver {
+  constructor(cfg) {
+    this.cfg = cfg; this.pkts = makeNetwork(cfg);
+    this.arrivals = this.pkts.filter(p => !p.lost).sort((a, b) => a.arrT - b.arrT || a.seq - b.seq);
+    this.audioLeft = this.arrivals.filter(p => p.type === "AUDIO").length;   // 還在路上的 AUDIO 封包數（模擬器才知道的事）
+    this.ai = 0; this.t = 0; this.buffer = new Map();          // seq → {arrT}
+    this.cap = Math.max(4, 4 * (cfg.bufferMs / TICK));          // buffer 上限：--buffer 的 4 倍（最少 4 個 frame）
+    this.nextSeq = null; this.nextTick = null; this.maxSeq = -1; this.seen = new Set(); this.byeSeen = false; this.done = false;
+    this.stats = { received: 0, lost: 0, late: 0, dup: 0, reordered: 0, overflow: 0, concealed: 0, avg_delay_ms: 0, max_delay_ms: 0, frames_out: 0 };
+    this.delaySum = 0; this.played = 0; this.lastSeqPlayed = null; this.outcome = []; this.events = []; this.lastOut = null;
+  }
+  // 一個合法的 AUDIO 封包到了（received 先 +1；含重複、遲到）
+  onAudio(p) {
+    const S = this.stats; S.received++;
+    if (this.nextTick === null) this.nextTick = p.arrT + this.cfg.bufferMs;         // 第一包到了：先累積 --buffer ms 再開始播
+    if (this.seen.has(p.seq)) { S.dup++; this.ev(p.arrT, `seq ${p.seq} 重複（dup）→ 丟掉`, "dup", p); return; }   // 同一個 seq 已經收過 → dup，丟掉
+    this.seen.add(p.seq);
+    if (this.nextSeq !== null && p.seq < this.nextSeq) {                            // 它的拍子已經過了 → late，丟掉
+      S.late++; if (this.outcome[p.seq] === "plc") S.lost--;                         //   （之前被當成 lost 補過的，現在知道它只是遲到，不算 lost）
+      this.ev(p.arrT, `seq ${p.seq} 遲到（late）：已經播到 ${this.nextSeq} → 丟掉`, "late", p); return;
+    }
+    if (p.seq < this.maxSeq) { S.reordered++; this.ev(p.arrT, `seq ${p.seq} 亂序（reordered）：比 ${this.maxSeq} 晚到，排回去`, "reordered", p); }   // 比它大的 seq 先到了，但還來得及 → reordered，排回正確位置
+    this.maxSeq = Math.max(this.maxSeq, p.seq);
+    this.buffer.set(p.seq, { arrT: p.arrT });
+    if (this.buffer.size > this.cap) {                                               // buffer 滿了 → 丟最舊的（最小的 seq），計 overflow
+      const oldest = Math.min(...this.buffer.keys()); this.buffer.delete(oldest); S.overflow++; this.ev(p.arrT, `buffer 滿（${this.cap}）→ 丟最舊的 seq ${oldest}（overflow）`, "overflow");
+    }
+  }
+  // 播放時鐘的一拍：buffer 裡有「下一個該播的 seq」→ 播它；沒有 → PLC 補一個（concealed）；seq 照樣前進
+  tick(now) {
+    const S = this.stats;
+    if (this.nextSeq === null) this.nextSeq = this.buffer.size ? Math.min(...this.buffer.keys()) : 0;   // 第一拍：從 buffer 裡最小的 seq 開始
+    const s = this.nextSeq, e = this.buffer.get(s);
+    if (e) {
+      this.buffer.delete(s); const d = now - e.arrT;                                 // 延遲 = 到達 → 播放（只算真的播出去的包）
+      this.delaySum += d; this.played++; S.max_delay_ms = Math.max(S.max_delay_ms, d); S.avg_delay_ms = this.delaySum / this.played;
+      this.lastSeqPlayed = s; this.outcome[s] = "ok"; this.lastOut = { seq: s, kind: "ok" };
+    } else {
+      S.concealed++; this.outcome[s] = "plc";
+      if (!this.seen.has(s)) S.lost++;                                                // 從 seq 判斷沒收到 → lost（之後若遲到才到，late 那邊會把它扣回來）
+      this.lastOut = { seq: s, kind: "plc", src: this.cfg.plc === "repeat" ? this.lastSeqPlayed : null };
+      this.ev(now, `拍子 ${now} ms：buffer 沒有 seq ${s} → PLC ${this.cfg.plc === "repeat" ? "重複 seq " + (this.lastSeqPlayed ?? "—") : "補 0"}（concealed）`, "plc");
+    }
+    S.frames_out++; this.nextSeq++;                                                  // frames_out = 播出的 + concealed
+  }
+  ev(t, msg, kind, p) { this.events.push({ t, msg, kind }); if (p) p.fate = kind; }
+  // 把模擬推進到時間 to（ms）：到達事件與播放拍子依時間順序處理
+  advance(to) {
+    while (!this.done) {
+      const a = this.ai < this.arrivals.length ? this.arrivals[this.ai] : null, tA = a ? a.arrT : Infinity, tT = this.nextTick === null ? Infinity : this.nextTick;
+      const tn = Math.min(tA, tT); if (tn > to) break;
+      this.t = tn;
+      if (tA <= tT) { this.ai++; if (a.type === "BYE") { this.byeSeen = true; a.fate = "bye"; } else { this.audioLeft--; this.onAudio(a); } }
+      else { if (this.nextSeq === null || this.nextSeq < this.cfg.N) this.tick(tT); this.nextTick += TICK; }   // 最後一包之後的拍子不再補（相當於已收到 BYE）
+      // 結束：所有會到的 AUDIO 封包都到了、該播的都播完了（相當於收到 BYE／逾時）。
+      // 真的 C 程式不知道路上還有沒有包，會一直補到 BYE 或逾時為止；模擬器知道，所以不多補、不把不存在的 seq 算成 lost。
+      if (this.audioLeft === 0 && (this.nextSeq === null || (this.nextSeq > this.maxSeq && this.buffer.size === 0))) this.done = true;
+    }
+    this.t = Math.max(this.t, Math.min(to, this.done ? this.t : to));
+  }
+  runToEnd() { while (!this.done) this.advance(this.t + 1e6); return this.stats; }
+  statsLine() { const S = this.stats; return `STATS role=recv buffer_ms=${this.cfg.bufferMs} plc=${this.cfg.plc} frames_out=${S.frames_out} received=${S.received} lost=${S.lost} late=${S.late} dup=${S.dup} reordered=${S.reordered} overflow=${S.overflow} concealed=${S.concealed} avg_delay_ms=${S.avg_delay_ms.toFixed(1)} max_delay_ms=${S.max_delay_ms.toFixed(1)}`; }
+}
+// buffer 0, 20, …, 200 各跑一次完整模擬（同一個 seed，所以網路的亂數完全相同）
+function sweep(cfg) { const out = []; for (let b = 0; b <= 200; b += 20) { const r = new Receiver({ ...cfg, bufferMs: b }); r.runToEnd(); out.push({ bufferMs: b, ...r.stats }); } return out; }
+
+// ── 畫面 ──
+const STAT_KEYS = ["frames_out", "received", "lost", "late", "dup", "reordered", "overflow", "concealed", "avg_delay_ms", "max_delay_ms"];
+let rx = null, playing = false, lastFrame = 0;
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function cfgFromUI() { return { N: +$("N").value, jitter: +$("jitter").value, loss: +$("loss").value, reorder: +$("reorder").value, dup: +$("dup").value, bufferMs: +$("buffer").value, plc: $("plc").value, seed: +$("seed").value || 0 }; }
+function showParams() { const c = cfgFromUI(); $("No").textContent = c.N; $("jittero").textContent = "0–" + c.jitter + " ms"; $("losso").textContent = (100 * c.loss).toFixed(0) + " %"; $("reordero").textContent = (100 * c.reorder).toFixed(0) + " %"; $("dupo").textContent = (100 * c.dup).toFixed(0) + " %"; $("buffero").textContent = c.bufferMs + " ms"; $("speedo").textContent = "1 拍 = " + $("speed").value + " ms"; }
+function reset() { playing = false; $("play").textContent = "▶ 播放"; rx = new Receiver(cfgFromUI()); showParams(); draw(); }
+
+function draw() {
+  const c = $("anim"), g = c.getContext("2d"), W = c.width, H = c.height, t = rx.t, cfg = rx.cfg;
+  const SX = 70, RX = 560, LANE_Y = 40, LANE_H = 150, BX = 600;
+  g.fillStyle = css("--card"); g.fillRect(0, 0, W, H); g.font = "12px system-ui"; g.textBaseline = "middle";
+  g.fillStyle = css("--net"); g.fillRect(SX + 30, LANE_Y, RX - SX - 30, LANE_H);
+  g.fillStyle = css("--dim"); g.textAlign = "center"; g.fillText("送端 send", SX, LANE_Y - 14); g.fillText("網路（udp_impair）", (SX + RX) / 2, LANE_Y - 14); g.fillText("收端 jitter buffer（上限 " + rx.cap + "）", BX + 120, LANE_Y - 14);
+  g.fillText("t = " + t.toFixed(0) + " ms", SX, LANE_Y + LANE_H + 14);
+  // 在路上的封包：位置 = (t − 送出) / (到達 − 送出)；弄丟的走到一半掉下去
+  const box = (x, y, label, bg, fg) => { g.fillStyle = bg; g.fillRect(x - 15, y - 9, 30, 18); g.fillStyle = fg || css("--pktfg"); g.textAlign = "center"; g.fillText(label, x, y); };
+  for (const p of rx.pkts) {
+    if (p.sendT > t) continue;
+    const y = LANE_Y + 14 + (p.seq % 6) * 23 + (p.dup ? 8 : 0), label = p.type === "BYE" ? "BYE" : String(p.seq);
+    if (p.lost) { const dt = t - p.sendT, dropT = 20 + cfg.jitter / 2; if (dt > dropT + 300) continue; const prog = Math.min(1, dt / dropT), yy = y + (dt > dropT ? (dt - dropT) / 4 : 0); g.globalAlpha = dt > dropT ? Math.max(0, 1 - (dt - dropT) / 300) : 1; box(SX + 30 + prog * (RX - SX - 60) * 0.5, yy, "✕" + label, css("--lost")); g.globalAlpha = 1; continue; }
+    if (p.arrT > t) { const prog = (t - p.sendT) / Math.max(1e-9, p.arrT - p.sendT); box(SX + 30 + prog * (RX - SX - 60), y, label, p.dup ? css("--dup") : css("--pkt")); }
+    else if (p.fate && p.fate !== "reordered" && t - p.arrT < 400) { g.globalAlpha = 1 - (t - p.arrT) / 400; box(RX - 20, y, label, p.fate === "late" ? css("--late") : p.fate === "dup" ? css("--dup") : p.fate === "bye" ? css("--dim") : css("--lost")); g.globalAlpha = 1; }
+  }
+  // buffer：由小到大排
+  g.fillStyle = css("--buf"); g.fillRect(BX, LANE_Y, 240, LANE_H); g.strokeStyle = css("--line"); g.strokeRect(BX, LANE_Y, 240, LANE_H);
+  const seqs = [...rx.buffer.keys()].sort((a, b) => a - b);
+  seqs.forEach((s, i) => box(BX + 20 + (i % 7) * 33, LANE_Y + 14 + Math.floor(i / 7) * 23, String(s), css("--pkt")));
+  g.fillStyle = css("--dim"); g.textAlign = "left"; g.fillText(rx.nextTick === null ? "等第一包…" : rx.nextSeq === null ? `累積到 ${rx.nextTick.toFixed(0)} ms 再開始播` : `下一個該播的 seq：${rx.nextSeq}`, BX + 4, LANE_Y + LANE_H + 14);
+  // now playing
+  const PY = LANE_Y + LANE_H + 40; g.fillStyle = css("--dim"); g.textAlign = "left"; g.fillText("喇叭（每 20 ms 一個 frame）→", BX, PY);
+  if (rx.lastOut) { const o = rx.lastOut; g.fillStyle = o.kind === "ok" ? css("--ok") : css("--plc"); g.fillRect(BX + 190, PY - 11, 50, 22); g.fillStyle = css("--pktfg"); g.textAlign = "center"; g.fillText(o.kind === "ok" ? "seq " + o.seq : o.src != null ? "再 " + o.src : "靜音", BX + 215, PY); }
+  // 每個 seq 的下場
+  const TY = H - 44, cw = Math.min(14, (W - 40) / cfg.N); g.fillStyle = css("--dim"); g.textAlign = "left"; g.fillText("每個 seq 的下場（綠：播出、紅：PLC 補、橘：遲到）", 20, TY - 12);
+  for (let s = 0; s < cfg.N; s++) { const o = rx.outcome[s]; if (!o) continue; g.fillStyle = o === "ok" ? css("--ok") : css("--plc"); g.fillRect(20 + s * cw, TY, cw - 1, 14); }
+  for (const p of rx.pkts) if (p.fate === "late") { g.fillStyle = css("--late"); g.fillRect(20 + p.seq * cw, TY + 16, cw - 1, 5); }
+  if (rx.done) { g.fillStyle = css("--fg"); g.textAlign = "right"; g.fillText("結束（BYE／逾時）", W - 10, TY - 12); }
+  // 右欄
+  const S = rx.stats; $("stats").innerHTML = STAT_KEYS.map(k => `<div>${k}</div><div>${typeof S[k] === "number" && k.endsWith("_ms") ? S[k].toFixed(1) : S[k]}</div>`).join("");
+  $("statsline").textContent = rx.statsLine(); $("tnow").textContent = `t = ${t.toFixed(0)} ms，第 ${S.frames_out} 拍` + (rx.done ? "，結束" : "");
+  $("log").innerHTML = rx.events.slice(-5).map(e => `<div>${e.t.toFixed(0)} ms：${e.msg}</div>`).join("") || "<div>（事件會列在這裡：遲到、重複、亂序、PLC、overflow）</div>";
+  $("explain").innerHTML = `--buffer ${cfg.bufferMs} ms = 先存 ${cfg.bufferMs / TICK} 個 frame 再開始播。buffer 愈大，愈能等到亂序與抖動的包（late、concealed 變少），但每一包從到達到播出都要多等（avg_delay_ms 變大）。` +
+    (cfg.bufferMs === 0 ? "現在 buffer = 0：包一到就播，稍微晚一點就來不及。" : cfg.jitter > cfg.bufferMs ? "現在抖動的範圍比 buffer 大：有些包會遲到。" : "現在 buffer 蓋得住抖動：遲到應該很少，掉的包只能靠 PLC。");
+}
+function frame(ts) {
+  if (!playing) return;
+  const dt = lastFrame ? ts - lastFrame : 0; lastFrame = ts;
+  rx.advance(rx.t + dt * TICK / +$("speed").value); draw();
+  if (rx.done) { playing = false; $("play").textContent = "▶ 播放"; } else requestAnimationFrame(frame);
+}
+function togglePlay() { if (rx.done) reset(); playing = !playing; $("play").textContent = playing ? "⏸ 暫停" : "▶ 播放"; lastFrame = 0; if (playing) requestAnimationFrame(frame); }
+function stepOne() { playing = false; $("play").textContent = "▶ 播放"; const target = rx.nextTick === null ? rx.t + TICK : (rx.nextSeq === null ? rx.nextTick : rx.nextTick); rx.advance(target); draw(); }
+
+function drawSweep(rows) {
+  const W = 900, H = 240, L = 46, R = 56, T = 20, B = 34, pw = W - L - R, ph = H - T - B, n = rows.length, bw = pw / n;
+  const maxC = Math.max(1, ...rows.map(r => Math.max(r.late, r.concealed))), maxD = Math.max(1, ...rows.map(r => r.avg_delay_ms));
+  const Y = v => T + (1 - v / maxC) * ph, YD = v => T + (1 - v / maxD) * ph;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="buffer 掃描"><text x="${L}" y="12">左軸：次數（late、concealed）　右軸：avg_delay_ms</text>`;
+  for (let i = 0; i <= 4; i++) { const v = maxC * i / 4; s += `<line class="gridl" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="dimt" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v.toFixed(0)}</text><text class="dimt" x="${W - R + 6}" y="${Y(v) + 4}">${(maxD * i / 4).toFixed(0)}</text>`; }
+  rows.forEach((r, i) => { const x0 = L + i * bw; s += `<rect x="${x0 + bw * 0.15}" width="${bw * 0.3}" y="${Y(r.late)}" height="${ph - (Y(r.late) - T)}" fill="var(--late)"/><rect x="${x0 + bw * 0.5}" width="${bw * 0.3}" y="${Y(r.concealed)}" height="${ph - (Y(r.concealed) - T)}" fill="var(--plc)"/><text class="dimt" x="${x0 + bw / 2}" y="${H - 14}" text-anchor="middle">${r.bufferMs}</text>`; });
+  s += `<path fill="none" stroke="var(--pkt)" stroke-width="2" d="${rows.map((r, i) => (i ? "L" : "M") + (L + i * bw + bw / 2) + "," + YD(r.avg_delay_ms)).join("")}"/>`;
+  s += `<line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><text class="dimt" x="${W - R}" y="${H - 2}" text-anchor="end">--buffer（ms）</text>`;
+  s += `<text x="${L + 10}" y="${T + 14}" fill="var(--late)">■ late</text><text x="${L + 70}" y="${T + 14}" fill="var(--plc)">■ concealed</text><text x="${L + 170}" y="${T + 14}" fill="var(--pkt)">— avg_delay_ms</text></svg>`;
+  $("sweepplot").innerHTML = s + `<p style="font-size:13px;color:var(--dim);margin:6px 0 0">報告的第 1 題就是這張圖：buffer 變大，late 單調變少、concealed 跟著降到接近 lost，但 avg_delay_ms 線性上升——你們建議的 buffer 要畫在哪裡？</p>`;
+}
+
+function init() {
+  for (const id of ["N", "jitter", "loss", "reorder", "dup", "buffer", "plc", "seed"]) $(id).oninput = reset;
+  $("speed").oninput = showParams; $("reset").onclick = reset; $("play").onclick = togglePlay; $("step").onclick = stepOne;
+  $("sweep").onclick = () => drawSweep(sweep(cfgFromUI()));
+  document.onkeydown = e => { if (["INPUT", "SELECT"].includes(e.target.tagName)) return;
+    if (e.key === " ") { e.preventDefault(); togglePlay(); } else if (e.key === "ArrowRight") { e.preventDefault(); stepOne(); } else if (e.key === "r" || e.key === "R") reset(); else if (e.key === "s" || e.key === "S") $("sweep").click(); };
+  reset();
+}
+if (typeof window !== "undefined" && window.__TEST__) { window.__JB__ = { Receiver, makeNetwork, sweep, mulberry32, init, reset, stepOne, draw, drawSweep, rx: () => rx }; } else init();
+</script>
+</body>
+</html>

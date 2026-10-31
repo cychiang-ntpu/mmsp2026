@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STFT 四步驟：切段、加窗、補零、DFT</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1f2328; --dim:#6b7280; --line:#c9ccd1; --card:#ffffff; --grid:#e3e5e8; --wave:#2457c5; --frame:#d1242f;
+          --win:#1f9d4d; --pad:#8250df; --spec:#2457c5; --rect:#e08a00; --on:#2457c5; --onfg:#ffffff; --hl:rgba(209,36,47,.18); }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --fg:#e6e8eb; --dim:#9aa3ad; --line:#3a3f46; --card:#1d2024; --grid:#2a2e34; --wave:#8ab0ff; --frame:#ff7b72;
+            --win:#3fcf73; --pad:#c297ff; --spec:#8ab0ff; --rect:#f0a63a; --on:#8ab0ff; --onfg:#10131a; --hl:rgba(255,123,114,.22); } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
+  header { padding:12px 16px 4px; }
+  h1 { margin:0 0 10px; font-size:20px; }
+  #pipe { display:flex; flex-wrap:wrap; gap:6px; align-items:stretch; }
+  .stage { flex:1 1 130px; border:2px solid var(--line); border-radius:10px; padding:6px 10px; background:var(--card); cursor:pointer; text-align:left; font:inherit; color:var(--fg); }
+  .stage b { display:block; font-size:15px; } .stage span { font-size:12.5px; color:var(--dim); }
+  .stage.on { border-color:var(--on); background:var(--on); color:var(--onfg); } .stage.on span { color:var(--onfg); opacity:.85; }
+  .stage.done { border-color:var(--on); }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:12px; padding:8px 16px 16px; }
+  @media (max-width:980px) { main { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  #explain { margin:0 0 8px; min-height:3em; }
+  .plot { overflow-x:auto; margin-bottom:6px; } svg, canvas { display:block; max-width:100%; }
+  canvas#wavec { cursor:crosshair; }
+  .axis { stroke:var(--fg); stroke-width:1.2; } .gridl { stroke:var(--grid); stroke-width:1; }
+  .wave { stroke:var(--wave); stroke-width:1.6; fill:none; } .faint { opacity:.35; }
+  .fr { stroke:var(--frame); stroke-width:1.6; fill:none; } .winl { stroke:var(--win); stroke-width:2; fill:none; stroke-dasharray:6 4; }
+  .padl { stroke:var(--pad); stroke-width:1.6; fill:none; } .specl { stroke:var(--spec); stroke-width:1.6; fill:none; } .rectl { stroke:var(--rect); stroke-width:1.2; fill:none; opacity:.7; }
+  .seam { stroke:var(--frame); stroke-width:1; stroke-dasharray:3 3; }
+  text { fill:var(--fg); font-size:12px; } .dimt { fill:var(--dim); }
+  .ctrl { display:grid; grid-template-columns:auto 1fr auto; gap:6px 10px; align-items:center; font-size:14px; }
+  .ctrl output { font-variant-numeric:tabular-nums; min-width:80px; text-align:right; }
+  input[type=range] { width:100%; accent-color:var(--on); }
+  select, button.nav { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:5px 10px; }
+  button.nav { cursor:pointer; } button.nav.primary { background:var(--on); color:var(--onfg); border-color:var(--on); } button.nav:disabled { opacity:.4; cursor:default; }
+  button.nav.sel { border-color:var(--on); box-shadow:inset 0 0 0 1px var(--on); }
+  #nav { display:flex; gap:8px; justify-content:center; align-items:center; margin-top:10px; }
+  h2 { font-size:15px; margin:0 0 6px; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:14px; } .kv div:nth-child(odd) { color:var(--dim); }
+  .legend { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:13px; color:var(--dim); margin-top:6px; }
+  .legend i { display:inline-block; width:18px; height:3px; vertical-align:middle; margin-right:4px; }
+  audio { width:100%; margin-top:6px; }
+  .note { font-size:12.5px; color:var(--dim); margin:6px 0 0; }
+</style>
+</head>
+<body>
+<noscript><p style="padding:16px;color:#b3261e">這一頁需要 JavaScript：切 frame、算 FFT、畫 spectrogram 都在瀏覽器裡做。請允許執行腳本後重新整理。</p></noscript>
+<header>
+  <h1>STFT 四步驟：切段 → 加窗 → 補零 → DFT（再排成 spectrogram）</h1>
+  <div id="pipe">
+    <button class="stage" data-s="0"><b>⓪ 整段波形</b><span>點一下選位置</span></button>
+    <button class="stage" data-s="1"><b>① 切段 framing</b><span>P 個 sample，每 M 個跳一次</span></button>
+    <button class="stage" data-s="2"><b>② 加窗 windowing</b><span>把兩端壓平</span></button>
+    <button class="stage" data-s="3"><b>③ 補零 zero padding</b><span>補到 N = 2^k</span></button>
+    <button class="stage" data-s="4"><b>④ DFT</b><span>|X[k]| 對頻率</span></button>
+    <button class="stage" data-s="5"><b>⑤ spectrogram</b><span>每個 frame 一直行</span></button>
+  </div>
+</header>
+<main>
+  <section class="card">
+    <p id="explain"></p>
+    <div class="plot"><canvas id="wavec" width="900" height="150" aria-label="整段波形"></canvas></div>
+    <div class="plot" id="plot"></div>
+    <div class="plot" id="plot2"></div>
+    <div class="plot" id="specwrap" style="display:none"><canvas id="specc" width="900" height="300" aria-label="spectrogram"></canvas></div>
+    <div class="legend" id="legend"></div>
+    <div id="nav">
+      <button class="nav" id="prev">◀ 上一步</button>
+      <span id="stepno" style="color:var(--dim)"></span>
+      <button class="nav primary" id="next">下一步 ▶</button>
+    </div>
+  </section>
+  <aside>
+    <div class="card" style="margin-bottom:12px">
+      <h2>調調看</h2>
+      <div class="ctrl">
+        <label for="pos">位置</label><input id="pos" type="range" min="0" max="1000" step="1" value="0"><output id="poso"></output>
+        <label for="P">窗長 P</label><select id="P"><option value="4">4 ms</option><option value="8">8 ms</option><option value="16">16 ms</option><option value="32" selected>32 ms</option><option value="64">64 ms</option></select><output id="Po"></output>
+        <label for="M">跳距 M</label><select id="M"><option value="5">5 ms</option><option value="10" selected>10 ms</option><option value="20">20 ms</option></select><output id="Mo"></output>
+        <label for="wt">窗函數</label><select id="wt"><option value="rect">矩形 rectangular</option><option value="hamming" selected>Hamming</option><option value="hann">Hann</option></select><output></output>
+        <label for="N">DFT 長度 N</label><select id="N"><option value="auto" selected>自動：≥ P 的最小 2^k</option></select><output id="No"></output>
+        <label for="cmap">色階</label><select id="cmap"><option value="gray">灰階</option><option value="color" selected>彩色</option></select><output></output>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="nav" data-preset="narrow">窄帶 narrow-band（32 ms）</button>
+        <button class="nav" data-preset="wide">寬帶 wide-band（4 ms）</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px"><h2>數字</h2><div class="kv" id="stats"></div></div>
+    <div class="card"><h2>聽聽看</h2>
+      <audio id="aud" controls preload="auto"></audio>
+      <p class="note" id="credit"></p>
+      <p class="note">播放時位置會跟著跑；暫停後可以再點波形或拉滑桿。鍵盤 ← → 換步驟。</p></div>
+  </aside>
+</main>
+<script src="samples.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const b64bytes = s => { const bin = atob(s), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; };
+
+// ── 1. 讀 WAV（samples.js 給的是標準 44-byte 檔頭的 PCM，但還是照 chunk 走）──
+function parseWav(bytes) {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let p = 12, fs = 16000, ch = 1, bits = 16, data = null;
+  while (p + 8 <= bytes.length) {
+    const id = String.fromCharCode(bytes[p], bytes[p + 1], bytes[p + 2], bytes[p + 3]), size = dv.getUint32(p + 4, true);
+    if (id === "fmt ") { ch = dv.getUint16(p + 10, true); fs = dv.getUint32(p + 12, true); bits = dv.getUint16(p + 22, true); }
+    else if (id === "data") data = bytes.subarray(p + 8, p + 8 + size);
+    p += 8 + size + (size & 1);
+  }
+  const n = Math.floor(data.length / (bits / 8) / ch), x = new Float32Array(n), d2 = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  for (let i = 0; i < n; i++) x[i] = bits === 16 ? d2.getInt16(i * 2 * ch, true) / 32768 : (data[i * ch] - 128) / 128;
+  return { fs, x };
+}
+
+// ── 2. 窗函數、FFT、頻譜 ──
+function makeWindow(type, P) {
+  const w = new Float64Array(P);
+  for (let n = 0; n < P; n++) {
+    const c = P > 1 ? Math.cos(2 * Math.PI * n / (P - 1)) : 1;
+    w[n] = type === "hamming" ? 0.54 - 0.46 * c : type === "hann" ? 0.5 - 0.5 * c : 1;
+  }
+  return w;
+}
+// radix-2、時間抽取、原地運算的 FFT。re/im 長度必須是 2 的次方。
+function fft(re, im) {
+  const N = re.length;
+  for (let i = 1, j = 0; i < N; i++) {                         // bit-reversal 重排
+    let bit = N >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+    if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+  }
+  for (let len = 2; len <= N; len <<= 1) {                       // 蝶形：長度 2、4、8、…、N
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < N; i += len) {
+      let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const a = i + k, b = a + len / 2, tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr;
+      }
+    }
+  }
+}
+// 一個 frame：取 P 個 sample、乘窗、補零到 N、FFT，回傳 N/2+1 個 dB 值（相對 0 dBFS）。
+function frameSpectrumDb(x, start, w, N) {
+  const re = new Float64Array(N), im = new Float64Array(N), P = w.length;
+  for (let n = 0; n < P; n++) re[n] = (x[start + n] || 0) * w[n];
+  fft(re, im);
+  const out = new Float64Array(N / 2 + 1), g = 2 / P;                       // 2/P 讓滿幅弦波 ≈ 0 dB
+  for (let k = 0; k <= N / 2; k++) out[k] = 20 * Math.log10(Math.hypot(re[k], im[k]) * g + 1e-9);
+  return out;
+}
+// 整段的 spectrogram：cols 個 frame，每個 rows = N/2+1 個 dB 值。
+function spectrogram(x, fs, seconds, P, M, wtype, N) {
+  const w = makeWindow(wtype, P), nS = Math.min(x.length, Math.floor(seconds * fs)), cols = Math.max(0, Math.floor((nS - P) / M) + 1), rows = N / 2 + 1;
+  const data = new Float32Array(cols * rows); let max = -Infinity;
+  for (let c = 0; c < cols; c++) { const s = frameSpectrumDb(x, c * M, w, N); for (let k = 0; k < rows; k++) { data[c * rows + k] = s[k]; if (s[k] > max) max = s[k]; } }
+  return { cols, rows, data, max, P, M, N };
+}
+const nextPow2 = p => { let n = 1; while (n < p) n <<= 1; return n; };
+
+// ── 3. 狀態與參數 ──
+let stage = 0, fs = 16000, x = new Float32Array(0), pos = 0, specCache = null, specKey = "";
+const SPEC_SEC = 3;
+function params() {
+  const P = Math.round(+$("P").value * fs / 1000), M = Math.round(+$("M").value * fs / 1000), wt = $("wt").value;
+  const N = $("N").value === "auto" ? nextPow2(P) : Math.max(nextPow2(P), +$("N").value);
+  return { P, M, wt, N, Pms: +$("P").value, Mms: +$("M").value };
+}
+function fillN() {
+  const sel = $("N"), cur = sel.value; sel.innerHTML = `<option value="auto">自動：≥ P 的最小 2^k</option>`;
+  for (let k = 6; k <= 13; k++) sel.innerHTML += `<option value="${1 << k}">${1 << k}（2^${k}）</option>`;
+  sel.value = cur || "auto";
+}
+
+// ── 4. 畫圖 ──
+const CMAP = [[0, 0, 0.2], [0.2, 0.1, 0.6], [0.8, 0.1, 0.4], [1, 0.6, 0.1], [1, 1, 0.8]];
+function color(v, mode) {                                   // v ∈ [0,1]
+  if (mode === "gray") { const g = Math.round(255 * (1 - v)); return [g, g, g]; }
+  const t = v * (CMAP.length - 1), i = Math.min(CMAP.length - 2, Math.floor(t)), f = t - i, a = CMAP[i], b = CMAP[i + 1];
+  return [0, 1, 2].map(j => Math.round(255 * (a[j] + (b[j] - a[j]) * f)));
+}
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+function drawWave(p) {
+  const c = $("wavec"), g = c.getContext("2d"), W = c.width, H = c.height, dur = x.length / fs;
+  g.clearRect(0, 0, W, H); g.fillStyle = css("--card"); g.fillRect(0, 0, W, H);
+  g.strokeStyle = css("--grid"); g.lineWidth = 1;
+  for (let s = 0; s <= dur; s += 0.5) { const X = s / dur * W; g.beginPath(); g.moveTo(X, 0); g.lineTo(X, H - 14); g.stroke(); }
+  g.fillStyle = css("--dim"); g.font = "11px system-ui"; g.textAlign = "center";
+  for (let s = 0; s <= dur; s += 1) g.fillText(s + " s", s / dur * W, H - 2);
+  if (stage >= 5) { g.fillStyle = css("--hl"); g.fillRect(0, 0, SPEC_SEC / dur * W, H - 14); }
+  g.strokeStyle = css("--wave"); g.lineWidth = 1; g.beginPath();              // 每個像素畫 min–max
+  const per = x.length / W, mid = (H - 14) / 2;
+  for (let i = 0; i < W; i++) { let lo = 1, hi = -1; for (let n = Math.floor(i * per); n < Math.floor((i + 1) * per); n++) { if (x[n] < lo) lo = x[n]; if (x[n] > hi) hi = x[n]; } g.moveTo(i + .5, mid - hi * mid); g.lineTo(i + .5, mid - lo * mid + .5); }
+  g.stroke();
+  if (stage >= 1) { g.fillStyle = css("--hl"); g.fillRect(pos / x.length * W, 0, Math.max(2, p.P / x.length * W), H - 14); }
+  g.strokeStyle = css("--frame"); g.lineWidth = 2; const X = pos / x.length * W; g.beginPath(); g.moveTo(X, 0); g.lineTo(X, H - 14); g.stroke();
+}
+
+function framePlot(title, series, P, N, opt) {               // series: [{cls, y: Float64Array}]，x 軸是 sample 編號 0..N-1
+  const W = 900, H = 200, L = 46, R = 12, T = 22, B = 26, pw = W - L - R, ph = H - T - B, X = n => L + n / N * pw, Y = v => T + (1 - v) / 2 * ph;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}"><text x="${L}" y="14">${title}</text>`;
+  s += `<line class="axis" x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}"/><line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/>`;
+  if (opt && opt.padFrom != null) s += `<rect x="${X(opt.padFrom)}" y="${T}" width="${X(N) - X(opt.padFrom)}" height="${ph}" fill="var(--pad)" opacity=".08"/>`;
+  for (const v of [-1, 1]) s += `<text class="dimt" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  for (const t of [0, P]) s += `<line class="seam" x1="${X(t)}" x2="${X(t)}" y1="${T}" y2="${H - B}"/><text class="dimt" x="${X(t)}" y="${H - 8}" text-anchor="middle">n=${t}</text>`;
+  if (N !== P) s += `<text class="dimt" x="${X(N)}" y="${H - 8}" text-anchor="end">N=${N}</text>`;
+  for (const { cls, y } of series) { let d = ""; for (let n = 0; n < y.length; n++) d += (n ? "L" : "M") + X(n).toFixed(1) + "," + Y(y[n]).toFixed(1); s += `<path class="${cls}" d="${d}"/>`; }
+  return s + "</svg>";
+}
+function tiledPlot(frame, win) {                             // 把 frame 連續貼三次：沒加窗時接縫處會跳，加窗後接縫是 0
+  const W = 900, H = 120, P = frame.length, L = 46, T = 18, pw = W - L - 12, ph = H - T - 20, X = n => L + n / (3 * P) * pw, Y = v => T + (1 - v) / 2 * ph;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><text x="${L}" y="12">把這一段週期性地重複三次（DFT 心裡的樣子）：接縫處跳不跳？</text>`;
+  for (const [cls, w] of [["fr faint", null], ["winl", win]]) {
+    let d = ""; for (let r = 0; r < 3; r++) for (let n = 0; n < P; n++) d += (d ? "L" : "M") + X(r * P + n).toFixed(1) + "," + Y(frame[n] * (w ? w[n] : 1)).toFixed(1);
+    s += `<path class="${cls}" style="stroke-dasharray:none" d="${d}"/>`;
+  }
+  for (const r of [1, 2]) s += `<line class="seam" x1="${X(r * P)}" x2="${X(r * P)}" y1="${T}" y2="${H - 20}"/>`;
+  return s + "</svg>";
+}
+function spectrumPlot(db, dbRect, N) {
+  const W = 900, H = 240, L = 46, R = 12, T = 22, B = 30, pw = W - L - R, ph = H - T - B, lo = -90, hi = 0;
+  const X = k => L + k / (N / 2) * pw, Y = v => T + (hi - Math.max(lo, v)) / (hi - lo) * ph;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="頻譜"><text x="${L}" y="14">|X[k]|（dB）對頻率 k·f<tspan baseline-shift="sub" font-size="9">s</tspan>/N（Hz），共 N/2+1 = ${N / 2 + 1} 個 bin</text>`;
+  for (let v = lo; v <= hi; v += 30) s += `<line class="gridl" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="dimt" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  for (let f = 0; f <= fs / 2; f += 1000) s += `<text class="dimt" x="${X(f / fs * N)}" y="${H - 10}" text-anchor="middle">${f / 1000}k</text>`;
+  s += `<line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/>`;
+  if (dbRect) { let d = ""; for (let k = 0; k < dbRect.length; k++) d += (k ? "L" : "M") + X(k).toFixed(1) + "," + Y(dbRect[k]).toFixed(1); s += `<path class="rectl" d="${d}"/>`; }
+  let d = ""; for (let k = 0; k < db.length; k++) d += (k ? "L" : "M") + X(k).toFixed(1) + "," + Y(db[k]).toFixed(1); s += `<path class="specl" d="${d}"/>`;
+  return s + "</svg>";
+}
+function drawSpec(p) {
+  const key = [p.P, p.M, p.wt, p.N].join(","), mode = $("cmap").value;
+  if (specKey !== key) { specCache = spectrogram(x, fs, SPEC_SEC, p.P, p.M, p.wt, p.N); specKey = key; }
+  const S = specCache, c = $("specc"), g = c.getContext("2d"), W = c.width, H = c.height, L = 46, B = 18, pw = W - L, ph = H - B;
+  const off = document.createElement("canvas"); off.width = S.cols; off.height = S.rows;
+  const og = off.getContext("2d"), img = og.createImageData(S.cols, S.rows), hi = S.max, lo = hi - 80;
+  for (let cI = 0; cI < S.cols; cI++) for (let k = 0; k < S.rows; k++) {
+    const v = Math.max(0, Math.min(1, (S.data[cI * S.rows + k] - lo) / (hi - lo))), [r, gg, b] = color(v, mode), o = ((S.rows - 1 - k) * S.cols + cI) * 4;
+    img.data[o] = r; img.data[o + 1] = gg; img.data[o + 2] = b; img.data[o + 3] = 255;
+  }
+  og.putImageData(img, 0, 0);
+  g.fillStyle = css("--card"); g.fillRect(0, 0, W, H); g.imageSmoothingEnabled = false;
+  const secShown = S.cols ? (S.cols - 1) * S.M / fs : SPEC_SEC;
+  g.drawImage(off, L, 0, pw * secShown / SPEC_SEC, ph);
+  g.fillStyle = css("--dim"); g.font = "11px system-ui"; g.textAlign = "right";
+  for (let f = 0; f <= fs / 2; f += 2000) g.fillText(f / 1000 + "k", L - 4, ph - f / (fs / 2) * ph + 4);
+  g.textAlign = "center"; for (let s = 0; s <= SPEC_SEC; s += 0.5) g.fillText(s + " s", L + s / SPEC_SEC * pw, H - 4);
+  const col = Math.round(pos / S.M);
+  if (col >= 0 && col < S.cols) { g.strokeStyle = css("--frame"); g.lineWidth = 2; const X = L + col * S.M / fs / SPEC_SEC * pw; g.beginPath(); g.moveTo(X, 0); g.lineTo(X, ph); g.stroke(); }
+}
+
+function render() {
+  const p = params(); pos = Math.max(0, Math.min(x.length - p.P, pos));
+  $("pos").max = Math.max(0, x.length - p.P); $("pos").value = pos; $("poso").textContent = (pos / fs).toFixed(3) + " s";
+  $("Po").textContent = p.P + " 點"; $("Mo").textContent = p.M + " 點"; $("No").textContent = p.N + " 點";
+  document.querySelectorAll(".stage").forEach(b => { const s = +b.dataset.s; b.className = "stage" + (s === stage ? " on" : s < stage ? " done" : ""); });
+  $("stepno").textContent = `${stage + 1} ／ 6`; $("prev").disabled = stage === 0; $("next").disabled = stage === 5;
+  document.querySelectorAll("[data-preset]").forEach(b => b.classList.toggle("sel", (b.dataset.preset === "narrow") === (p.Pms === 32) && p.wt === "hamming" && (p.Pms === 32 || p.Pms === 4)));
+  drawWave(p);
+  const w = makeWindow(p.wt, p.P), frame = new Float64Array(p.P); for (let n = 0; n < p.P; n++) frame[n] = x[pos + n] || 0;
+  const winf = frame.map((v, n) => v * w[n]);
+  let s1 = "", s2 = "", leg = `<span><i style="background:var(--wave)"></i>x[n] 整段</span>`;
+  if (stage === 1) { s1 = framePlot(`frame：從第 ${pos} 個 sample 起算的 P = ${p.P} 個點（${p.Pms} ms）`, [{ cls: "fr", y: frame }], p.P, p.P); leg += `<span><i style="background:var(--frame)"></i>這個 frame</span>`; }
+  if (stage === 2) {
+    s1 = framePlot(`frame × 窗 w[n]（${$("wt").options[$("wt").selectedIndex].text}）`, [{ cls: "fr faint", y: frame }, { cls: "winl", y: w }, { cls: "fr", y: winf }], p.P, p.P);
+    s2 = tiledPlot(frame, p.wt === "rect" ? null : w); leg += `<span><i style="background:var(--frame)"></i>加窗後</span><span><i style="background:var(--win)"></i>窗 w[n]</span>`;
+  }
+  if (stage === 3) { const padded = new Float64Array(p.N); padded.set(winf); s1 = framePlot(`補零：後面 ${p.N - p.P} 個 0，長度 N = ${p.N}`, [{ cls: "padl", y: padded }], p.P, p.N, { padFrom: p.P }); leg += `<span><i style="background:var(--pad)"></i>補零後的 N 點</span>`; }
+  if (stage === 4) {
+    const db = frameSpectrumDb(x, pos, w, p.N), dbR = p.wt === "rect" ? null : frameSpectrumDb(x, pos, makeWindow("rect", p.P), p.N);
+    s1 = spectrumPlot(db, dbR, p.N); leg += `<span><i style="background:var(--spec)"></i>${$("wt").options[$("wt").selectedIndex].text} 窗的 |X[k]|</span>` + (dbR ? `<span><i style="background:var(--rect)"></i>同一段改用矩形窗</span>` : "");
+  }
+  $("plot").innerHTML = s1; $("plot2").innerHTML = s2; $("specwrap").style.display = stage === 5 ? "block" : "none";
+  if (stage === 5) { drawSpec(p); leg = `<span>spectrogram：橫軸時間（前 ${SPEC_SEC} 秒）、縱軸頻率 0–${fs / 2} Hz、顏色 = dB（最亮往下 80 dB）</span><span><i style="background:var(--frame)"></i>目前的 frame</span>`; }
+  $("legend").innerHTML = leg;
+  const txt = [
+    `這是真實的錄音：五個母音「a、e、u、e、o」，f<sub>s</sub> = ${fs} Hz，共 ${x.length.toLocaleString()} 個 sample（${(x.length / fs).toFixed(2)} 秒）。聲音的頻率內容會隨時間變，所以不能對整段做一次 DFT——要<b>一小段一小段</b>看。點波形選一個位置（母音中間最好）。`,
+    `<b>切段</b>：從位置 n<sub>0</sub> = ${pos} 取 P = ${p.P} 個 sample（${p.Pms} ms）當一個 frame；下一個 frame 從 n<sub>0</sub> + M 開始（M = ${p.M} 點 = ${p.Mms} ms），frame 之間重疊 ${Math.max(0, p.P - p.M)} 點。假設：在 ${p.Pms} ms 內語音「幾乎不變」（準穩態）。`,
+    `<b>加窗</b>：硬切出來的 frame 兩端不連續。DFT 把這段當成週期訊號（下圖重複三次），接縫的跳躍會變成假的高頻、把主瓣旁邊的 side-lobe 抬高。Hamming／Hann 窗把兩端壓到接近 0，接縫就平了；代價是主瓣變寬（頻率解析度略差）。切到「矩形」再看一次對照。`,
+    `<b>補零</b>：FFT 要 2 的次方長度，P = ${p.P} 補到 N = ${p.N}。補零<b>不會增加資訊</b>——只是把同一條頻譜曲線取樣得更密（bin 間距 f<sub>s</sub>/N = ${(fs / p.N).toFixed(1)} Hz），真正的頻率解析度仍由窗長 P 決定（約 f<sub>s</sub>/P = ${(fs / p.P).toFixed(0)} Hz）。試試把 N 調大。`,
+    `<b>DFT</b>：|X[k]| 畫成 dB，橫軸 k·f<sub>s</sub>/N。${p.Pms >= 32 ? "32 ms 以上的窗看得到一根根的<b>諧波</b>（基頻的整數倍，間距就是音高）。" : "短窗（≤ 8 ms）看不到個別諧波，只剩下寬寬的<b>共振峰 formant</b>包絡——這就是母音的「形狀」。"}${p.wt !== "rect" ? "橘線是同一段改用矩形窗：主瓣較窄但 side-lobe 高，小的諧波被旁邊大的淹掉。" : "矩形窗的 side-lobe 只比主瓣低 13 dB，換成 Hamming 看看。"}`,
+    `<b>spectrogram</b>：每個 frame 的 |X[k]| 立起來當一直行，frame 往右排。頻率解析度 f<sub>s</sub>/N = ${(fs / p.N).toFixed(1)} Hz、時間解析度 M = ${p.Mms} ms。${p.Pms >= 32 ? "<b>窄帶</b>（長窗）：橫的細線是諧波，看得出音高怎麼變；時間上糊。" : p.Pms <= 8 ? "<b>寬帶</b>（短窗）：直的細條紋是一個個聲帶脈衝（間隔 = 音高週期），共振峰是粗粗的橫帶；頻率上糊。" : "中等窗長：諧波與脈衝都看得到一點、都不清楚——試試兩個預設。"}`
+  ];
+  $("explain").innerHTML = txt[stage];
+  $("stats").innerHTML = `<div>f<sub>s</sub></div><div>${fs} Hz</div><div>P（窗長）</div><div>${p.P} 點 = ${p.Pms} ms</div><div>M（跳距）</div><div>${p.M} 點 = ${p.Mms} ms</div>` +
+    `<div>重疊</div><div>${Math.max(0, p.P - p.M)} 點（${(100 * Math.max(0, p.P - p.M) / p.P).toFixed(0)}%）</div><div>N（DFT 長度）</div><div>${p.N}</div>` +
+    `<div>bin 間距 f<sub>s</sub>/N</div><div>${(fs / p.N).toFixed(2)} Hz</div><div>主瓣寬 ≈ f<sub>s</sub>/P ×${p.wt === "rect" ? 2 : 4}</div><div>${(fs / p.P * (p.wt === "rect" ? 2 : 4)).toFixed(0)} Hz</div>` +
+    `<div>每秒 frame 數</div><div>${(1000 / p.Mms).toFixed(0)}</div>` + (stage >= 5 && specCache ? `<div>spectrogram</div><div>${specCache.cols} 行 × ${specCache.rows} 列</div>` : "");
+}
+
+// ── 5. 事件 ──
+function setStage(v) { stage = Math.max(0, Math.min(5, v)); render(); }
+function setPosFromEvent(e) { const c = $("wavec"), r = c.getBoundingClientRect(); pos = Math.round((e.clientX - r.left) / r.width * x.length); render(); }
+function init() {
+  const S = (window.SAMPLES || {}).vowel; if (!S) { $("explain").textContent = "找不到 samples.js（請把它放在和這個 html 同一個資料夾）。"; return; }
+  const bytes = b64bytes(S.b64), wav = parseWav(bytes); fs = wav.fs; x = wav.x; fillN();
+  $("aud").src = "data:audio/wav;base64," + S.b64; $("credit").textContent = S.name + "：" + S.credit;
+  pos = Math.round(0.45 * fs);
+  document.querySelectorAll(".stage").forEach(b => b.onclick = () => setStage(+b.dataset.s));
+  $("prev").onclick = () => setStage(stage - 1); $("next").onclick = () => setStage(stage + 1);
+  for (const id of ["P", "M", "wt", "N", "cmap"]) $(id).oninput = render;
+  $("pos").oninput = () => { pos = +$("pos").value; render(); };
+  let drag = false; const c = $("wavec");
+  c.onpointerdown = e => { drag = true; c.setPointerCapture(e.pointerId); setPosFromEvent(e); }; c.onpointermove = e => { if (drag) setPosFromEvent(e); }; c.onpointerup = c.onpointercancel = () => { drag = false; };
+  document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => { $("P").value = b.dataset.preset === "narrow" ? "32" : "4"; $("M").value = b.dataset.preset === "narrow" ? "10" : "5"; $("wt").value = "hamming"; $("N").value = "auto"; setStage(Math.max(stage, 4)); });
+  $("aud").ontimeupdate = () => { if (!$("aud").paused) { pos = Math.round($("aud").currentTime * fs); render(); } };
+  document.onkeydown = e => { if (["INPUT", "SELECT", "AUDIO"].includes(e.target.tagName)) return;
+    if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); setStage(stage + 1); } else if (e.key === "ArrowLeft") setStage(stage - 1); };
+  render();
+}
+if (typeof window !== "undefined" && window.__TEST__) { window.__STFT__ = { fft, makeWindow, frameSpectrumDb, spectrogram, parseWav, nextPow2, init, render, setStage, state: () => ({ stage, fs, x, pos, specCache }) }; } else init();
+</script>
+</body>
+</html>

@@ -53,7 +53,8 @@ foreach ($line in $md) {
 Note ($cmds.Count -ge 30) 'commands found in commands.md' $cmds.Count
 
 Set-Location (Split-Path $repo)
-$skip = '--step|^start |chat server|chat client|^ipconfig|recv 5001|send 127\.0\.0\.1 5001|chunk_send|^--probe$|^ --probe$'
+# interactive / two-window / platform-specific commands are exercised separately (section 3) or not at all
+$skip = '--step|^start |^open |^xdg-open |chat server|chat client|^ipconfig|recv 5001|send 127\.0\.0\.1 5001|chunk_send|^--probe$|^ --probe$|voicelink(_raw)?(\.exe)? (recv|send|call) |voicelink\.py (recv|send) |udp_impair|run_mock_tests|<[^>]*IP>|^macOS'
 $expectNonZero = 'mingw32-make test|^\.\\textlink\.exe$'
 foreach ($c in $cmds) {
     if ($c -match $skip) { Write-Host "  (later / interactive) $c" -ForegroundColor DarkGray; continue }
@@ -73,11 +74,27 @@ foreach ($c in $cmds) {
     if ($c -match 'MISSISSIPPI') { $ok = $ok -and ($out -match '46') }
     if ($c -match 'wavegen') { $ok = $ok -and ($out -match 'SQNR') -and (Test-Path .\sine16.wav) }
     if ($c -match 'inspect') { $ok = $ok -and ($out -match 's16') }
+    if ($c -match 'window_demo') { $ok = $ok -and ($out -match 'Hamming') }
+    if ($c -match 'stft_demo') { $ok = $ok -and ($out -match 'FFT') }
+    if ($c -match 'jitter_sim') { $ok = $ok -and ($out -match 'concealed') }
+    if ($c -match 'spectrogram\.py') { $ok = $ok -or ($out -match 'numpy') }   # the MP5 reference needs numpy; absence is not a course failure
     Note $ok $c "exit=$code  $tail"
 }
 
-# ------------------------------------------------------------ 3. the two-window parts (we are now in python_ref)
+# ------------------------------------------------------------ 3. the two-window parts
 Write-Host '=== 3. two-window parts ===' -ForegroundColor Cyan
+if ($Week -like 'wk07*') {
+    # Team 2: baseline smoke (send -> recv over 127.0.0.1) and the python_ref acceptance suite 1-7
+    Set-Location "$repo	eam_projects	eam2_voicelinkaseline"
+    $out = (mingw32-make smoke 2>&1 | Out-String)
+    Note ($LASTEXITCODE -eq 0) 'baseline: make smoke (voicelink_raw send -> recv, PCM identical)' ((($out -split "`n") | Where-Object { $_.Trim() } | Select-Object -Last 1) -join '')
+    Set-Location "$repo	eam_projects	eam2_voicelink	ests"
+    $out = (python run_mock_tests.py 'python ..\python_refoicelink.py' 'python ..\python_refoicelink.py' "$repo\lectures\$Week\dataeueo-16kHz.wav" --port 5420 2>&1 | Out-String)
+    Note ($LASTEXITCODE -eq 0 -and $out -notmatch 'FAIL') 'python_ref: acceptance tests 1-7 through udp_impair.py' ((($out -split "`n") | Where-Object { $_ -match 'PASS|FAIL' } | Select-Object -Last 1) -join '')
+    Set-Location "$repo	eam_projects	eam2_voicelink\python_ref"
+    $out = (python voicelink.py recv 5421 probe.wav --probe --timeout 1500 2>&1 | Out-String)
+    Note ($out -match 'STATS role=recv') 'python_ref recv --probe exits by itself on timeout and prints STATS' ''
+} else {
 Note ((Get-Location).Path -like '*python_ref') 'we ended up in python_ref, as commands.md says' (Get-Location).Path
 $data = "..\..\..\lectures\$Week\data\speech_osr_8k.wav"
 
@@ -117,6 +134,7 @@ $la = ''; $lb = ''
 if (Test-Path a.log) { $la = [IO.File]::ReadAllText((Resolve-Path a.log), [Text.Encoding]::UTF8) }
 if (Test-Path b.log) { $lb = [IO.File]::ReadAllText((Resolve-Path b.log), [Text.Encoding]::UTF8) }
 Note ($la.Length -gt 50 -and $lb.Length -gt 50 -and $la -match 'TODO' ) 'C starter: chat server + client start, connect, list the unfinished TODOs, and exit cleanly' "server log $($la.Length) chars, client log $($lb.Length) chars"
+}
 
 # ------------------------------------------------------------ summary
 $bad = @($results | Where-Object { -not $_.ok })

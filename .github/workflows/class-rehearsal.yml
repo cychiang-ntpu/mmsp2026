@@ -8,7 +8,8 @@ on:
     paths:
       - "tools/ci/class_rehearsal.ps1"
       - "tools/setup/**"
-      - "lectures/wk03_0921_team1-kickoff/commands.md"
+      - "lectures/*/commands.md"
+      - "team_projects/team2_voicelink/**"
       - ".github/workflows/class-rehearsal.yml"
   workflow_dispatch:
 
@@ -19,7 +20,11 @@ jobs:
       matrix:
         # reuse-msys2：電腦上已經有 C:\msys64（只是不在 PATH）；nothing-installed：什麼都沒有，MSYS2 也要從頭裝
         pc: [reuse-msys2, nothing-installed]
-    name: rehearsal (${{ matrix.pc }})
+        week: [wk07_1019_audio-pcm, wk03_0921_team1-kickoff]
+        exclude:
+          - pc: nothing-installed
+            week: wk03_0921_team1-kickoff
+    name: rehearsal (${{ matrix.week }}, ${{ matrix.pc }})
     runs-on: windows-latest
     timeout-minutes: 30
     steps:

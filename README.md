@@ -65,7 +65,7 @@ mmsp2026/
 ## 每週講義
 
 每週上課用的講義、範例程式與回家作業都在 [lectures/](lectures/README.md)，上課前先打開當週資料夾。
-本週：[第 3 週（9/21）Huffman coding、WAV 與 PCM、分組與 Team 1 說明](lectures/wk03_0921_team1-kickoff/README.md)；上週：[第 2 週（9/14）文字表示、UTF-8、MP1 導讀、TCP 黏包](lectures/wk02_0914_text-utf8/README.md)。
+本週：[第 7 週（10/19）聲音的時頻分析（STFT、MP5）、Team 2 開題、補驗時段 1](lectures/wk07_1019_audio-pcm/README.md)；上一份講義：[第 3 週（9/21）Huffman coding、WAV 與 PCM、分組與 Team 1 說明](lectures/wk03_0921_team1-kickoff/README.md)。
 
 ## 第一堂課 checklist
 
