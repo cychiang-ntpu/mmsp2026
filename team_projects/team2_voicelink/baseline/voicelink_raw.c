@@ -336,7 +336,7 @@ static int cmd_call(int my_port, const char *peer_ip, int peer_port) {
 
     char line[16];
     if (fgets(line, sizeof(line), stdin) == NULL) { /* 等 Enter（stdin 被關掉時 fgets 立刻回傳 NULL，也算結束） */
-        line[0] = ' ';
+        line[0] = 0;
     }
 
     c.running = 0;
