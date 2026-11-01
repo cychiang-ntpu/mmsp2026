@@ -11,6 +11,7 @@
 | 5 | buffer 掃描至少 3 個點、CSV 已 commit | repo |
 | 6 | live 通話 30 秒、兩種 PLC 都試過 | 助教現場聽 |
 | 7 | `docs/interface.md` 與規格一致 | repo |
+| 8 | `--codec mulaw`：你們 send → 參考 recv，SQNR ≥ 30 dB、bytes 減半 | STATS 與 `run_mock_tests.py` 測試 8 |
 
 常見格式錯誤的症狀：`--probe` 看到 seq 一直跳 2 → 送端 seq 從 1 開始或加兩次；每一拍都 conceal → ts 單位錯（要是 sample 數，每包 +320）或 buffer 沒累積就開始播；輸出比輸入長 640 的倍數 → 沒用 BYE 的 ts 截長度。
 

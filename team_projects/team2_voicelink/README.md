@@ -1,7 +1,7 @@
 # Team 2｜VoiceLink：即時語音管線（UDP、20 ms framing、jitter buffer、遺失補償）
 
 - 期間：10/19－11/23｜繳交截止：**11/22（日）18:00**｜評測：11/23（三節課內）
-- 2026/11/1 公告：11/9、11/16 老師出國停課，截止與評測各順延兩週（原 11/8／11/9）
+- 2026/11/1 公告：11/9、11/16 老師出國改為進度討論會，截止與評測各順延兩週（原 11/8／11/9）；**同時新增功能 4「語音壓縮（μ-law）」**，見下
 - 團隊 repo 必備：`src/`、`include/`、`tests/`、建置檔、`README.md`、
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
 - 繳交：登錄 repo URL＋完整 commit SHA
@@ -39,6 +39,13 @@ Team 1 用 TCP：掉一個封包，TCP 會重傳，後面的資料全部排隊�
 
 - 每次執行都要印 STATS（格式固定，見下）。報告要分析：**buffer 大小 vs 補償次數 vs 延遲**（見「量測與報告」）。
 
+### 功能 4｜語音壓縮：μ-law（必做）、ADPCM（加分）（11/1 新增）
+
+- `--codec mulaw`：送端把每個 16-bit sample 用 **G.711 μ-law** 壓成 8 bits（一包 **320 bytes**，位元率 128 kb/s → 一半），收端解回 16-bit 再播。第 9 週 2.2 講過的公式；用查表或分段折線都可以，但**編碼端與解碼端要用同一條曲線**。
+- 收到的 WAV 不會逐 byte 相同（有失真），驗收改看 **SQNR**：用老師的語音檔，mock 模式沒有搗蛋時，輸出對原檔的 SQNR ≥ 30 dB（第 9 週 `mulaw_demo.py` 實測約 36–38 dB）。
+- PLC 在**解碼之後**的 16-bit 上做（repeat 重複的是解碼後的 frame），所以 PLC 的程式不用改。
+- 加分：`--codec adpcm`：4-bit DPCM／ADPCM（一包 160 bytes、64 kb/s），第 9 週 2.3 的做法；SQNR ≥ 20 dB 即可。報告要比較三種 codec 的位元率、SQNR、以及掉包時 PLC 的效果（ADPCM 掉一包後要怎麼重新同步預測器？）。
+
 ## 固定的部分（各組一律相同，評測會照這個跑）
 
 ### 音訊格式
@@ -54,11 +61,11 @@ Team 1 用 TCP：掉一個封包，TCP 會重傳，後面的資料全部排隊�
 ### 命令列介面
 
 ```
-voicelink send <ip> <port> <in.wav> [--burst]
+voicelink send <ip> <port> <in.wav> [--burst] [--codec pcm|mulaw|adpcm]
     mock：讀 WAV 照 20 ms 節奏送（--burst 一口氣全送，用來看 buffer 的用處）
 voicelink recv <port> <out.wav> [--bind <ip>] [--buffer <ms>] [--plc zero|repeat] [--timeout <ms>]
     mock：收、排序、補償，寫成 WAV，結束印 STATS
-voicelink call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero|repeat]
+voicelink call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero|repeat] [--codec pcm|mulaw|adpcm]
     live：雙向通話，按 Enter 結束，結束印 STATS
 voicelink devices
     列出麥克風與喇叭
@@ -69,6 +76,7 @@ voicelink devices
 | `--buffer <ms>` | 60 | jitter buffer 的目標延遲（必須是 20 的倍數；60＝先存 3 個 frame 再開始播）|
 | `--plc zero\|repeat` | repeat | 遺失補償：補 320 個 0，或重複上一個收到的 frame |
 | `--timeout <ms>` | 2000 | recv：這麼久沒有任何封包就當作結束（**不可以永久等待**）|
+| `--codec pcm\|mulaw\|adpcm` | pcm | send／call：每包的 PCM 怎麼編（pcm = 16-bit 原樣 640 bytes；mulaw = 320 bytes；adpcm = 160 bytes）；recv 由封包的 `type` 自動判斷，不用參數 |
 | `--bind <ip>` | 0.0.0.0 | recv 綁哪個介面 |
 
 結束碼：0 正常；1 網路或裝置錯誤；2 參數或檔案格式錯誤。
@@ -81,18 +89,20 @@ voicelink devices
 ```
 offset  長度  欄位
  0      1     magic    = 0x56（'V'）
- 1      1     type     = 0x01 AUDIO、0x02 BYE（結束，沒有 PCM）
+ 1      1     type     = 0x01 AUDIO（16-bit PCM，640 bytes）、0x02 BYE（結束，沒有 PCM）、
+                         0x04 AUDIO_MULAW（320 bytes，每 sample 1 byte）、0x05 AUDIO_ADPCM（160 bytes，每 sample 4 bits，加分）
  2      2     seq      每送一包 +1，從 0 開始；2^16 後繞回 0
  4      4     ts       timestamp，單位 sample：第 k 個 frame 是 320·k
  8      4     ssrc     本次串流的隨機識別碼；同一次執行固定。收到不同 ssrc 就重置 buffer
-12      640   PCM      320 個 16-bit little-endian sample（只有 AUDIO 有）
+12      640   PCM      320 個 16-bit little-endian sample（type 0x01）；type 0x04 是 320 bytes 的 μ-law；0x05 是 160 bytes（高 4 bits 先）
 ```
 
 - `seq` 用來偵測**遺失、亂序、重複**；`ts` 用來決定**什麼時候播**。兩者分開存，因為真實系統裡一包未必剛好一個 frame（例如靜音壓縮）。
 - 最後一包之後送 3 次 BYE（UDP 可能掉），接收端收到 BYE 或逾時都要能正常結束。
 - **BYE 的 `ts` = 整個檔案真正的 sample 總數**（最後一包補的 0 不算）：接收端用它把輸出截到正確長度，所以沒有搗蛋時輸出能和輸入逐 byte 相同；BYE 全掉了就會多幾個 0（可接受）。BYE 的 `seq` 接在最後一個 AUDIO 之後繼續 +1。
 - **逾時結束時**（沒收到 BYE）：最後一個真正收到的 frame 之後，播放時鐘在等待期間補的那些 frame 不算、不寫進 WAV（否則 `--timeout 2000` 會憑空多出 100 個靜音 frame）。
-- header 不合法（magic 不對、長度不是 12 或 652）的封包直接丟掉並計數，**不可以當掉**。
+- header 不合法（magic 不對、長度和 type 不符：0x01 要 652、0x04 要 332、0x05 要 172、BYE 要 12）的封包直接丟掉並計數，**不可以當掉**。
+- 同一次串流的 codec 不會換；收端以收到的第一個合法 AUDIO 封包的 type 為準，之後 type 不同的封包當壞封包。
 
 ### jitter buffer 與播放時鐘
 
@@ -107,11 +117,12 @@ offset  長度  欄位
 程式結束時印**一行**到 stderr（評測用正規表示式抓，欄位順序與名稱不可改）：
 
 ```
-STATS role=recv buffer_ms=60 plc=repeat frames_out=1678 received=1601 lost=77 late=3 dup=0 reordered=12 overflow=0 concealed=80 avg_delay_ms=58.3 max_delay_ms=112.0
+STATS role=recv buffer_ms=60 plc=repeat codec=mulaw frames_out=1678 received=1601 lost=77 late=3 dup=0 reordered=12 overflow=0 concealed=80 avg_delay_ms=58.3 max_delay_ms=112.0
 ```
 
 | 欄位 | 意義 |
 |---|---|
+| `codec` | pcm／mulaw／adpcm（收端依封包 type；一個都沒收到時印 pcm）|
 | `frames_out` | 交給喇叭／寫進 WAV 的 frame 數（含補償的）|
 | `received` | 收到的合法 AUDIO 封包數（含重複、遲到）|
 | `lost` | 從 seq 判斷沒收到的包數（亂序後仍沒到的才算）|
@@ -119,7 +130,7 @@ STATS role=recv buffer_ms=60 plc=repeat frames_out=1678 received=1601 lost=77 la
 | `concealed` | PLC 補的 frame 數（= 播放時 buffer 沒有那個 seq 的次數）|
 | `avg_delay_ms`、`max_delay_ms` | 封包「到達」到「被播放」的時間差的平均與最大值（只算真的播出去的包）|
 
-`send` 也印一行：`STATS role=send frames=1678 bytes=1094056 duration_ms=33560 pace=20`。
+`send` 也印一行：`STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20`（`bytes` 是送上線的 UDP payload 總和，mulaw 時約一半）。
 
 ## 遺失補償（PLC）的要求
 
@@ -136,6 +147,7 @@ STATS role=recv buffer_ms=60 plc=repeat frames_out=1678 received=1601 lost=77 la
 2. 這組抖動參數下你們建議的 buffer 是多少 ms？理由？
 3. `--burst` 送（沒有 20 ms 的間隔）時 buffer 會發生什麼事？`overflow` 怎麼變？這說明了為什麼送端也要照時間送。
 4. live 模式從講話到對方聽到大概多久（自己想一個量法，例如拍手、或兩台電腦對著同一支錄音）？延遲由哪些部分組成？
+5. pcm 與 mulaw（有做 adpcm 的加上 adpcm）：位元率、SQNR、掉包 5% 時聽起來的差別；用耳朵和數字各說一次。
 
 ## 最低驗收
 
@@ -151,6 +163,7 @@ STATS role=recv buffer_ms=60 plc=repeat frames_out=1678 received=1601 lost=77 la
 7. STATS 一行的格式與欄位正確，數字彼此一致（`frames_out = 收到且播出的 frame 數 + concealed`）。
 8. live：兩台電腦戴耳機通話 30 秒，聽得懂；當場把 `--plc` 換成 zero 再試。
 9. buffer 掃描圖（至少 5 個點、每點 3 次）與報告四題。
+10. **μ-law**：`send --codec mulaw` → recv，沒有搗蛋：輸出 WAV 對原檔的 SQNR ≥ 30 dB、長度相同、`send` 的 `bytes` 約為 pcm 的一半；經過 `--loss 0.05` 仍能正常結束、`concealed ≈ lost`。（加分：adpcm SQNR ≥ 20 dB。）
 
 ## 跨機器測試須知
 

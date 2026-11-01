@@ -16,7 +16,7 @@
 3. 解釋預測編碼（DPCM／ADPCM）：語音相鄰 sample 很像，只送殘差；prediction gain 與省下的 bits。
 4. 說出 source–filter 模型與 LPC／CELP 的概念：為什麼語音 codec 都以 20 ms 為 frame（和 Team 2 的 framing 一樣）。
 5. 說出 MP3／AAC 這類感知編碼的三個要素：轉換（MDCT）、心理聲學（遮蔽）、位元分配。
-6. 把 Team 2 的 PLC（zero／repeat）放到真實 codec 的做法（pitch 重複、衰減、FEC）裡定位，知道加分項怎麼做。
+6. 說出 Team 2 的四個核心：為什麼 UDP、封包格式（seq／ts／ssrc）、jitter buffer 與播放時鐘、PLC（zero／repeat）——這些 10/19 沒講到，今天第三節補上。
 
 ## 時程
 
@@ -24,7 +24,7 @@
 |---|---|---|---|
 | 1 | 13:10–14:00 | **期中考**：50 分鐘閉卷，範圍 MP1–MP5 與 Team 1 | 範例：[midterm_sample.md](midterm_sample.md) |
 | 2 | 14:10–15:00 | **語音編碼（上）**：位元率與封包開銷、μ-law 壓伸、預測編碼 DPCM／ADPCM | [examples/mulaw_demo.py](examples/mulaw_demo.py)、[examples/dpcm_demo.py](examples/dpcm_demo.py) |
-| 3 | 15:10–16:00 | **語音編碼（下）**：source–filter 與 LPC／CELP（為什麼 20 ms）、感知編碼（MP3／AAC）概觀、真實 codec 的 PLC 與 Team 2 的加分項；Team 2 問答 | [Team 2 規格](../../team_projects/team2_voicelink/README.md)、[第 7 週 2.3–2.4](../wk07_1019_audio-pcm/README.md#23-抖動jitter-buffer-與播放時鐘12-分鐘) |
+| 3 | 15:10–16:00 | **Team 2 的核心（10/19 沒講到的部分）**：為什麼 UDP、封包格式、jitter buffer 與播放時鐘、PLC、新功能 4（μ-law）、兩週討論會與評測怎麼跑 | [Team 2 規格](../../team_projects/team2_voicelink/README.md)、[jitter_buffer.html](../wk07_1019_audio-pcm/slides/jitter_buffer.html)、[jitter_sim.py](../wk07_1019_audio-pcm/examples/jitter_sim.py) |
 
 Team 2 的實作工作坊（聽掉封包、對手端驗格式、自動驗收、buffer 掃描、live 通話）放在 [lab.md](lab.md)，由助教帶、各組自己跑；今天第三節最後 10 分鐘講怎麼用。
 
@@ -80,7 +80,7 @@ G.711 把這條曲線用 8 段折線近似（每段 16 階），所以可以用�
 
 線性 8-bit 每小 10 dB 就掉 10 dB；μ-law 在 40 dB 的音量範圍內只掉 11 dB。代價：滿刻度弦波時 μ-law（36 dB）比線性 8-bit（48 dB）差——它把「大聲時的精準」換成「小聲時還能聽」。
 
-**和 Team 2 的關係**：規格固定 16-bit PCM，不要求做 μ-law；但如果你們想把位元率減半（640 → 320 bytes 一包），μ-law 是最簡單的加分項：編碼一個查表、解碼一個查表，PLC 完全不用改。
+**和 Team 2 的關係**：11/1 起規格新增**功能 4：`--codec mulaw` 必做**（封包 type 0x04、一包 320 bytes、位元率減半，驗收第 10 項看 SQNR ≥ 30 dB）；ADPCM 是加分。做法就是今天這一節：編碼一個查表（或這條公式）、解碼反過來；PLC 在解碼後的 16-bit 上做，完全不用改。
 
 ### 2.3 預測編碼：DPCM／ADPCM，只送「和上一個差多少」（22 分鐘）
 
@@ -115,55 +115,113 @@ DPCM 最重要的一個細節（程式裡有註解）：**編碼端的預測器�
 
 ---
 
-## 第三節｜語音編碼（下）：送參數、送感知得到的，與 Team 2 的 PLC
+## 第三節｜Team 2 的核心：不等、會掉、要補（10/19 沒講到的部分）
 
-### 3.1 source–filter 模型與 LPC／CELP：為什麼語音 codec 都是 20 ms（15 分鐘）
+> 第 7 週講義第二節（2.1–2.6）有完整版；今天把實作必須知道的四件事講完，剩下的課後讀。
 
-第 7 週 1.3 講過：語音 = **聲源**（聲帶振動的脈衝串，週期 1/F₀；或氣音的雜訊）經過**聲道**（口腔、鼻腔這根會變形的管子）濾波。數學上聲道就是一個 p 階的全極點濾波器，係數 a_k 由 20–30 ms 的 frame 用最小平方法算出來（**LPC**，linear predictive coding，p ≈ 10–16）——和 2.3 的 p 階預測器是同一件事。
+### 3.1 為什麼不用 TCP（5 分鐘）
 
-所以可以**不送波形，送參數**：每 20 ms 送一組 a_k（10 個數）＋ F₀ ＋ 增益 ＋ 有聲／無聲，解碼端自己合成。1980 年代的 LPC-10 只要 2.4 kb/s，但聽起來像機器人；**CELP**（GSM、AMR、Opus 的 SILK 模式）改成「聲源用一本 codebook 裡的雜訊向量，挑一個合成出來最像原音的」——codebook 搜尋就是 Team 1 的 codebook 概念反過來用：兩邊事先約定同一本，只送索引。
-
-**為什麼 20 ms**：LPC 假設 frame 內聲道形狀不變（準週期，1.3 節）；太短（< 10 ms）係數估不準、開銷大，太長（> 40 ms）聲道已經在變。Team 2 的 320 samples = 20 ms 不是隨便挑的：**它就是語音 codec 的自然單位**，Opus、AMR、G.729 都用 20 ms（或它的倍數／分數）。掉一包＝掉一個 LPC frame，接收端有上一組參數可以「延續」——這是真實 PLC 比 `repeat` 好的原因。
-
-### 3.2 感知編碼：MP3／AAC 概觀（12 分鐘）
-
-音樂不能用 LPC（沒有單一聲道模型），走另一條路：**不送人耳聽不到的部分**。
-
-| 要素 | 做什麼 | 課程裡對應的東西 |
+| | TCP（Team 1） | UDP（Team 2） |
 |---|---|---|
-| 轉換 | 每 frame（MP3：1152 sample，約 26 ms）做 MDCT，得到幾百個頻帶的係數 | 第 7 週的 STFT；MDCT 是重疊 50%、可以完美重建的版本 |
-| 心理聲學模型 | 算每個頻帶的**遮蔽門檻**：大聲的成分旁邊、之後幾十 ms 內，比門檻小的聲音人耳聽不到（第 7 週 1.2 的等響曲線是最簡單的門檻） | — |
-| 位元分配與量化 | 每個頻帶依「門檻以上有多少」決定量化階距：聽不到的粗、聽得到的細；量化雜訊被藏在遮蔽門檻之下 | 第 3 週的量化，但階距每個頻帶、每個 frame 不同 |
-| 熵編碼 | 量化後的係數用 Huffman（MP3 有 32 張表） | MP4、Team 1 |
-| 位元率 | MP3 128 kb/s ≈ 0.09；AAC 同品質更低；Opus 音樂 64 kb/s | — |
+| 掉包 | 重傳，後面的**全部等** | 掉了就掉，**從不等** |
+| 邊界 | byte stream，要自己加長度前綴 | 一個 `sendto` 就是一個封包 |
+| 順序 | 保證 | 不保證，可能亂序、重複 |
 
-這是**有失真**壓縮：失真發生在量化（第 3 週 1.1 說的），但量化雜訊的「形狀」被心理聲學模型控制，讓它聽不見。
+語音每 20 ms 一包：掉一包少 20 ms 的聲音，補一下幾乎聽不出；等重傳一次 RTT（50–200 ms）後面全部延後，而且延遲會累積。**即時媒體寧可掉，不要等**——這是整個 Team 2 的設計原則。
 
-### 3.3 真實 codec 的 PLC、FEC、DTX：Team 2 的加分項從哪裡來（13 分鐘）
+### 3.2 封包格式：seq、ts、ssrc 各回答一個問題（8 分鐘）
+
+20 ms = 320 samples = 640 bytes（16-bit PCM），加 12 bytes header：
+
+```
+magic 'V' | type | seq(2) | ts(4) | ssrc(4) | 640 bytes PCM        多 byte 欄位 big-endian
+```
+
+| 欄位 | 回答的問題 | 用途 |
+|---|---|---|
+| `seq`（每包 +1，16-bit 會繞回） | 有沒有**掉**、**亂序**、**重複** | 偵測與計數 |
+| `ts`（單位 sample，每包 +320） | 這包**什麼時候該播** | 對齊播放時鐘 |
+| `ssrc`（隨機） | 這是**哪一次**的串流 | 對方重啟就重置 |
+
+這是 RTP（RFC 3550）的精簡版。`type` 今天多了 0x04 μ-law（320 bytes）、0x05 ADPCM（160 bytes）——功能 4，見 3.5。
+
+### 3.3 jitter buffer 與播放時鐘（15 分鐘）
+
+送端每 20 ms 一包；網路送到的時間不規則：有快有慢（**jitter**）、不見（**loss**）、超車（**reorder**）、兩份（**dup**）。喇叭卻**必須**每 20 ms 拿到一個 frame，否則卡住。
+
+```
+到達（不規則）──▶ [ jitter buffer：依 seq 排序 ] ──▶ 每 20 ms 拿「下一個 seq」──▶ 喇叭
+                                                       │ 沒有？→ PLC 補一個（concealed）
+                                                       │ 來晚了？→ 丟（late）
+```
+
+規則（規格「jitter buffer 與播放時鐘」）：
+1. 播放時鐘**自己走**，每 20 ms 一拍，不等網路。
+2. 先存到 `--buffer` ms（預設 60 = 3 個 frame）才開始播。
+3. 每一拍：buffer 裡有「下一個該播的 seq」→ 播；沒有 → **PLC 補一個**（計 `concealed`）；**seq 一定前進**。
+4. 遲到的（它的拍子已經過了）→ 丟（`late`）；重複 → 丟（`dup`）；亂序但來得及 → 排回正確位置（`reordered`）。
+5. buffer 有上限（建議 4 倍），滿了丟最舊（`overflow`）。
+
+打開 [jitter_buffer.html](../wk07_1019_audio-pcm/slides/jitter_buffer.html)：拉 jitter 30 ms、loss 5%，看封包飛、buffer 排隊、時鐘一拍一拍走；把 buffer 從 0 拉到 200 看 `late`／`concealed` 下降、延遲上升；按「sweep」畫曲線。離線版：
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `python3 ../wk07_1019_audio-pcm/examples/jitter_sim.py --jitter 30 --loss 0.05` | `python ..\wk07_1019_audio-pcm\examples\jitter_sim.py --jitter 30 --loss 0.05` |
+
+預設參數的結果：buffer 0 ms 時 late 288、concealed 513；40 ms 時 13／77；**60 ms 起 late = 0、concealed = 64 = 真正遺失的數目**，之後每多 20 ms 只是延遲多 20 ms。
+
+**取捨**：buffer 越大越少 late／concealed，但延遲越高；G.114 說單向 150 ms 以內通話品質好。報告第 2 題「建議多少 ms」就是依量到的抖動選一個值。
+
+### 3.4 PLC：封包掉了，喇叭不能停（7 分鐘）
+
+**PLC = packet loss concealment（遺失補償）**：第 3 步「沒有就補一個」補的那個 frame 怎麼做。規格要求兩種都做：
+
+| 方法 | 做法 | 聽起來 | 問題 |
+|---|---|---|---|
+| `zero` | 補 320 個 0 | 「喀」一聲斷音 | 波形突然跳到 0 → click |
+| `repeat` | 重複上一個播出去的 frame | 單掉一包幾乎聽不出 | 連續掉好幾包 → 同一個 20 ms 一直重複，「嗡」的機械音 |
+
+注意 repeat 重複的是「**收端手上已經有的**」東西（上一個播出去的 frame），這和 2.3 DPCM「預測器要用解碼端重建的值」是同一個道理。
+真的 codec（G.711 Appendix I、Opus）是重複**上一個 pitch 週期**並逐包衰減、接縫做 2 ms 淡入淡出——第 7 週 1.3 的 F₀ 就用在這裡；規格的加分項「衰減」「淡入淡出」就是這兩個。更進階的 FEC（下一包帶上一包的低品質版）、DTX／CNG（沒人講話不送）、自適應 buffer（WebRTC NetEQ）見第 7 週 2.4 與本講義課後讀的 3.6。
+
+### 3.5 新功能 4：μ-law 壓縮（必做）、ADPCM（加分）（10 分鐘）
+
+今天第二節剛教完，直接用：`--codec mulaw` 把每個 sample 16-bit → 8-bit（2.2 的公式或查表），一包 320 bytes、位元率減半，封包 `type` = 0x04；收端解回 16-bit 再進 jitter buffer，**PLC 不用改**。驗收第 10 項：沒有搗蛋時輸出對原檔 SQNR ≥ 30 dB（今天 `mulaw_demo.py` 實測 36–38 dB）、`bytes` 減半。
+ADPCM（2.3 的做法，4 bits、160 bytes、type 0x05）是加分：每個 frame 獨立編碼，掉一包預測器才不會失步——報告第 5 題要討論。
+對手端 `python_ref/voicelink.py send --codec mulaw` 已支援，先拿它確認你們的解碼對不對。
+
+### 3.6 接下來三週怎麼跑（5 分鐘）
+
+- **11/9 進度討論會 ①**（助教主持）：各組 4 分鐘進度報告、組間**格式互測**（收端開 `--probe`）、問題診所。交進度報告 ①（11/15）。
+- **11/16 進度討論會 ②**：自動驗收互測（`run_mock_tests.py` 四種組合）、live 預演、buffer 掃描當場畫圖。交進度報告 ②＋小成品（11/22 與 SHA 一起）。
+- **11/22（日）18:00 截止；11/23 評測**：mock 用老師的 WAV 跑 `run_mock_tests.py` 兩個方向、live 用熱點；評測前老師先回答兩次討論會收集的問題。
+- 工作坊的指令與簽核表在 [lab.md](lab.md)；今天回家先把 lab.md 的 2.1「聽掉封包」跑一次。
+
+課後讀（原本第三節的內容，期末會用到）：第 7 週 2.5–2.6（baseline 導覽）、以及下面的「延伸：LPC／CELP 與感知編碼」。
+
+---
+
+## 延伸閱讀：送參數、送感知得到的（課後讀）
+
+### source–filter 模型與 LPC／CELP：為什麼語音 codec 都是 20 ms
+
+第 7 週 1.3 講過：語音 = **聲源**（聲帶振動的脈衝串，週期 1/F₀；或氣音的雜訊）經過**聲道**（會變形的管子）濾波。聲道是一個 p 階的全極點濾波器，係數 a_k 由 20–30 ms 的 frame 算出（**LPC**，p ≈ 10–16）——和 2.3 的 p 階預測器是同一件事。
+所以可以**不送波形，送參數**：每 20 ms 送一組 a_k＋F₀＋增益＋有聲／無聲，解碼端自己合成（LPC-10：2.4 kb/s，像機器人）。**CELP**（GSM、AMR、Opus 的 SILK）改成「聲源從一本 codebook 挑一個合成出來最像原音的向量」，只送索引。
+**為什麼 20 ms**：LPC 假設 frame 內聲道不變；太短係數估不準、開銷大，太長聲道已經在變。Team 2 的 320 samples 就是語音 codec 的自然單位。
+
+### 感知編碼：MP3／AAC 概觀
+
+音樂沒有單一聲道模型，走另一條路：**不送人耳聽不到的部分**。每 frame（MP3：1152 sample）做 MDCT → 心理聲學模型算每個頻帶的**遮蔽門檻** → 門檻以下的粗量化、以上的細量化（雜訊藏在門檻下）→ Huffman。MP3 128 kb/s ≈ 壓縮率 0.09；是有失真壓縮，失真在量化但被遮蔽。
+
+### 真實 codec 的 PLC、FEC、DTX
 
 | 技術 | 做法 | Team 2 對應 |
 |---|---|---|
-| **PLC：pitch 重複**（G.711 Appendix I） | 掉包時不是重複整個 20 ms，而是重複**上一個 pitch 週期**（用 1.3 的自相關找 T₀），波形連續；連續掉包時每包**衰減**（×0.5–0.8），4 包後靜音 | `repeat` 的升級版；規格加分項「衰減」就是這裡 |
-| **接縫平滑** | 補上去的 frame 和前後真實 frame 之間做 2–4 ms 的淡入淡出（cross-fade），避免 click | 加分項「2 ms 淡入淡出」 |
-| **FEC（前向錯誤更正）**（Opus in-band FEC） | 每包順便帶**上一包的低品質版本**：掉一包，下一包到了就能補回大致的內容 | 要多 20 ms 延遲（等下一包）；位元率多 20–30%；可以當進階加分 |
-| **DTX／CNG**（不連續傳輸、舒適雜訊） | 沒人講話時不送包（只送很少的背景雜訊參數），接收端自己合成輕微的雜訊，否則對方以為斷線 | 你們的 recv 遇到沒有封包 = 逾時結束；真實系統要分「靜音」和「斷線」 |
-| **jitter buffer 自適應**（WebRTC NetEQ） | buffer 大小隨量到的抖動自動調，太多 late 就放大、一直沒 late 就縮小；調整時用時間伸縮（加速／放慢播放）而不是跳 | 規格的 `--buffer` 是固定的；報告第 2 題「建議多少 ms」就是在手動做這件事 |
-
-**把今天的方法放回 Team 2 的管線**：
-
-```
-麥克風 → [μ-law／ADPCM／CELP：source coding，壓到 8–64 kb/s] → 20 ms 封包（seq、ts）→ UDP
-      ← [PLC：補；FEC：用冗餘救] ← jitter buffer ← 收
-```
-
-你們做的是中間沒有 codec 的版本（PCM 直傳）；codec 放進去之後 header、seq／ts、buffer、PLC 的位置都不變——這就是第 3 週 1.1 說的 source coding 和 channel／transport 可以分開設計。
-
-### 3.4 Team 2 問答與接下來兩週的安排（10 分鐘）
-
-- 規格的問題現場問；評測流程見 [lab.md](lab.md) 的簽核表（mock 用 `run_mock_tests.py`、live 用熱點）。
-- **11/9、11/16 老師出國**，兩週改為**助教主持的 Team 2 進度討論會**：[11/9 ①](../wk10_1109_team2-progress1/README.md)（格式互測、問題診所）、[11/16 ②](../wk11_1116_team2-progress2/README.md)（自動驗收互測、量測、live 預演），各交一頁進度報告，11/16 加一個小成品。Team 2 截止改為 **11/22（日）18:00**、評測 **11/23**；Team 3 11/23 開題、評測 12/14；期末上機考 12/21 不變。
-
----
+| PLC：pitch 重複（G.711 App. I） | 重複上一個 pitch 週期、每包衰減、4 包後靜音 | `repeat` 的升級版；加分項「衰減」 |
+| 接縫平滑 | 補的 frame 與前後做 2–4 ms cross-fade | 加分項「淡入淡出」 |
+| FEC（Opus in-band） | 每包帶上一包的低品質版 | 多 20 ms 延遲、位元率多 20–30% |
+| DTX／CNG | 沒人講話不送，收端合成輕微雜訊 | 「靜音」與「斷線」要分開 |
+| 自適應 jitter buffer（WebRTC NetEQ） | buffer 隨量到的抖動自動調 | 報告第 2 題是手動版 |
 
 ## 範例程式（examples/）
 
@@ -171,14 +229,15 @@ DPCM 最重要的一個細節（程式裡有註解）：**編碼端的預測器�
 |---|---|---|
 | [examples/mulaw_demo.py](examples/mulaw_demo.py) | μ-law 8-bit 與線性 8-bit 在不同音量下的 SQNR（2.2） | `python3 mulaw_demo.py [檔案.wav]` |
 | [examples/dpcm_demo.py](examples/dpcm_demo.py) | 1、2 階預測的 prediction gain 與熵；4-bit DPCM 的 SQNR（2.3） | `python3 dpcm_demo.py 檔案.wav` |
-| [lab.md](lab.md) | Team 2 實作工作坊（助教帶） | — |
+| [../wk07_1019_audio-pcm/slides/jitter_buffer.html](../wk07_1019_audio-pcm/slides/jitter_buffer.html)、[../wk07_1019_audio-pcm/examples/jitter_sim.py](../wk07_1019_audio-pcm/examples/jitter_sim.py) | jitter buffer 的動畫與離線模擬（3.3） | 瀏覽器開啟；`python3 jitter_sim.py --jitter 30 --loss 0.05` |
+| [lab.md](lab.md) | Team 2 實作工作坊（11/9、11/16 討論會與自己互測用） | — |
 
 只用標準函式庫。
 
 ## 回家作業／下週前要做的事
 
 1. **Team 2**：照 [lab.md](lab.md) 的簽核表把驗收 0–7 跑過；**11/22（日）18:00** 登錄 SHA。
-2. 想一想（口試會問）：如果把 μ-law 加進你們的管線，封包格式哪裡要改？PLC 要不要改？位元率變多少？
+2. **Team 2 新增功能 4（μ-law，必做）**：封包 type 0x04、320 bytes；先用 `mulaw_demo.py` 的公式做出來，用 `python_ref/voicelink.py send --codec mulaw` 當對手端確認 SQNR ≥ 30 dB。
 3. 11/9、11/16 Team 2 進度討論會 ①②（見各週講義）；11/23 評測（mock 用 `run_mock_tests.py` 加老師的 WAV、live 用熱點）。
 
 ## 參考
