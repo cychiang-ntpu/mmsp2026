@@ -24,5 +24,5 @@
 - [x] 音訊／UDP wrapper：[team_projects/team2_voicelink/baseline/wrapper/](../team_projects/team2_voicelink/baseline/wrapper/)
 - [x] Team 2 mock 模式自動驗收：[team_projects/team2_voicelink/tests/run_mock_tests.py](../team_projects/team2_voicelink/tests/run_mock_tests.py)
 - [x] 測試素材：[lectures/wk07_1019_audio-pcm/data/](../lectures/wk07_1019_audio-pcm/data/)（16 kHz WAV）、[lectures/wk03_0921_team1-kickoff/data/](../lectures/wk03_0921_team1-kickoff/data/)（8 kHz WAV、BMP）
-- [ ] camera／JPEG／display wrapper、JPEG 序列與測試軌跡（Team 3，11/30 開題時放入）
+- [ ] camera／JPEG／display wrapper、JPEG 序列與測試軌跡（Team 3，11/23 開題時放入）
 - [ ] mock transport（期末上機考）
