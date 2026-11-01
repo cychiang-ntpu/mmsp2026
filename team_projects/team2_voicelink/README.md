@@ -173,8 +173,8 @@ STATS role=recv buffer_ms=60 plc=repeat frames_out=1678 received=1601 lost=77 la
 | 1 | 10/19–10/25 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；定封包格式與 `docs/interface.md`；**兩台電腦 UDP 互通**。（10/23 是 MP1–MP5 截止，請先排好時間）|
 | 2 | 10/26–11/1（10/26 停課） | header、seq／ts、jitter buffer、PLC；mock 模式過驗收 1–7；`udp_impair.py` 自動化測試 |
 | 3 | 11/2–11/8（11/2 期中考） | live 模式；mock 模式過驗收 1–7（用 `tests/run_mock_tests.py`） |
-| 4 | 11/9–11/15 | 11/9 Team 1 回顧討論會；buffer 掃描與圖；兩台電腦真實網路的量測 |
-| 5 | 11/16–11/22 | 11/16 Team 2 進度討論會（組間互測、交進度報告）；投影片、報告四題、`docs/interface.md` 定稿；**11/22 18:00 前登錄 SHA** |
+| 4 | 11/9–11/15 | 11/9 進度討論會 ①（格式互測、問題診所、交進度報告 ①）；buffer 掃描與圖；兩台電腦真實網路的量測 |
+| 5 | 11/16–11/22 | 11/16 進度討論會 ②（自動驗收互測、量測、live 預演、交進度報告 ②＋小成品）；投影片、報告四題、`docs/interface.md` 定稿；**11/22 18:00 前登錄 SHA** |
 
 ## baseline/：官方文字 baseline＋音訊／UDP wrapper（建議從這裡開始）
 
