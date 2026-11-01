@@ -35,12 +35,12 @@ mmsp2026/
 │                           不透露 C 的實作方式）
 ├── team_projects/          三次 Team Project 的規格與 baseline
 │   ├── team1_textlink/     TextLink：文字、封包與 Huffman 傳輸（評測 10/12）；starter/ 是可編譯的殼
-│   ├── team2_voicelink/    VoiceLink：即時語音管線（評測 11/9）
+│   ├── team2_voicelink/    VoiceLink：即時語音管線（評測 11/9）；baseline/ 音訊／UDP wrapper、python_ref/、tests/ 自動驗收
 │   └── team3_miniline/     MiniLINE：視訊與整合（評測 12/7）
 ├── lectures/               每週上課講義與範例（依日曆週編號，上完課陸續發布）
 ├── docs/                   課程時程與評分方式摘要
 │   └── tutorials/          新手教學文件（VSCode、終端機、Git、除錯…）
-└── tools/                  課程工具：ci/（MP 自動測試，已可用）、loss／reorder 模擬器等（陸續發布）
+└── tools/                  課程工具：ci/（MP 自動測試、課程程式三平台建置、上課彩排）、setup/（電腦教室一鍵安裝）、md2pdf.py
 ```
 
 ## 課程 Slack（線上即時討論）
@@ -65,7 +65,7 @@ mmsp2026/
 ## 每週講義
 
 每週上課用的講義、範例程式與回家作業都在 [lectures/](lectures/README.md)，上課前先打開當週資料夾。
-本週：[第 7 週（10/19）聲音的時頻分析（STFT、MP5）、Team 2 開題、補驗時段 1](lectures/wk07_1019_audio-pcm/README.md)；上一份講義：[第 3 週（9/21）Huffman coding、WAV 與 PCM、分組與 Team 1 說明](lectures/wk03_0921_team1-kickoff/README.md)。
+本週：[第 9 週（11/2）期中考、Team 2 實作工作坊](lectures/wk09_1102_midterm-speech/README.md)（[期中考範例考題](lectures/wk09_1102_midterm-speech/midterm_sample.pdf)）；上一份講義：[第 7 週（10/19）聲音的時頻分析（STFT、MP5）、Team 2 開題](lectures/wk07_1019_audio-pcm/README.md)。
 
 ## 第一堂課 checklist
 
