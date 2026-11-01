@@ -197,8 +197,8 @@ live 模式還要印 Team 1 的文字、Team 2 的語音各自的 STATS 行（�
 | `wrapper/udp.h`、`clock.h`、`wav.h`、`audio.h` | 與 Team 2 相同 |
 | `chat.c`、`voicelink` 的 python_ref | 文字與語音沿用 Team 1／Team 2 |
 | `make_sequence.c` | 產生測試用的 JPEG 序列（會動的圖形＋frame 編號），評測的序列也是這樣做的 |
-| `miniline_raw.c` | **最天真的視訊串流**：一張 JPEG 一個 UDP 封包（超過 MTU 會被切、常常整張不見）、沒有 header、收到什麼存什麼；加上 `devices`、`camera-test`（攝影機 → 視窗）。你們要做的是把分片、重組、逾時、queue、掛斷重連加進去 |
-| `udp_impair.py` | 同 Team 2（軟連結到那邊的檔） |
+| `miniline_raw.c` | **最天真的視訊串流**：一張 JPEG 一個 UDP 封包（超過 MTU 會被切、常常整張不見）、沒有 header、收到什麼存什麼；加上 `devices`、`camera-test`（攝影機 → 視窗；電腦有多個攝影機時用 `--camera <編號>` 選）。你們要做的是把分片、重組、逾時、queue、掛斷重連加進去 |
+| `udp_impair.py` | 同 Team 2（這裡是一份轉呼叫過去的小程式，參數相同） |
 
 ## python_ref/：純 Python 的完整版（對照用、評測的對手端）
 

@@ -57,6 +57,16 @@ run "make smoke（本機 UDP：send → recv 逐 byte 相同）" $MAKE -C $D smo
 echo "== Team 2 python_ref：驗收 1–7（本機 UDP，經 udp_impair.py）=="
 run "run_mock_tests.py（python_ref 對 python_ref）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$PY team_projects/team2_voicelink/python_ref/voicelink.py" "$PY team_projects/team2_voicelink/python_ref/voicelink.py" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5390 --buffer 200
 
+echo "== Team 3 baseline（jpeg／camera／display wrapper＋make_sequence＋miniline_raw）=="
+D=team_projects/team3_miniline/baseline
+run "make" $MAKE -B -C $D; nowarn "Team 3 baseline"
+run "miniline_raw devices（沒有攝影機也要正常結束）" $D/miniline_raw$EXE devices
+run "make smoke（make_sequence → raw send → recv，本機 UDP）" $MAKE -C $D smoke
+
+echo "== Team 3 python_ref：驗收 1–7（本機 UDP，經 udp_impair.py）=="
+rm -rf "$ROOT/.ci_out/seq3"; run "make_sequence 產生 30 張測試序列" $D/make_sequence$EXE "$ROOT/.ci_out/seq3" --frames 30
+run "run_video_tests.py（python_ref 對 python_ref）" $PY team_projects/team3_miniline/tests/run_video_tests.py "$PY team_projects/team3_miniline/python_ref/miniline.py" "$PY team_projects/team3_miniline/python_ref/miniline.py" "$ROOT/.ci_out/seq3" --port 5590
+
 echo "== Team 1 baseline（chat.c）=="
 run "make" $MAKE -B -C team_projects/team1_textlink/baseline; nowarn "baseline chat.c"
 
