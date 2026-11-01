@@ -187,6 +187,6 @@ DPCM 最重要的一個細節（程式裡有註解）：**編碼端的預測器�
 - ITU-T G.726（1990），"40, 32, 24, 16 kbit/s Adaptive Differential Pulse Code Modulation (ADPCM)"：<https://www.itu.int/rec/T-REC-G.726>。
 - J.-M. Valin, K. Vos, T. Terriberry, "Definition of the Opus Audio Codec," RFC 6716, Sept. 2012：<https://www.rfc-editor.org/rfc/rfc6716>（SILK＝LPC／CELP 路線、CELT＝MDCT 路線、in-band FEC、PLC）。
 - M. R. Schroeder and B. S. Atal, "Code-excited linear prediction (CELP): High-quality speech at very low bit rates," *Proc. ICASSP*, 1985, pp. 937–940. [doi:10.1109/ICASSP.1985.1168147](https://doi.org/10.1109/ICASSP.1985.1168147)。
-- K. Brandenburg, "MP3 and AAC Explained," *AES 17th International Conference on High-Quality Audio Coding*, 1999：<https://www.aes.org/e-lib/browse.cfm?elib=8079>——感知編碼的三要素。
+- K. Brandenburg, "MP3 and AAC Explained," *AES 17th International Conference on High Quality Audio Coding*, Florence, Sept. 1999, pp. 99–110。作者所屬單位公開的 PDF：<https://www.ee.columbia.edu/~dpwe/papers/Brand99-mp3.pdf>——感知編碼的三要素。
 - X. Huang, A. Acero, H.-W. Hon, *Spoken Language Processing*, Prentice Hall, 2001, ch. 7（speech coding：PCM、ADPCM、LPC、CELP）。
 - 第 3 週 2.3–2.4（量化、SQNR）、第 7 週 1.3（F₀、source–filter）、2.3–2.4（jitter buffer、PLC）。
