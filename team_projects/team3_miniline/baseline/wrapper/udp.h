@@ -150,6 +150,11 @@ static inline int udp_open(udp_t *u, const char *bind_ip, int bind_port) {
 
     int yes = 1;                                           /* 程式重開時允許立刻重綁同一個 port */
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
+    /* 收發緩衝區放大到 1 MB：macOS 預設的送出緩衝只有 9 216 bytes，一個大於它的 datagram 會直接 sendto 失敗
+     * （EMSGSIZE「Message too long」）；Linux／Windows 預設比較大。放大之後三個平台都能送到 UDP 的上限 65 507 bytes。 */
+    int bufsz = 1 << 20;
+    setsockopt(s, SOL_SOCKET, SO_SNDBUF, (const char *)&bufsz, sizeof(bufsz));
+    setsockopt(s, SOL_SOCKET, SO_RCVBUF, (const char *)&bufsz, sizeof(bufsz));
 
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         udp_perror("bind（port 被占用？--bind 的 IP 不是這台電腦的？）");

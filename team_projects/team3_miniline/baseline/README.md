@@ -107,3 +107,5 @@ PASS: 收到 20 張合法 JPEG（raw 版：20/20 張逐 byte 相同）
 - `wrapper/miniaudio.h` 是 David Reid 的 [miniaudio](https://miniaud.io/) **v0.11.25**，授權 **public domain 或 MIT-0 二選一**；
   `wrapper/audio.c` 是唯一定義 `MINIAUDIO_IMPLEMENTATION` 的檔案（和 Team 2 相同）。
 - 報告或 `README.md` 裡提一句「JPEG 用 stb（public domain／MIT）、音訊用 miniaudio（public domain／MIT-0）」就好。
+
+> macOS 注意：UDP socket 預設的送出緩衝只有 9 216 bytes，比它大的 datagram 會 `sendto` 失敗（Message too long）。wrapper 的 `udp_open` 已把緩衝放大到 1 MB；自己寫 socket 的組記得設 `SO_SNDBUF`，否則 raw 模式一張都送不出去——這也是「一張一包」不可行的另一個理由。
