@@ -2,6 +2,102 @@
 
 > 原本排在 11/2 第二、三節，改為課後讀：第 2.1–2.3 節是 μ-law 與 DPCM 的原理（Team 2 的 `--codec mulaw` 就是 2.2），後面是延伸。範例：[examples/mulaw_demo.py](examples/mulaw_demo.py)、[examples/dpcm_demo.py](examples/dpcm_demo.py)。
 
+## 圖解：μ-law、A-law、ADPCM（淺顯版，先看這裡）
+
+這三個是「把聲音的位元率減半或減四分之一」最老、最簡單、至今還在電話裡用的方法。先用圖看懂，公式放後面。
+圖都是 [examples/make_codec_figs.py](examples/make_codec_figs.py) 當場算出來的，可以自己改參數重畫。
+
+### 1. 問題：8 bits 直接量化，小聲的時候會很難聽
+
+第 3 週學過：16-bit 的 sample 有 65 536 階，階距很細。如果為了省一半的位元率改成 8 bits，階距一下子粗 256 倍。
+大聲的時候還好（訊號大、誤差相對小），**小聲的時候訊號只用到幾個階，誤差相對就很大**——講話的句尾、停頓前後都是小聲的，聽起來沙沙的。
+
+下圖是用 1 kHz 弦波實測的 SQNR（訊號比量化雜訊，越高越好）：灰線「線性 8-bit」每小聲 10 dB 就掉 10 dB，到 −40 dBFS 只剩 11 dB，根本不能聽。
+
+<img src="figs/sqnr_vs_level.svg" width="640">
+
+### 2. 解法：先「壓」再量化——μ-law 與 A-law
+
+想法很直覺：**小聲的先放大、大聲的先壓小，再用 8 bits 均勻量化；解碼時反過來展開。**
+這樣小聲的訊號等於用了很細的階距，大聲的用粗的階距，「相對誤差」差不多，SQNR 就不再隨音量掉（上圖的紅線、藍線在 −40 到 0 dBFS 之間都是 35–39 dB）。
+
+壓縮用的曲線就是對數曲線，北美與日本用 **μ-law**（μ = 255），歐洲與台灣用 **A-law**（A = 87.6），形狀幾乎一樣：
+
+<img src="figs/compand_curves.svg" width="640">
+
+把曲線換個角度看——「輸入每一階有多寬」：線性 8-bit 固定 1/128；μ-law 在小聲處細到 1/8000 左右，大聲處才放寬到 1/50。這就是「小聲細、大聲粗」。
+
+<img src="figs/step_size.svg" width="640">
+
+真正的電話標準 **G.711** 不算對數，而是用 **8 段折線**近似：每段 16 階，每一段的階距是前一段的兩倍。一個 byte = 1 bit 符號 + 3 bits「第幾段」+ 4 bits「段內第幾階」，編解碼各一張 256 格的表就完成，一個 sample 幾個時脈週期。
+
+<img src="figs/g711_segments.svg" width="640">
+
+| | 線性 16-bit | 線性 8-bit | μ-law／A-law 8-bit |
+|---|---|---|---|
+| 位元率（16 kHz） | 256 kb/s | 128 kb/s | **128 kb/s** |
+| 滿刻度時 SQNR | 98 dB | 49 dB | 35 dB（大聲時比線性 8-bit 差） |
+| −40 dBFS 時 SQNR | 58 dB | 11 dB | **35 dB**（這就是重點） |
+| 做法 | 原樣 | 丟掉低 8 bits | 查表 |
+
+公式（想知道的再看）：
+
+```
+μ-law 壓縮  y = sign(x) · ln(1 + μ|x|) / ln(1 + μ)          μ = 255，x、y 都在 [−1, 1]
+      展開  x = sign(y) · ((1 + μ)^|y| − 1) / μ
+A-law 壓縮  y = sign(x) · A|x| / (1 + ln A)                 |x| < 1/A（小訊號：直線）
+            y = sign(x) · (1 + ln(A|x|)) / (1 + ln A)        其餘（對數）             A = 87.6
+```
+
+**和 Team 2 的關係**：功能 4 的 `--codec mulaw` 就是這件事——送端每個 16-bit sample 查表變 1 byte（一包 320 bytes），收端查表變回 16-bit，再交給 jitter buffer；PLC 一行都不用改。
+
+試試看：
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `python3 examples/mulaw_demo.py ../wk07_1019_audio-pcm/data/speech_osr_16k.wav` | `python examples\mulaw_demo.py ..\wk07_1019_audio-pcm\data\speech_osr_16k.wav` |
+
+### 3. 再省一半：只送「差多少」——DPCM 與 ADPCM
+
+語音的相鄰兩個 sample 很像（它是低頻為主的訊號）。那就不要送 x[n] 本身，送 **x[n] 和「猜測值」的差**；最簡單的猜測是「跟上一個一樣」。差值比原值小很多，用 4 bits 就夠，位元率再減半（64 kb/s）。
+
+下圖是真實語音的 30 ms：上面是原訊號與 4-bit ADPCM 重建出來的（幾乎疊在一起），中間是「差值」（比原訊號小很多，功率少 12 dB），下面是 ADPCM 自動調整的階距。
+
+<img src="figs/adpcm_demo.svg" width="760">
+
+方塊圖只有一個地方要注意：**編碼端的「猜測」要用解碼端也算得出來的「重建值」x̃，不能用原始的 x**。否則兩邊猜的不一樣，誤差會一路累積（這和 Team 2 的 PLC `repeat` 只能重複「收端手上有的」frame 是同一個道理）。
+
+<img src="figs/dpcm_block.svg" width="760">
+
+**DPCM 的困擾**：差值用固定階距 Δ 量化——Δ 太小，波形突然變大時跟不上（slope overload）；Δ 太大，平緩處粗糙（granular noise）。
+**ADPCM（adaptive）的解法**：Δ 跟著訊號自動調：上一個差值很大 → 下一個 Δ 放大；很小 → 縮小。兩邊用同一張表、同一個規則，所以 Δ 不用送。IMA ADPCM 的表有 89 格，每格約 ×1.1：
+
+<img src="figs/ima_step_table.svg" width="640">
+
+| | 線性 16-bit | μ-law 8-bit | ADPCM 4-bit（G.726 32 kb/s 等級） |
+|---|---|---|---|
+| 位元率（16 kHz） | 256 kb/s | 128 kb/s | **64 kb/s** |
+| 語音實測 SQNR | ≈ 83 dB | ≈ 38 dB | ≈ 25 dB（夠聽） |
+| 掉一個封包會怎樣 | 沒影響下一包 | 沒影響下一包 | **預測器失步**：解碼端的 x̃ 和編碼端對不上，之後的聲音都錯，直到重新同步 → Team 2 的做法是每個 20 ms frame 獨立編碼（預測器每包歸零），掉包只壞那一包 |
+
+試試看：
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `python3 examples/dpcm_demo.py ../wk07_1019_audio-pcm/data/speech_osr_16k.wav` | `python examples\dpcm_demo.py ..\wk07_1019_audio-pcm\data\speech_osr_16k.wav` |
+
+### 4. 一張表記住三個方法
+
+| 方法 | 一句話 | bits／sample | 要傳什麼額外資訊 | 誰在用 |
+|---|---|---|---|---|
+| 線性 PCM | 原樣 | 16 | 無 | WAV、CD、Team 2 的 pcm |
+| μ-law／A-law | 小聲放大再量化（查表） | 8 | 無（表是固定的） | 電話 G.711、Team 2 的 mulaw |
+| ADPCM | 只送差值、階距自動調 | 4（或 2、3、5） | 無（規則是固定的） | G.726、舊的 VoIP、遊戲音效 |
+
+再往下壓（Opus 的 6–40 kb/s）就要「送參數」或「送感知得到的」——下面的延伸閱讀。
+
+---
+
 ## 從 256 kb/s 往下壓
 
 ### 2.1 不壓縮要多少？Team 2 的封包開銷（8 分鐘）

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="430" viewBox="0 0 760 430" font-family="Noto Sans CJK TC, Microsoft JhengHei, Arial, sans-serif" font-size="13">
+<rect width="760" height="430" fill="white"/>
+<text x="380.0" y="22" text-anchor="middle" font-size="16" font-weight="bold">DPCM：只送「和預測值的差」；預測器一定要用解碼端也算得出的重建值</text>
+<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#333"/></marker></defs>
+<text x="20" y="60" font-weight="bold">編碼端</text>
+<rect x="20" y="90" width="60" height="40" rx="6" fill="white" stroke="#333"/>
+<text x="50.0" y="115.0" text-anchor="middle">x[n]</text>
+<rect x="130" y="80" width="50" height="60" rx="6" fill="#fff3e0" stroke="#333"/>
+<text x="155.0" y="115.0" text-anchor="middle">−</text>
+<rect x="230" y="80" width="90" height="60" rx="6" fill="#f4f6fa" stroke="#333"/>
+<text x="275.0" y="107.0" text-anchor="middle">量化</text>
+<text x="275.0" y="123.0" text-anchor="middle">（4 bits）</text>
+<rect x="370" y="80" width="70" height="60" rx="6" fill="#e8f5e9" stroke="#333"/>
+<text x="405.0" y="107.0" text-anchor="middle">送出</text>
+<text x="405.0" y="123.0" text-anchor="middle">q[n]</text>
+<rect x="230" y="200" width="90" height="60" rx="6" fill="#f4f6fa" stroke="#333"/>
+<text x="275.0" y="227.0" text-anchor="middle">反量化</text>
+<text x="275.0" y="243.0" text-anchor="middle">×Δ</text>
+<rect x="130" y="200" width="50" height="60" rx="6" fill="#fff3e0" stroke="#333"/>
+<text x="155.0" y="235.0" text-anchor="middle">+</text>
+<rect x="20" y="200" width="80" height="60" rx="6" fill="#f4f6fa" stroke="#333"/>
+<text x="60.0" y="227.0" text-anchor="middle">預測器</text>
+<text x="60.0" y="243.0" text-anchor="middle">x̂=x̃[n−1]</text>
+<line x1="80" y1="110" x2="130" y2="110" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<line x1="180" y1="110" x2="230" y2="110" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="205.0" y="104.0" text-anchor="middle" fill="#1f77b4">e[n]</text>
+<line x1="320" y1="110" x2="370" y2="110" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="345.0" y="104.0" text-anchor="middle" fill="#1f77b4">q[n]</text>
+<line x1="275" y1="140" x2="275" y2="200" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="283" y="175" fill="#1f77b4">q[n]</text>
+<line x1="230" y1="230" x2="180" y2="230" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="205.0" y="224.0" text-anchor="middle" fill="#1f77b4">ê[n]</text>
+<line x1="130" y1="230" x2="100" y2="230" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="115" y="222" text-anchor="middle" fill="#1f77b4">x̃[n]</text>
+<path d="M60,200 L60,165 L155,165" fill="none" stroke="#333" stroke-width="1.5"/>
+<line x1="155" y1="165" x2="155" y2="140" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<line x1="155" y1="165" x2="155" y2="200" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="105" y="160" text-anchor="middle" fill="#1f77b4">x̂[n]</text>
+<text x="20" y="300" font-weight="bold">解碼端（和編碼端右下角一模一樣）</text>
+<rect x="20" y="330" width="70" height="50" rx="6" fill="#e8f5e9" stroke="#333"/>
+<text x="55.0" y="352.0" text-anchor="middle">收到</text>
+<text x="55.0" y="368.0" text-anchor="middle">q[n]</text>
+<rect x="140" y="330" width="90" height="50" rx="6" fill="#f4f6fa" stroke="#333"/>
+<text x="185.0" y="352.0" text-anchor="middle">反量化</text>
+<text x="185.0" y="368.0" text-anchor="middle">×Δ</text>
+<rect x="280" y="330" width="50" height="50" rx="6" fill="#fff3e0" stroke="#333"/>
+<text x="305.0" y="360.0" text-anchor="middle">+</text>
+<rect x="380" y="330" width="90" height="50" rx="6" fill="#f4f6fa" stroke="#333"/>
+<text x="425.0" y="352.0" text-anchor="middle">預測器</text>
+<text x="425.0" y="368.0" text-anchor="middle">x̂=x̃[n−1]</text>
+<rect x="520" y="330" width="70" height="50" rx="6" fill="white" stroke="#333"/>
+<text x="555.0" y="352.0" text-anchor="middle">x̃[n]</text>
+<text x="555.0" y="368.0" text-anchor="middle">→ 喇叭</text>
+<line x1="90" y1="355" x2="140" y2="355" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<line x1="230" y1="355" x2="280" y2="355" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="255.0" y="349.0" text-anchor="middle" fill="#1f77b4">ê[n]</text>
+<line x1="330" y1="355" x2="380" y2="355" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="355.0" y="349.0" text-anchor="middle" fill="#1f77b4">x̃[n]</text>
+<line x1="470" y1="355" x2="520" y2="355" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<path d="M425,330 L425,310 L305,310 L305,330" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#ah)"/>
+<text x="365" y="305" text-anchor="middle" fill="#1f77b4">x̂[n]</text>
+<text x="470" y="110" fill="#d62728">重點：編碼端預測用的是 x̃（重建值），</text>
+<text x="470" y="128" fill="#d62728">不是原始的 x——這樣兩邊的預測一模一樣，</text>
+<text x="470" y="146" fill="#d62728">量化誤差才不會一路累積。</text>
+<text x="470" y="190" fill="#555">ADPCM 多做一件事：Δ 隨 |q[n]| 自動調整</text>
+<text x="470" y="208" fill="#555">（上一個 q 大 → Δ 放大；小 → 縮小），</text>
+<text x="470" y="226" fill="#555">兩邊用同一張表，所以不用把 Δ 送過去。</text>
+</svg>
