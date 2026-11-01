@@ -1,6 +1,7 @@
 # Team 2｜VoiceLink：即時語音管線（UDP、20 ms framing、jitter buffer、遺失補償）
 
-- 期間：10/19－11/9｜繳交截止：**11/8（日）18:00**｜評測：11/9（三節課內）
+- 期間：10/19－11/23｜繳交截止：**11/22（日）18:00**｜評測：11/23（三節課內）
+- 2026/11/1 公告：11/9、11/16 老師出國停課，截止與評測各順延兩週（原 11/8／11/9）
 - 團隊 repo 必備：`src/`、`include/`、`tests/`、建置檔、`README.md`、
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
 - 繳交：登錄 repo URL＋完整 commit SHA
@@ -171,7 +172,9 @@ STATS role=recv buffer_ms=60 plc=repeat frames_out=1678 received=1601 lost=77 la
 |---|---|---|
 | 1 | 10/19–10/25 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；定封包格式與 `docs/interface.md`；**兩台電腦 UDP 互通**。（10/23 是 MP1–MP5 截止，請先排好時間）|
 | 2 | 10/26–11/1（10/26 停課） | header、seq／ts、jitter buffer、PLC；mock 模式過驗收 1–7；`udp_impair.py` 自動化測試 |
-| 3 | 11/2–11/8（11/2 期中考） | live 模式；buffer 掃描與圖；投影片；**11/8 18:00 前登錄 SHA** |
+| 3 | 11/2–11/8（11/2 期中考） | live 模式；mock 模式過驗收 1–7（用 `tests/run_mock_tests.py`） |
+| 4 | 11/9–11/15（停課） | buffer 掃描與圖；兩台電腦真實網路的量測；助教 Slack 答疑 |
+| 5 | 11/16–11/22（停課） | 投影片、報告四題、`docs/interface.md` 定稿；**11/22 18:00 前登錄 SHA** |
 
 ## baseline/：官方文字 baseline＋音訊／UDP wrapper（建議從這裡開始）
 

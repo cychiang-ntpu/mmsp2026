@@ -35,8 +35,8 @@ mmsp2026/
 │                           不透露 C 的實作方式）
 ├── team_projects/          三次 Team Project 的規格與 baseline
 │   ├── team1_textlink/     TextLink：文字、封包與 Huffman 傳輸（評測 10/12）；starter/ 是可編譯的殼
-│   ├── team2_voicelink/    VoiceLink：即時語音管線（評測 11/9）；baseline/ 音訊／UDP wrapper、python_ref/、tests/ 自動驗收
-│   └── team3_miniline/     MiniLINE：視訊與整合（評測 12/7）
+│   ├── team2_voicelink/    VoiceLink：即時語音管線（評測 11/23）；baseline/ 音訊／UDP wrapper、python_ref/、tests/ 自動驗收
+│   └── team3_miniline/     MiniLINE：視訊與整合（評測 12/14）
 ├── lectures/               每週上課講義與範例（依日曆週編號，上完課陸續發布）
 ├── docs/                   課程時程與評分方式摘要
 │   └── tutorials/          新手教學文件（VSCode、終端機、Git、除錯…）
