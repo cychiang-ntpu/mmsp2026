@@ -13,6 +13,41 @@
 接收端用 **sequence／timestamp** 把包排回原順序、用 **jitter buffer** 吸收到達時間的抖動、
 用 **遺失補償（PLC）** 把掉的包補起來，而且**永遠不等**——寧可補一包，也不讓喇叭停下來。
 
+## 名詞解釋（看規格前先讀；原理在第 7 週 2.1–2.4 與第 9 週第三節）
+
+| 名詞 | 意思 | 原理一句話 |
+|---|---|---|
+| **UDP**（User Datagram Protocol） | 不建立連線、不保證送達、不保證順序的傳輸協定；一次 `sendto` 就是一個封包（datagram），對方一次 `recvfrom` 收到一整包 | 和 TCP 的差別是沒有重傳與排隊，所以不會「等」；即時語音寧可掉一包也不要全部延後 |
+| **datagram／封包** | UDP 一次送出的一塊資料，含我們自己定義的 header 與 payload | 本專案一包 = 12 bytes header + 一個 20 ms 的 frame |
+| **frame（音框）** | 固定長度的一小段聲音：20 ms = 320 samples = 640 bytes（16 kHz、16-bit） | 語音在 20 ms 內近似穩定，掉一包損失小；也是所有語音 codec 的自然單位 |
+| **framing** | 把連續的 sample 切成一個一個 frame 再包成封包 | 送端照 20 ms 的節奏一包一包送，不是一口氣全送 |
+| **seq**（sequence number） | 每送一包 +1 的編號（16-bit，到 65535 繞回 0） | 收端靠它知道哪一包**掉了、亂序、重複** |
+| **ts**（timestamp） | 這包的第一個 sample 是整段聲音的第幾個 sample（每包 +320） | 收端靠它知道這包**該在什麼時候播**；和 seq 分開存，因為真實系統裡一包未必剛好一個 frame |
+| **ssrc** | 本次串流的隨機識別碼，同一次執行固定 | 對方重啟後 ssrc 不同，收端就知道要把 buffer 清掉重來 |
+| **RTP** | 真實世界即時媒體用的封包格式（RFC 3550）；本專案的 header 是它的精簡版 | seq／ts／ssrc 三個欄位的概念都來自 RTP |
+| **big-endian** | 多 byte 的整數高位在前（網路慣例）；WAV 檔內的 sample 是 little-endian | header 用 big-endian，PCM 維持 WAV 的原樣 |
+| **jitter（抖動）** | 封包到達時間的不規則：送端每 20 ms 一包，收端收到的間隔忽長忽短 | 網路排隊、Wi-Fi 重傳造成；用「到達時間 − 預期時間」的變化量來量 |
+| **jitter buffer** | 收端先存幾個 frame 再開始播的緩衝區，依 seq 排序 | 用「多等一點延遲」換「不卡」：抖動小於 buffer 的包都來得及 |
+| **播放時鐘** | 收端自己每 20 ms 一拍、向 buffer 要一個 frame 的計時器 | 它不等網路；有就播、沒有就補；拍子一定前進 |
+| **late（遲到）** | 包到了，但它的拍子已經過了 | 丟掉；buffer 越大 late 越少 |
+| **dup（重複）** | 同一個 seq 收到兩次（網路或中繼複製） | 丟掉第二份 |
+| **reordered（亂序）** | seq 比較小的包比較晚到，但還來得及 | 排回正確位置，不算遺失 |
+| **lost（遺失）** | 從 seq 看應該有、但直到該播的時候都沒到的包 | 由 PLC 補；統計上 `concealed ≈ lost + late` |
+| **overflow** | buffer 滿了 | 丟最舊的；bounded buffer 才不會被 `--burst` 吃光記憶體 |
+| **underrun（欠載）** | 播放時鐘到了但沒東西可播 | 真實系統會卡一下（喀聲）；本專案用 PLC 補，所以計 concealed 而不是停 |
+| **PLC**（packet loss concealment，遺失補償） | 該播的 frame 沒有時「補一個」的方法 | `zero` 補靜音（會有 click）；`repeat` 重複上一個播出的 frame（連續掉包會變嗡聲）；真 codec 重複上一個 pitch 週期並衰減 |
+| **concealed** | PLC 補了幾個 frame | 評測看它是否 ≈ lost |
+| **latency／延遲** | 從聲音進麥克風到對方喇叭播出的時間 | = 取樣一個 frame（20 ms）＋網路＋jitter buffer（≥ `--buffer`）＋喇叭輸出 buffer；G.114 說 150 ms 以內通話品質好 |
+| **mock 模式／live 模式** | mock：WAV → 封包 → WAV，可重現、評測用；live：麥克風 → 對方喇叭 | 同一套 buffer 與 PLC，只是輸入輸出不同 |
+| **udp_impair.py（搗蛋中繼）** | 夾在送收之間、故意製造遺失／抖動／亂序／重複的程式 | `--seed` 讓每次一樣，評測才能重現 |
+| **bitrate（位元率）** | 每秒送幾個 bit：16 kHz × 16 bits = 256 kb/s | 壓縮就是為了降低它 |
+| **codec** | 編碼器＋解碼器：把 PCM 變小（編）、再變回 PCM（解） | 功能 4 的 μ-law、ADPCM；pcm 代表不壓縮 |
+| **μ-law** | G.711 的對數量化：16-bit → 8-bit，小聲時階距細、大聲時粗 | 讓 SQNR 幾乎不隨音量變；一個查表就能做 |
+| **ADPCM** | 只送「和預測值的差」並把量化階距隨訊號自動調整（4 bits／sample） | 語音相鄰 sample 很像，殘差小很多（prediction gain） |
+| **SQNR** | 訊號功率 ÷ 量化（或編解碼）誤差功率，dB | 評測 μ-law 用它而不是逐 byte 相同 |
+| **STATS** | 程式結束時印的一行統計，欄位固定 | 評測用正規表示式抓，報告的圖從這裡來 |
+| **BYE／HELLO** | 送端結束時送的封包（BYE）；Team 3 才有 HELLO | UDP 沒有連線，所以「結束」要自己告訴對方；掉了就靠逾時 |
+
 ## 為什麼不用 TCP
 
 Team 1 用 TCP：掉一個封包，TCP 會重傳，後面的資料全部排隊等它。文字檔可以等，**即時語音不能等**：
