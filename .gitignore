@@ -68,3 +68,4 @@ team_projects/*/baseline/*.jpg
 
 # Python 的快取
 __pycache__/
+*.spec.txt
