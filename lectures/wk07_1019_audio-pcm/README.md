@@ -269,7 +269,7 @@ buffer 裡沒有那個 seq 時，喇叭還是要東西。兩種最簡單的補�
 - **STATS 一行**（規格「量測輸出」）是評測抓的東西，欄位順序與名稱不可改。`frames_out = 播出的真封包 + concealed` 這條等式要成立。
 - **驗收 0–7 可以自動測**：`tests/run_mock_tests.py` 對自己跑一遍（用 Python 版當對手端也行）；評測當天用老師的 WAV 跑同一支。
 - **python_ref/voicelink.py** 是 mock 模式的完整版（`--probe` 印每一拍的 buffer）：可以先用它當對手端確認你們的封包格式對不對，再兩邊都換成自己的。
-- **時程**：第 1 週（10/19–10/25）建 repo、跑通 baseline、兩台 UDP 互通——**10/23 MP1–MP5 截止，先排好時間**；第 2 週（10/26 停課）header／buffer／PLC、過驗收 1–7；第 3 週（11/2 期中考）live、量測圖、投影片，**11/8 18:00 登錄 SHA**；11/9 評測。
+- **時程**（11/1 更新）：第 1–2 週（10/19–11/1）建 repo、跑通 baseline、兩台 UDP 互通；11/2 第三節起改照 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 七步做；11/9、11/16 工作坊（助教主持，每步 push）；**11/22（日）18:00 登錄 SHA**；11/23 評測。驗收已簡化為三層，見規格。
 - **角色**：P 報告；D×2 一位網路與 buffer、一位音訊與 live；V 測試與量測。每個人都要有 C 的 commit。
 
 ---
