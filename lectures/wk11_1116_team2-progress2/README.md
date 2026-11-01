@@ -1,28 +1,27 @@
-# 第 11 週（2026/11/16）｜Team 2 進度討論會 ②（助教主持）
+# 第 11 週（2026/11/16）｜Team 2 工作坊 ②：跟著 tutorial 做第 4–7 步（助教主持）
 
 對應：Team 2（11/22 截止、11/23 評測）
 時間：13:10–16:00，三節。老師出國，助教主持。
 
-## 目的
+## 做什麼
 
-離截止 6 天、離評測 7 天。今天把**評測當天會做的事全部預演一遍**：自動驗收兩個方向、live 通話、量測圖。
-交一頁[進度報告 ②](../../docs/templates/progress_report.md)＋一個小成品（buffer 掃描圖初版或 30 秒 live 錄影）；列入 Team 2 團隊「可重現整合」項。
+接著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做第 4–7 步（進階層）；基本層還沒過的組先補第 3 步。每步做完 push。
 
-## 時程
-
-| 節次 | 時間 | 內容 |
-|---|---|---|
-| 1 | 13:10–14:00 | **進度閃電報告**：各 4 分鐘：11/9 之後解掉了什麼、驗收 0–10 現況（含 μ-law）、還卡的一題、想問老師的一題。助教把問題寫白板 |
-| 2 | 14:10–15:00 | **自動驗收互測（評測預演）**：配對換組（1↔3、2↔4、…、10↔1）。用 [`tests/run_mock_tests.py`](../../team_projects/team2_voicelink/tests/run_mock_tests.py) 跑四種組合：你們 vs 你們、他們 vs 他們、你們 send 對他們 recv、反向。FAIL 的項目寫進雙方 `TEAM_LOG.md` |
-| 3 | 15:10–15:45 | **live 預演與量測**：兩組一起用熱點 `call` 通話（兩種 PLC、buffer 60 與 200）；用 `udp_impair.py` 跑 buffer 掃描至少 3 個點，當場畫成圖（小成品） |
-| 3 | 15:45–16:00 | 收尾：進度報告 ②＋小成品 11/22（日）18:00 與 SHA 一起交（`docs/progress_team2_2.md`）；11/23 帶兩台筆電、耳機、熱點，P 的 `slides.pdf` 要在 SHA 裡 |
+| 節次 | 時間 | 步 | 做完要看到 | push 什麼 |
+|---|---|---|---|---|
+| 1 | 13:10–14:00 | **第 4 步 counters**：late／dup／reordered、`--plc zero`、完整 STATS | `run_mock_tests.py … --only 1,2,3,5,7` PASS | `src/…step4…` |
+| 2 | 14:10–15:00 | **第 5 步 robust**：壞封包不當掉、ssrc 重置、seq 繞回；**第 6 步 μ-law**：`--codec mulaw` | `--only 1,2,3,4,5,6,7` PASS；`--only 8` PASS（SQNR ≥ 30 dB、bytes 減半） | `src/…step5…`、`src/…step6…` |
+| 3 | 15:10–15:45 | **第 7 步 live**：`call` 麥克風 → 對方喇叭；兩組一起用熱點通話，換 `--plc zero`、`--buffer 200` 聽差別 | 聽得到（單向也算 A4） | `src/…step7…`＋ 30 秒錄影或截圖 |
+| 3 | 15:45–16:00 | 收尾：進度報告（[範本](../../docs/templates/progress_report.md)）＋ SHA，11/22（日）18:00 前；11/23 帶兩台筆電、耳機、熱點，P 的 `slides.pdf` 要在 SHA 裡 | — |
 
 ## 助教要做的事
 
-完整的主持流程、配對表、Slack 公告文字見 [ta_guide.md](../wk10_1109_team2-progress1/ta_guide.md)。
+- 同 11/9：每步先帶看 5 分鐘差異，再各組做，巡場不代寫。
+- 第二節：兩組一組互測（配對 1↔3、2↔4、…）：`run_mock_tests.py` 跑「你們 send 對他們 recv」與反向。
+- 第三節 live：沒有麥克風的電腦用 `python_ref/voicelink.py send` 當聲源代替。
+- 16:00 前把「問老師的問題」貼 Slack；11/19 前整理給老師。
 
 ## 給同學
 
-- 來之前把 `run_mock_tests.py` 自己對自己跑一遍，帶結果來。
-- 進度報告的「問題」要寫現象與試過什麼，不要只寫「buffer 有問題」。
-- 11/23 第一節開始前，老師會先回答兩次討論會收集的問題。
+- 基本層（第 3 步）沒過的組，今天第一節先把它過了，再往下。
+- 進度報告（[docs/templates/progress_report.md](../../docs/templates/progress_report.md)）寫進度表、卡住的問題、想問老師的三件事；11/22 與 SHA 一起交。

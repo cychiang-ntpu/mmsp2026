@@ -1,28 +1,29 @@
-# 第 10 週（2026/11/9）｜Team 2 進度討論會 ①（助教主持）
+# 第 10 週（2026/11/9）｜Team 2 工作坊 ①：跟著 tutorial 做第 1–3 步（助教主持）
 
 對應：Team 2（11/22 截止、11/23 評測）
 時間：13:10–16:00，三節。老師出國，助教主持；問題彙整後老師 11/23 第一節統一回答。
 
-## 目的
+## 做什麼
 
-Team 2 做了三週，今天是第一次把各組的做法攤開來看：**封包格式有沒有照規格、buffer 與 PLC 的設計是什麼、卡在哪**。
-用別組的程式互測比自己測更容易抓到格式問題。交一頁[進度報告 ①](../../docs/templates/progress_report.md)（列入 Team 2 個人「C 貢獻與協作」項）。
+三節課就是**全班一起照 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做第 1–3 步**，做完就過規格的基本層（B1–B4）。
+每一步做完都要 **push 到 team repo**（以組為單位），下課前交半成品。
 
-## 時程
-
-| 節次 | 時間 | 內容 |
-|---|---|---|
-| 1 | 13:10–14:00 | **進度閃電報告**：11 組各 4 分鐘（P 講）：驗收 0–10 哪些過（10 是 11/1 新增的 μ-law 壓縮）、封包與 buffer 怎麼設計、卡住的一題、想問老師的一題、**從 Team 1 學到的一件事**（一句話）。助教計時、把問題寫白板 |
-| 2 | 14:10–15:00 | **格式互測**：配對（1↔2、3↔4、…、11↔1），兩個方向各跑：你們的 send → 他們的 recv（他們開 `--probe`）、反向。看 seq／ts／BYE／補 0 有沒有對；過不了就用 `python_ref/voicelink.py` 當裁判找出是誰的格式錯。結果寫進雙方的 `TEAM_LOG.md` |
-| 3 | 15:10–15:50 | **問題診所**：白板上的問題分四桌（格式／buffer 與 PLC／live 與裝置／量測），助教各顧一桌，已經解掉那題的組當小老師；每組至少解掉一個 |
-| 3 | 15:50–16:00 | 收尾：進度報告 ① 11/15（日）18:00 前 push 到 team repo 的 `docs/progress_team2_1.md` |
+| 節次 | 時間 | 步 | 做完要看到 | push 什麼 |
+|---|---|---|---|---|
+| 1 | 13:10–14:00 | **第 1 步 raw**：讀 WAV、每 20 ms 送 640 bytes、收到就寫檔 | `recv` 寫出的 WAV 聽得到；經過 `udp_impair.py --loss 0.05` 後變短、亂序 | `src/step1_raw.c`（可改名）＋ `TEAM_LOG.md` 寫「誰做了什麼」 |
+| 2 | 14:10–15:00 | **第 2 步 header**：12 bytes header（seq、ts、ssrc）、BYE | 收端每包印 `seq=… ts=…`；搗蛋時**看得到 seq 跳號** | `src/…step2…`；`docs/interface.md` 寫下封包格式 |
+| 3 | 15:10–15:50 | **第 3 步 jitter buffer**：環形 buffer、播放時鐘、repeat PLC、基本 STATS | `python3 ../tests/run_mock_tests.py … --only 1,2,5` 三項 PASS | `src/…step3…`＋測試輸出截圖 |
+| 3 | 15:50–16:00 | 收尾：登錄今天的 commit SHA 到 Slack 討論串；沒做完的回家做完，11/15（日）18:00 前 push | — |
 
 ## 助教要做的事
 
-完整的主持流程、配對表、Slack 公告文字見 [ta_guide.md](ta_guide.md)。
+- 開場 5 分鐘：講今天三步與「每步 push」的規則；投影 tutorial。
+- 每一步開始先用 5 分鐘帶大家看該步的「要加的東西」與程式碼差異（`diff step1_raw.c step2_header.c`），然後各組自己做，助教巡場。
+- 卡住的組先問「`--probe`／印出的 seq 看到什麼」；不幫改程式，可以指到 TUTORIAL.md 的「常見錯誤」。
+- 第三節結束前收集每組的 SHA 與「問老師的一題」貼 Slack `#team2-questions`；11/12 前整理成清單給老師。
 
 ## 給同學
 
-- 帶筆電、熱點、耳機；來之前至少讓 `send`／`recv` 在自己電腦上跑得起來（格式不對沒關係，今天就是要抓）。
-- 互測時用 [Team 2 規格](../../team_projects/team2_voicelink/README.md)的封包格式表逐欄對；`--probe` 的訊息怎麼讀見 [第 9 週 lab.md](../wk09_1102_midterm-speech/lab.md)。
-- 「想從老師那裡學的三件事」要具體（例如「jitter buffer 的上限該用 frame 數還是 ms？」）。
+- 帶筆電（每組至少兩台）、熱點、耳機；來之前 `git pull`、baseline `make` 編得過。
+- 可以直接複製 tutorial 的 step 程式再改，但口試會問每一行在做什麼。
+- 半成品的評分：11/15 前 team repo 有第 3 步且 `--only 1,2,5` PASS → 基本層算完成一半（評測當天再跑一次確認）。

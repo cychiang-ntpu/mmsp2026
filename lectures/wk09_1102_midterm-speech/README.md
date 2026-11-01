@@ -1,251 +1,349 @@
-# 第 9 週（2026/11/2）｜期中考、語音編碼的方法（配合 Team 2）
+# 第 9 週（2026/11/2）｜期中考；聲音的數位表示（A/D、PCM）與數位音訊的量測、感知、頻譜
 
-對應：期中考、Team 2（**11/22 18:00 截止、11/23 評測**——因 11/9、11/16 停課各順延兩週）
+對應：期中考、MP2／MP5 複習、Team 2
 時間：13:10–16:00，三節。
 
 > **課前準備（同學）**：`git pull`；帶耳機。用電腦教室公用電腦的同學：一開機先做 [../wk03_0921_team1-kickoff/setup_first.md](../wk03_0921_team1-kickoff/setup_first.md)。
 > **跟著打指令請開 [commands.md](commands.md)**。
 > 期中考範例：[midterm_sample.md](midterm_sample.md)／[詳解](midterm_sample_solutions.md)。
+>
+> **Team 2 的同學注意**：10/19 沒講到的 Team 2 核心（為什麼 UDP、封包、jitter buffer、PLC）整理在 [team2_core.md](team2_core.md)，11/9 工作坊前讀完；11/9、11/16 全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 一步一步做。語音壓縮（μ-law、DPCM）在 [audio_coding.md](audio_coding.md)。
+
+本講義整理自 2023 年課程的 [Chapter 2 Digital Data (Signal) Representation](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/tree/master/Chapter-2) 與 [Chapter 3 Digital Audio Representation](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/tree/master/Chapter-3)，內容比兩節課能講的多：課堂挑重點（標 ★），其餘課後讀。第 3 週 2.1–2.6 與第 7 週 1.2–1.6 講過的部分這裡只放摘要與連結。
 
 ## 本週目標
 
 上完課你應該能：
 
-1. 算出未壓縮語音的位元率（16 kHz × 16 bits = 256 kb/s），並說出 Team 2 每 20 ms 一包的封包開銷。
-2. 解釋 μ-law／A-law 為什麼用 8 bits 就能打電話：對數量化讓小聲時的 SQNR 不掉。
-3. 解釋預測編碼（DPCM／ADPCM）：語音相鄰 sample 很像，只送殘差；prediction gain 與省下的 bits。
-4. 說出 source–filter 模型與 LPC／CELP 的概念：為什麼語音 codec 都以 20 ms 為 frame（和 Team 2 的 framing 一樣）。
-5. 說出 MP3／AAC 這類感知編碼的三個要素：轉換（MDCT）、心理聲學（遮蔽）、位元分配。
-6. 說出 Team 2 的四個核心：為什麼 UDP、封包格式（seq／ts／ssrc）、jitter buffer 與播放時鐘、PLC（zero／repeat）——這些 10/19 沒講到，今天第三節補上。
+1. 畫出「麥克風 → 取樣 → 量化 → 編碼 → 儲存／傳輸 → 解碼 → DAC → 喇叭」的完整路徑，說出每一步在做什麼、哪一步會失真。
+2. 寫出理想取樣的數學（x[n] = x_c(nT)、頻譜以 Ω_s 週期複製），說明 Nyquist 條件與 aliasing，並用 8 kHz 取樣 3 kHz／5 kHz 的例子驗證。
+3. 寫出均勻量化的式子，算出量化誤差、SQNR 與動態範圍（6.02·m dB），解釋 bit depth 與 dynamic range 的關係。
+4. 說出聲音怎麼產生（語音：source–filter；樂器：弦、膜、管）、怎麼拾取（振膜 → 電壓 → PCM），以及 PCM 這個詞的來歷。
+5. 用三種單位量振幅（Pa／dB SPL、dBFS、normalized），用波形量週期與 F₀，並區分客觀量（frequency、intensity）與主觀感知（pitch、loudness）。
+6. 說出 FT、DTFT、DFT 的關係、DFT 第 k 根對應幾 Hz，以及 spectrogram 的四個步驟與時間／頻率解析度的取捨。
 
 ## 時程
 
 | 節次 | 時間 | 內容 | 教材／範例 |
 |---|---|---|---|
-| 1 | 13:10–14:00 | **期中考**：50 分鐘閉卷，範圍 MP1–MP5 與 Team 1 | 範例：[midterm_sample.md](midterm_sample.md) |
-| 2 | 14:10–15:00 | **語音編碼（上）**：位元率與封包開銷、μ-law 壓伸、預測編碼 DPCM／ADPCM | [examples/mulaw_demo.py](examples/mulaw_demo.py)、[examples/dpcm_demo.py](examples/dpcm_demo.py) |
-| 3 | 15:10–16:00 | **Team 2 的核心（10/19 沒講到的部分）**：為什麼 UDP、封包格式、jitter buffer 與播放時鐘、PLC、新功能 4（μ-law）、兩週討論會與評測怎麼跑 | [Team 2 規格](../../team_projects/team2_voicelink/README.md)、[jitter_buffer.html](../wk07_1019_audio-pcm/slides/jitter_buffer.html)、[jitter_sim.py](../wk07_1019_audio-pcm/examples/jitter_sim.py) |
-
-Team 2 的實作工作坊（聽掉封包、對手端驗格式、自動驗收、buffer 掃描、live 通話）放在 [lab.md](lab.md)，由助教帶、各組自己跑；今天第三節最後 10 分鐘講怎麼用。
+| 1 | 13:10–14:00 | **期中考**（50 分鐘閉卷） | [midterm_sample.md](midterm_sample.md) |
+| 2 | 14:10–15:00 | **Chapter 2：聲音的數位化**：A/D 與 D/A（SpeechA2D）、為什麼要 digital、理想取樣的數學、Nyquist 與 aliasing、量化與 SQNR／動態範圍、PCM 與 WAV | [a2d_steps.html](../wk03_0921_team1-kickoff/slides/a2d_steps.html)、[alias_demo.py](../wk03_0921_team1-kickoff/examples/alias_demo.py)、[quantize_demo.py](../wk03_0921_team1-kickoff/examples/quantize_demo.py)、[wav_bmp_viewer.html](../wk03_0921_team1-kickoff/slides/wav_bmp_viewer.html) |
+| 3 | 15:10–16:00 | **Chapter 3：數位音訊的表示**：聲音從哪裡來（語音、樂器）、拾取與 PCM、取樣率與 bit depth 的選擇、頻率與振幅的量測（dB SPL、dBFS）、人的感知（pitch、loudness、ATH、Mel）、DFT 複習、spectrogram | [frame_demo.py](../wk07_1019_audio-pcm/examples/frame_demo.py)、[window_demo.py](../wk07_1019_audio-pcm/examples/window_demo.py)、[stft_steps.html](../wk07_1019_audio-pcm/slides/stft_steps.html)、[stft_demo.py](../wk07_1019_audio-pcm/examples/stft_demo.py) |
 
 ---
 
-## 第一節｜期中考
+## 第二節｜Chapter 2：聲音的數位化（Digital Data Representation）
 
-13:10 準時發卷，14:00 收卷。閉卷、可帶不能上網的計算機。題型與配分同[範例考題](midterm_sample.md)，題數較少。
+### 2.1 ★ A/D 與 D/A：聲音進電腦、再出來（10 分鐘；照 2023 Ch2 2.1 的 SpeechA2D 投影片）
 
----
+投影片：[SpeechA2D.pdf](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/blob/master/Chapter-2/SpeechA2D.pdf)（2023 repo）；互動版 [a2d_steps.html](../wk03_0921_team1-kickoff/slides/a2d_steps.html)。
 
-## 第二節｜語音編碼（上）：從 256 kb/s 往下壓
-
-### 2.1 不壓縮要多少？Team 2 的封包開銷（8 分鐘）
-
-| 項目 | 數字 |
-|---|---|
-| Team 2 的 PCM | 16 000 sample/s × 16 bits = **256 kb/s** |
-| 每 20 ms 一包 | 640 bytes PCM ＋ 12 bytes header ＋ UDP 8 ＋ IP 20 ＋ 乙太網路 14 = 694 bytes → 50 包/s → **277.6 kb/s**；開銷 8.4% |
-| 電話（G.711） | 8 kHz × 8 bits = **64 kb/s**；同樣 20 ms 一包只有 160 bytes，開銷 25% |
-| Opus（LINE、Discord、WebRTC） | 語音 **6–40 kb/s**；20 ms 一包只有 15–100 bytes，header 比資料還大 |
-
-兩個觀察：(1) 封包的固定開銷（54 bytes）不會隨壓縮變小，所以**壓得越兇，framing 的設計越重要**（這是為什麼 RTP header 只有 12 bytes，而且 Opus 不會把 frame 切更短）。(2) 壓縮是為了**位元率**（頻寬、行動網路的費用、同時通話的人數），不是為了「存起來」。
-
-把 256 壓到 64、再壓到 8 kb/s，歷史上用了三種路線：**壓伸（量化階距隨大小變）→ 預測（只送差值）→ 參數／感知（送「怎麼合成」而不是波形）**。今天照這個順序講。
-
-### 2.2 壓伸（companding）：μ-law／A-law，為什麼 8 bits 能打電話（15 分鐘）
-
-第 3 週 2.4 的結論：均勻量化的 SQNR ≈ 6.02n + 1.76 dB，但那是**滿刻度**的訊號。語音大部分時間是小聲的（母音之間、句子尾巴），小聲 30 dB 時 SQNR 也掉 30 dB——8-bit 線性量化在 −30 dBFS 只剩 8 dB，根本不能聽。
-
-解法：**量化前先把訊號壓成對數曲線**，小訊號被放大、大訊號被壓縮，再做均勻量化；解碼端反過來展開。小訊號得到細的階距、大訊號粗的階距，**相對誤差差不多，SQNR 就幾乎不隨音量變**。
+**A/D（ADC，analog-to-digital）**：
 
 ```
-μ-law（北美、日本）  y = sign(x) · ln(1 + μ|x|) ／ ln(1 + μ)        μ = 255，x ∈ [−1, 1]
-A-law（歐洲、台灣）   y = sign(x) · A|x| ／ (1 + ln A)                |x| < 1／A
-                      y = sign(x) · (1 + ln(A|x|)) ／ (1 + ln A)     其餘，A = 87.6
+說話 → 空氣壓力變化 ──麥克風（振膜→電壓）──▶ x_c(t) 類比電壓（連續時間、連續值）
+   ① 取樣 sampling      每 T 秒記一次 → x[n] = x_c(nT)            離散時間、連續值
+   ② 量化 quantization   每個值四捨五入到 2^m 階之一 → Q(x[n])      離散時間、離散值
+   ③ 編碼 coding         每階用 m 個 bit 的二進位表示 → 0101…      PCM
+   → 存成 WAV、送上網路（Team 2 的一包 = 320 個 sample 的 PCM）
 ```
 
-G.711 把這條曲線用 8 段折線近似（每段 16 階），所以可以用查表做，一個 sample 幾個 cycle；13–14 bits 的線性 PCM 壓成 8 bits，**壓縮率 0.57–0.62，而且沒有延遲、沒有 frame**。這是第 3 週 2.3 講過的「非均勻量化」，也是期中考範例選擇題那個「G.711 是把 13–14 bits 壓成 8 bits」的出處。
+**D/A（DAC，digital-to-analog）**：反過來，而且每一步都有對應：
 
-| macOS / Linux / WSL | Windows PowerShell |
-|---|---|
-| `python3 examples/mulaw_demo.py` | `python examples\mulaw_demo.py` |
-| `python3 examples/mulaw_demo.py ../wk07_1019_audio-pcm/data/speech_osr_16k.wav` | `python examples\mulaw_demo.py ..\wk07_1019_audio-pcm\data\speech_osr_16k.wav` |
+```
+0101… ──① 解碼──▶ 整數 ──② 零階保持（zero-order hold）──▶ 階梯波（每個 sample 撐 T 秒）
+      ──③ 重建濾波器（低通，截止 f_s/2）──▶ 平滑的 x̂_c(t) ──放大──▶ 喇叭（電壓→振膜→空氣壓力）
+```
 
-實測（真實語音）：
+- 階梯波的「角」是高頻（f_s 的倍數附近的複製頻譜，2.3 會算出來），低通濾掉它們就剩原訊號；理想情況下（Nyquist 條件成立、不量化）還原是**完美的**。
+- 整條路徑裡**只有量化（②）不可逆**：取樣可以還原，編碼只是改寫法。所以 A/D → D/A 的損失 = 量化雜訊（2.4）＋ aliasing（如果取樣太慢，2.3）。
+- 兩個參數就決定一切：**f_s**（多久記一次）與 **m**（每次記多細）。
 
-| 音量 | 線性 8-bit | μ-law 8-bit |
+| macOS | Linux / WSL | Windows PowerShell |
 |---|---|---|
-| 0 dBFS | 35.0 dB | 37.9 dB |
-| −20 dBFS | 15.6 dB | 36.5 dB |
-| −40 dBFS | 1.4 dB | 26.5 dB |
+| `open ../wk03_0921_team1-kickoff/slides/a2d_steps.html` | `xdg-open …/a2d_steps.html` | `start ..\wk03_0921_team1-kickoff\slides2d_steps.html` |
 
-線性 8-bit 每小 10 dB 就掉 10 dB；μ-law 在 40 dB 的音量範圍內只掉 11 dB。代價：滿刻度弦波時 μ-law（36 dB）比線性 8-bit（48 dB）差——它把「大聲時的精準」換成「小聲時還能聽」。
+第 3 週 2.1 有麥克風的構造（振膜、動圈／電容）與 DSP 2026 講義的四步驟；今天從數學往下走。
 
-**和 Team 2 的關係**：11/1 起規格新增**功能 4：`--codec mulaw` 必做**（封包 type 0x04、一包 320 bytes、位元率減半，驗收第 10 項看 SQNR ≥ 30 dB）；ADPCM 是加分。做法就是今天這一節：編碼一個查表（或這條公式）、解碼反過來；PLC 在解碼後的 16-bit 上做，完全不用改。
+### 2.2 ★ 為什麼要 digital？（5 分鐘）
 
-### 2.3 預測編碼：DPCM／ADPCM，只送「和上一個差多少」（22 分鐘）
-
-語音是低頻為主的訊號（第 7 週 1.3：F₀ 100–250 Hz、能量集中在 4 kHz 以下），**相鄰的 sample 很像**。那就不要送 x[n]，送 **殘差 e[n] = x[n] − x̂[n]**，x̂[n] 是用前面的 sample 預測的值：
+只是要「把訊號放大」，一顆電晶體的類比放大電路就夠；為什麼要繞一圈 C/D → 離散時間系統 → D/C？
 
 ```
-1 階：x̂[n] = x[n−1]                       （「跟上一個一樣」）
-2 階：x̂[n] = 2x[n−1] − x[n−2]             （「照上一段的斜率直線外插」）
-p 階 LPC：x̂[n] = Σ_{k=1}^{p} a_k·x[n−k]   （係數 a_k 每 20 ms 由訊號算一次——這就是下一節的 LPC）
+x_c(t) ──▶ [C/D (ADC)] ──▶ x[n] ──▶ [離散時間系統（程式）] ──▶ y[n] ──▶ [D/C (DAC)] ──▶ y_c(t)
 ```
 
-殘差的功率比原訊號小多少（dB），叫 **prediction gain**；每小 6 dB 就能少用 1 bit 而 SQNR 不變。
+| Digital 的優點 | Digital 的缺點 |
+|---|---|
+| 可程式：同一顆晶片改軟體就變成濾波器、壓縮器、合成器 | 要多 ADC／DAC 兩個轉換，各有延遲與誤差 |
+| 可複製、可儲存、可傳輸而**不累積失真**（數字不會變舊） | 取樣與量化本身就是失真（aliasing、量化雜訊） |
+| 可壓縮、可加密、可糾錯（第 3 週的 source／channel coding） | 高取樣率、高位元深度的 ADC 貴、耗電 |
+| 精度由 bit 數決定，不受溫度、元件老化影響 | 即時處理有運算量上限（第 7 週 FFT 的 N² 對 N log N） |
+
+DSP 的 D 是 Discrete 還是 Digital？離散時間（discrete-time）只說「時間是整數 n」，值仍可是實數；數位（digital）再加上「值也是有限 bit」。數學推導用 discrete-time，電腦裡跑的是 digital。
+
+### 2.3 ★ 理想週期取樣（Ideal Periodic Sampling）（15 分鐘）
+
+**定義**：取樣是把連續訊號變成數列——聲音在時間上等距取點，影像在空間上等距取點。
+
+```
+x[n] = x_c(nT)                          T：取樣週期（秒）；f_s = 1/T：取樣率（Hz）
+```
+
+**用數學看它**：把取樣想成「連續訊號乘上一串 impulse」：
+
+```
+s(t) = Σ_k δ(t − kT)                                      impulse train（Dirac delta）
+x_s(t) = x_c(t)·s(t) = Σ_n x_c(nT)·δ(t − nT)              仍是連續時間的訊號，只在 t = nT 有值
+```
+
+訊號與系統學過：時間上的 impulse train，頻率上也是 impulse train：
+
+```
+s(t)  ⟷  S(jΩ) = (2π/T)·Σ_k δ(Ω − kΩ_s)                   Ω_s = 2π/T（rad/s）
+x_s(t) = x_c(t)·s(t)  ⟷  X_s(jΩ) = (1/2π)·X_c(jΩ) * S(jΩ) = (1/T)·Σ_k X_c(j(Ω − kΩ_s))
+```
+
+**結論一句話**：取樣後的頻譜 = 原頻譜**每隔 Ω_s 複製一份**再相加。
+
+```
+|X_c(jΩ)|                       |X_s(jΩ)|
+   ▲   /\                          ▲   /\      /\      /\      /\
+   │  /  \                         │  /  \    /  \    /  \    /  \
+───┴─/────\──▶ Ω        ────────/────\──/────\──/────\──/────\──▶ Ω
+  −Ω_N    Ω_N                  −Ω_s      0      Ω_s     2Ω_s
+                                  ◄──── 複製不重疊的條件：Ω_s − Ω_N > Ω_N ────►
+```
+
+- **C/D**（連續到離散）：乘 impulse train，再把 impulse 的面積拿出來當 x[n]。
+- **D/C**（離散到連續）：把 x[n] 放回 impulse 的位置，過一個截止在 Ω_s/2 的理想低通濾波器，複製的頻譜被濾掉，剩下原來那一份 → 完美還原。（真實的 DAC 是「零階保持」的階梯波加上類比低通。）
+
+**Nyquist 定理**：取樣率 ≥ 訊號最高頻率成分的兩倍（Ω_s ≥ 2Ω_N），複製的頻譜才不會重疊，才有機會用低通濾波器還原。
+**Aliasing**：Ω_s < 2Ω_N 時，複製的頻譜疊到原來的頻譜上，高頻成分「假扮」成低頻，**還原不回來**。
+
+- **Nyquist rate vs. Nyquist frequency**（不要搞混）：Nyquist rate = 2·f_max，是**訊號**要求的最低取樣率；Nyquist frequency = f_s/2，是**系統**能表示的最高頻率。（2023 講義把 Nyquist rate 寫成 f_s，本講義採一般定義。）
+- 例（第 3 週 `alias_demo.py`）：f_s = 8 000 Hz。
+  - Case 1，f = 3 000：x₁[n] = sin(2π·3000·n/8000)，沒有 aliasing。
+  - Case 2，f = 5 000：x₂[n] = sin(2π·5000·n/8000) = sin(2π·(8000−3000)·n/8000) = sin(2πn − 2π·3000·n/8000) = **−sin(2π·3000·n/8000) = −x₁[n]**。5 kHz 取樣後和 3 kHz 的波形一模一樣（只差正負號），聽起來就是 3 kHz。（2023 講義少了負號；程式印出 x₁ + x₂ = 0 可以驗證。）
+- Undersampling 在影像上：取樣跟不上花紋的變化，出現摩爾紋（moiré）、假的圖案；聲音上就是假的低頻。
 
 | macOS / Linux / WSL | Windows PowerShell |
 |---|---|
-| `python3 examples/dpcm_demo.py ../wk07_1019_audio-pcm/data/speech_osr_16k.wav` | `python examples\dpcm_demo.py ..\wk07_1019_audio-pcm\data\speech_osr_16k.wav` |
+| `python3 ../wk03_0921_team1-kickoff/examples/alias_demo.py` | `python ..\wk03_0921_team1-kickoff\examples\alias_demo.py` |
 
-實測（OSR 語音 16 kHz）：
+課後讀：第 3 週 2.2 的「頻譜複製」小節、Oppenheim & Schafer ch. 4（取樣定理的完整推導、D/C 的零階保持）。
 
-| 送什麼 | 功率 | 熵（以 16-bit 值為符號） | prediction gain |
+### 2.4 ★ 量化（Quantization）（15 分鐘）
+
+每個 sample 用固定的 m 個 bit 表示，m 叫 **sample size／bit depth**；能表示的值有 **L = 2^m 個等級**（quantization levels）。影像每個像素的 R、G、B 各 8 bits → 256 階；聲音常用 16 bits（65 536 階；2023 講義寫 65,532 是筆誤）或 32 bits。
+
+**均勻（線性）量化**，階距 Δ：
+
+```
+Q(x[n]) = Δ · ⌊ x[n]/Δ + 1/2 ⌋              四捨五入到最近的階
+e[n] = x[n] − Q(x[n])                       量化誤差，|e[n]| ≤ Δ/2
+```
+
+教科書的例子（Oppenheim & Schafer）：x[n] = 0.99·cos(n/10)，3-bit 量化後波形變成階梯、誤差 e[n] 是一串看得出規律的鋸齒；8-bit 時誤差小到像雜訊。這就是為什麼量化誤差常被**當成均勻分布的雜訊**來分析（Bennett 1948）。
+
+**SNR**（signal-to-noise ratio）= 訊號功率 ÷ 雜訊功率；用 dB 表示：
+
+```
+SNR = P_signal / P_noise = A_signal² / A_noise²        （P ∝ V²）
+SNR(dB) = 10·log₁₀(P_signal / P_noise) = 20·log₁₀(A_signal / A_noise)
+```
+
+**SQNR**（signal-to-quantization-noise ratio）：雜訊就是量化誤差。用整段訊號算：
+
+```
+P  = E[x²[n]] = (1/N)·Σ x²[n]          P₀ = E[e²[n]] = (1/N)·Σ e²[n]          SQNR(dB) = 10·log₁₀(P / P₀)
+```
+
+**動態範圍（dynamic range）**：量化後的訊號「能分得多細」，不是值域的大小。用最大振幅對最大量化誤差的比來估：
+
+```
+SQNR(dB) ≈ 10·log₁₀( (2^{m−1}·Δ)² / (0.5·Δ)² ) = 20·log₁₀(2^m) ≈ 6.02·m dB
+```
+
+每多 1 bit，動態範圍多 6.02 dB：8 bits 約 48 dB、16 bits 約 96 dB、24 bits 約 144 dB。
+這是「峰值比」的版本；MP2 量的是功率比，滿刻度弦波會多 1.76 dB（6.02m + 1.76），第 3 週 2.4 兩個都講過，考試要說清楚用哪一個。
+
+**非線性量化**：A-law、μ-law（G.711）——小訊號階距細、大訊號粗，讓 SQNR 不隨音量掉，電話用 8 bits 就能聽；原理與實測在 [audio_coding.md](audio_coding.md) 2.2，也是 Team 2 功能 4。
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `python3 ../wk03_0921_team1-kickoff/examples/quantize_demo.py` | `python ..\wk03_0921_team1-kickoff\examples\quantize_demo.py` |
+
+實測（440 Hz 滿刻度弦波、f_s = 8 kHz）：4 bits 23.2 dB、8 bits 49.6 dB、12 bits 74.6 dB、16 bits 98.5 dB；振幅減半每列少 6 dB。
+
+### 2.5 PCM 與 WAV：把數字存起來（5 分鐘；第 3 週 2.6 講過）
+
+量化後的整數用二進位存，就是 **PCM**（pulse code modulation）；WAV 是把 PCM 裝進 RIFF 容器（`fmt ` chunk 記 f_s、聲道、bits；`data` chunk 是 sample，little-endian，`data` 不一定在第 44 byte）。
+MP2 的 function generator 就是在模擬一台 A/D：產生 x_c(t) → 取樣 → 量化（`rint`）→ 寫 WAV → 算 SQNR。2023 的 MP3「Generating Waves」是同一題（`sinegen fs m wavetype f A T`）。
+
+打開 [wav_bmp_viewer.html](../wk03_0921_team1-kickoff/slides/wav_bmp_viewer.html)：換取樣率、bit depth 再聽；用 hex 逐欄讀檔頭。
+
+### 2.6 小結：Chapter 2 的三個數字（2 分鐘）
+
+| 參數 | 決定什麼 | 太小會怎樣 | 常見值 |
 |---|---|---|---|
-| sample 本身 | 63.0 dB | 11.78 bits/sample | — |
-| 1 階殘差 | 48.0 dB | 8.72 bits/sample | 15.0 dB |
-| 2 階殘差 | 43.4 dB | 7.84 bits/sample | 19.6 dB |
+| f_s | 能表示的最高頻率 f_s/2 | aliasing | 8k（電話）、16k（寬頻語音）、44.1k（CD）、48k（影片）、96k／192k（DVD-Audio） |
+| m（bit depth） | 動態範圍 ≈ 6.02·m dB | 量化雜訊、小聲時粗糙 | 8（電話，配 μ-law）、16（CD）、24（錄音室） |
+| 聲道 | 空間感 | — | 1、2、5.1 |
 
-兩個讀法：
-- **Huffman 的角度**（Team 1 的延伸）：熵從 11.8 降到 7.8 bits——同一支 Huffman 編碼器，先做預測再編，壓縮率從 0.74 變 0.49。「符號怎麼定」在聲音上就是「先不先預測」。這就是 FLAC 的原理（LPC 預測＋Rice／Huffman 編殘差，無失真，約 0.5–0.6）。
-- **量化的角度**：殘差直接量化成 4 bits（**DPCM**），位元率 256 → 64 kb/s。程式試了四種階距：階距 256 時 SQNR 23.8 dB，太小（64）跟不上大的跳動（slope overload，9.4 dB），太大（512）小聲處粗糙（granular noise）。
-  **ADPCM**（G.726，32 kb/s）讓階距跟著訊號自動調：上一個殘差大就把階距放大，小就縮小；預測器係數也邊跑邊調。
-
-DPCM 最重要的一個細節（程式裡有註解）：**編碼端的預測器要用「解碼端重建出來的 x̂」而不是原始的 x**，否則兩邊的預測不同，誤差會一直累積。這和 Team 2 的 PLC `repeat` 是同一個問題：接收端用來「補」的，必須是它自己手上有的東西。
+資料率 = f_s × m × 聲道（第 3 週 1.1 的計算機）。
 
 ---
 
-## 第三節｜Team 2 的核心：不等、會掉、要補（10/19 沒講到的部分）
+## 第三節｜Chapter 3：數位音訊的表示（Digital Audio Representation）
 
-> 第 7 週講義第二節（2.1–2.6）有完整版；今天把實作必須知道的四件事講完，剩下的課後讀。
+課程目標（2023）：1. 了解音訊非常粗淺的物理特性；2. 回顧音訊的來源與儲存方法；3. 音訊的量測與人類的感知；4. 時頻譜（spectrogram）。
 
-### 3.1 為什麼不用 TCP（5 分鐘）
+### 3.1 ★ 聲音從哪裡來（8 分鐘）
 
-| | TCP（Team 1） | UDP（Team 2） |
-|---|---|---|
-| 掉包 | 重傳，後面的**全部等** | 掉了就掉，**從不等** |
-| 邊界 | byte stream，要自己加長度前綴 | 一個 `sendto` 就是一個封包 |
-| 順序 | 保證 | 不保證，可能亂序、重複 |
+**聲波**是聲源振動產生的機械波。在空氣與液體裡是**縱波**（疏密波：質點振動方向與傳播方向平行；空氣擠在一起氣壓升高、散開氣壓降低），在固體裡可能混有**橫波**（振動方向與傳播方向垂直，像繩波）。人耳大約聽 20 Hz–20 kHz；狗聽得到 50 kHz，但 15 Hz 以下聽不到。
 
-語音每 20 ms 一包：掉一包少 20 ms 的聲音，補一下幾乎聽不出；等重傳一次 RTT（50–200 ms）後面全部延後，而且延遲會累積。**即時媒體寧可掉，不要等**——這是整個 Team 2 的設計原則。
+**語音**：發音器官的結構（肺 → 聲帶 → 咽、口腔、鼻腔 → 嘴唇）可以簡化成 **source–filter 模型**：
+- **聲源**：聲帶振動（有聲音，週期 1/F₀）或氣流通過狹縫的湍流（無聲音，像雜訊）。
+- **濾波器**：聲道是一根會變形的管子（tube resonance model），不同形狀有不同的共振頻率（**formant**），決定是哪個母音。
+- 數位模型：脈衝串或雜訊 → 聲道濾波器 → 輻射 → 語音；頻譜 = 聲源頻譜（harmonics）× 聲道頻率響應（formant 包絡）。這就是第 7 週 1.3 與 Team 2 PLC「pitch 重複」的根據，也是 [audio_coding.md](audio_coding.md) LPC／CELP 的出發點。
+- 影片（2023 連結）：聲帶振動的內視鏡影像（Sean Parker Institute for the Voice）、tube resonance（voicescienceworks.org）、Vibration of the Vocal Folds 動畫。
 
-### 3.2 封包格式：seq、ts、ssrc 各回答一個問題（8 分鐘）
+**樂器**：
+- 吉他弦的振動影片——注意影片裡弦看起來慢慢擺動，那是**攝影機的 frame rate 取樣了弦的高頻振動**造成的 aliasing（弦 637 Hz、攝影 500 fps → 看起來 137 Hz），正是 2.3 的現象。
+- 鋼琴的擊弦機制；銅鈸與小鼓的慢動作（膜與板的振動模態）。
 
-20 ms = 320 samples = 640 bytes（16-bit PCM），加 12 bytes header：
+### 3.2 ★ 拾取與數位化：waveform 與 PCM（7 分鐘）
 
-```
-magic 'V' | type | seq(2) | ts(4) | ssrc(4) | 640 bytes PCM        多 byte 欄位 big-endian
-```
+機械波 → 麥克風振膜 → **電壓**：記下振幅隨時間的變化就是 **waveform（波形）**。電壓 → ADC → 0／1 的序列：最常用的表示法叫 **PCM**。
 
-| 欄位 | 回答的問題 | 用途 |
-|---|---|---|
-| `seq`（每包 +1，16-bit 會繞回） | 有沒有**掉**、**亂序**、**重複** | 偵測與計數 |
-| `ts`（單位 sample，每包 +320） | 這包**什麼時候該播** | 對齊播放時鐘 |
-| `ssrc`（隨機） | 這是**哪一次**的串流 | 對方重啟就重置 |
+- PCM 由 Alec Reeves 於 1937 年在 International Telephone and Telegraph 發明；當時的重點是「調變」：每個 sample 量化、用二進位編碼、把 bit 當成脈衝傳出去。今天 PCM 這個詞在數位音訊裡就是指「取樣＋量化、未壓縮」的資料；raw 的 PCM 檔沒有檔頭。
+- 新建一個音訊檔時軟體問你的兩個問題就是 **sampling rate** 與 **bit depth**。
+- 取樣率的常見選擇：8 kHz 單聲道（電話）、44.1 kHz 雙聲道 16 bits（CD）、48 kHz（DAT、影片）、96／192 kHz 24 bits（DVD-Audio）。
+- Bit depth 限制每個 sample 的**精度**，決定 SQNR 與動態範圍；16 bits 最常用（值域 [−2¹⁵, 2¹⁵−1]，C 的 `short`）；處理中常用 32-bit（浮點）以免中間運算累積誤差，最後再降回 16 bits。
+- 選擇的考量：要和其他要混音的素材一致；錄音的對象（語音 16 kHz 就夠，音樂要 44.1k 以上）；儲存媒體容量；播放設備的靈敏度；要加特效時先用高一點的規格。
 
-這是 RTP（RFC 3550）的精簡版。`type` 今天多了 0x04 μ-law（320 bytes）、0x05 ADPCM（160 bytes）——功能 4，見 3.5。
+2023 講義的 C 範例：產生 1 秒 440 Hz 弦波、振幅 10 000、16 kHz，`x[n] = (short)floor(A·sin(2π·f·n·T) + 0.5)` 寫成 `.pcm`——就是 MP2 去掉 WAV 檔頭的版本。
 
-### 3.3 jitter buffer 與播放時鐘（15 分鐘）
+### 3.3 ★ 音訊的基礎量測：頻率與振幅（12 分鐘）
 
-送端每 20 ms 一包；網路送到的時間不規則：有快有慢（**jitter**）、不見（**loss**）、超車（**reorder**）、兩份（**dup**）。喇叭卻**必須**每 20 ms 拿到一個 frame，否則卡住。
+**頻率（frequency）**：介質質點每秒來回振動的次數，單位 Hz（cycle/second）。弦波的一個 cycle 是一個完整的來回；弦波的聲音叫 **pure tone**。
 
-```
-到達（不規則）──▶ [ jitter buffer：依 seq 排序 ] ──▶ 每 20 ms 拿「下一個 seq」──▶ 喇叭
-                                                       │ 沒有？→ PLC 補一個（concealed）
-                                                       │ 來晚了？→ 丟（late）
-```
-
-規則（規格「jitter buffer 與播放時鐘」）：
-1. 播放時鐘**自己走**，每 20 ms 一拍，不等網路。
-2. 先存到 `--buffer` ms（預設 60 = 3 個 frame）才開始播。
-3. 每一拍：buffer 裡有「下一個該播的 seq」→ 播；沒有 → **PLC 補一個**（計 `concealed`）；**seq 一定前進**。
-4. 遲到的（它的拍子已經過了）→ 丟（`late`）；重複 → 丟（`dup`）；亂序但來得及 → 排回正確位置（`reordered`）。
-5. buffer 有上限（建議 4 倍），滿了丟最舊（`overflow`）。
-
-打開 [jitter_buffer.html](../wk07_1019_audio-pcm/slides/jitter_buffer.html)：拉 jitter 30 ms、loss 5%，看封包飛、buffer 排隊、時鐘一拍一拍走；把 buffer 從 0 拉到 200 看 `late`／`concealed` 下降、延遲上升；按「sweep」畫曲線。離線版：
+**用波形量週期**（2023 用 WaveSurfer 看「voice」這個詞；今天用 [frame_demo.py](../wk07_1019_audio-pcm/examples/frame_demo.py)）：母音穩定的一段裡可以看到波形重複；數 5 個週期佔的時間除以 5 就是**基本週期**，倒數是 **F₀**。
+2023 的例子：0.1112–0.1352 s 有 5 個週期 → T₀ = 0.0048 s → F₀ ≈ 208 Hz。今天的檔案：t = 1.0 s 處 τ = 102 sample = 6.4 ms → F₀ ≈ 157 Hz。
 
 | macOS / Linux / WSL | Windows PowerShell |
 |---|---|
-| `python3 ../wk07_1019_audio-pcm/examples/jitter_sim.py --jitter 30 --loss 0.05` | `python ..\wk07_1019_audio-pcm\examples\jitter_sim.py --jitter 30 --loss 0.05` |
+| `python3 ../wk07_1019_audio-pcm/examples/frame_demo.py ../wk07_1019_audio-pcm/data/aeueo-16kHz.wav 1.0` | `python ..\wk07_1019_audio-pcm\examples\frame_demo.py ..\wk07_1019_audio-pcm\data\aeueo-16kHz.wav 1.0` |
 
-預設參數的結果：buffer 0 ms 時 late 288、concealed 513；40 ms 時 13／77；**60 ms 起 late = 0、concealed = 64 = 真正遺失的數目**，之後每多 20 ms 只是延遲多 20 ms。
+三種訊號：
+- **週期訊號**：存在最小的 N 使 x[n] = x[n+N]。
+- **準週期（quasi-periodic）**：相鄰週期很像但不完全一樣（四季變化也是）。大部分語音是這一種。
+- **非週期**：氣音、擦音，像雜訊。
 
-**取捨**：buffer 越大越少 late／concealed，但延遲越高；G.114 說單向 150 ms 以內通話品質好。報告第 2 題「建議多少 ms」就是依量到的抖動選一個值。
+**分析語音的基本假設**：整段不是週期的，但 20–40 ms 的 **frame** 內近似週期（16 kHz × 20 ms = 320 個 sample——Team 2 的一包）。週期訊號可以拆成 **F₀ 的弦波＋整數倍的 harmonics**（傅立葉級數）；用 DFT 分析一個 frame 就看得到。MP3 的 frame 是 576 或 1152 個 sample（44.1 kHz 下 13／26 ms）。
 
-### 3.4 PLC：封包掉了，喇叭不能停（7 分鐘）
+**振幅（amplitude）** 有好幾種單位，都在用，要分清楚：
 
-**PLC = packet loss concealment（遺失補償）**：第 3 步「沒有就補一個」補的那個 frame 怎麼做。規格要求兩種都做：
+| 單位 | 意義 | 數字 |
+|---|---|---|
+| **Pa**（N/m²，氣壓的變化量） | 聲音造成的氣壓對平均大氣壓（約 10⁵ Pa）的偏差 | 聽覺門檻（1 kHz）：2×10⁻⁵ Pa |
+| **dB SPL**（sound pressure level） | 20·log₁₀(p / p₀)，p₀ = 20 μPa（聽覺門檻），所以門檻 = 0 dB SPL | 耳語 30、交談 60、捷運 90、痛覺 120–130 dB SPL；**+10 dB 聽起來約兩倍大聲；3 dB 是大多數人分得出的最小差別** |
+| **sample 值** | 電腦裡的整數：16 bits 是 [−32768, 32767] | — |
+| **dBFS**（full scale） | 20·log₁₀(\|x\| / 32768)：滿刻度 = 0 dBFS，只能是負的 | 10 000 → −10.3 dBFS；1 → −90.3 dBFS |
+| **百分比** | 最大 = 100%、最小 = −100% | — |
+| **normalized** | 振幅正規化到 [−1, 1]（MP2 的 A、`quantize_demo.py` 的 x） | — |
 
-| 方法 | 做法 | 聽起來 | 問題 |
+dB 永遠是「相對某個參考」：SPL 的參考是聽覺門檻，FS 的參考是滿刻度，SNR 的參考是雜訊。用 log 是因為人耳對大小聲的感覺接近對數（線上計算機：sengpielaudio.com）。
+
+### 3.4 ★ 人的感知：客觀量 vs 主觀量（8 分鐘）
+
+| 客觀（儀器量） | 主觀（人聽到的） | 關係 |
+|---|---|---|
+| frequency（Hz） | **pitch（音高）** | 大致對數：高八度 = 頻率 ×2；250 vs 260 Hz 分得出，1000 vs 1010 Hz 幾乎分不出。「音準」是感知的說法 |
+| intensity／energy（dB） | **loudness（響度）** | 大致對數；而且**人耳對不同頻率的靈敏度不同** |
+
+- **絕對聽覺門檻（ATH）**：最小能聽到的聲壓，隨頻率變，2–5 kHz 最靈敏（門檻最低），低頻與高頻要大聲很多才聽得到。
+- **等響曲線（equal-loudness contour）**：同樣「聽起來一樣大聲」的各頻率需要的 dB SPL；低音量時低頻要補很多（音響的 loudness 鈕）。
+- **Mel scale**、**Bark scale**：把頻率軸換成「聽起來等距」的尺度：1 kHz 以下近似線性、以上近似對數。語音辨識的 MFCC、MP3 的頻帶切法都用它。
+- 線上工具：Online Tone Generator（szynalski.com）——課堂放 250／260 Hz 與 1000／1010 Hz 比較；放 50 Hz 與 4 kHz 同樣 dBFS 比較響度。
+
+這一節是有失真壓縮（MP3／AAC）的根據：**聽不到的不用存**（[audio_coding.md](audio_coding.md) 感知編碼）。
+
+### 3.5 ★ DFT 複習與 spectrogram（15 分鐘；第 7 週 1.4–1.6 的濃縮）
+
+**FT、DTFT、DFT 的關係**：
+
+| 轉換 | 輸入 | 輸出 | 用在 |
 |---|---|---|---|
-| `zero` | 補 320 個 0 | 「喀」一聲斷音 | 波形突然跳到 0 → click |
-| `repeat` | 重複上一個播出去的 frame | 單掉一包幾乎聽不出 | 連續掉好幾包 → 同一個 20 ms 一直重複，「嗡」的機械音 |
+| FT（Fourier transform） | 連續時間 x_c(t) | 連續頻率 X(jΩ) | 2.3 的推導 |
+| DTFT | 離散時間 x[n]（無限長） | 連續、週期 2π 的 X(e^{jω}) | 理論 |
+| **DFT** | 有限長 N 點 x[n] | N 個離散的 X[k] | **電腦算的就是它**；FFT 是它的快速算法 |
 
-注意 repeat 重複的是「**收端手上已經有的**」東西（上一個播出去的 frame），這和 2.3 DPCM「預測器要用解碼端重建的值」是同一個道理。
-真的 codec（G.711 Appendix I、Opus）是重複**上一個 pitch 週期**並逐包衰減、接縫做 2 ms 淡入淡出——第 7 週 1.3 的 F₀ 就用在這裡；規格的加分項「衰減」「淡入淡出」就是這兩個。更進階的 FEC（下一包帶上一包的低品質版）、DTX／CNG（沒人講話不送）、自適應 buffer（WebRTC NetEQ）見第 7 週 2.4 與本講義課後讀的 3.6。
+DFT 是 DTFT 在 N 個等距頻率上的取樣；隱含假設 x[n] 是週期為 N 的週期訊號（所以要用窗函數，第 7 週 1.5）。
 
-### 3.5 新功能 4：μ-law 壓縮（必做）、ADPCM（加分）（10 分鐘）
+**DFT 裡的頻率**：
 
-今天第二節剛教完，直接用：`--codec mulaw` 把每個 sample 16-bit → 8-bit（2.2 的公式或查表），一包 320 bytes、位元率減半，封包 `type` = 0x04；收端解回 16-bit 再進 jitter buffer，**PLC 不用改**。驗收第 10 項：沒有搗蛋時輸出對原檔 SQNR ≥ 30 dB（今天 `mulaw_demo.py` 實測 36–38 dB）、`bytes` 減半。
-ADPCM（2.3 的做法，4 bits、160 bytes、type 0x05）是加分：每個 frame 獨立編碼，掉一包預測器才不會失步——報告第 5 題要討論。
-對手端 `python_ref/voicelink.py send --codec mulaw` 已支援，先拿它確認你們的解碼對不對。
+```
+X[k] = Σ_{n=0}^{N−1} x[n]·e^{−j2πkn/N}         f_k = k·f_s / N（Hz）      k = 0 … N/2 有意義，最高 = f_s/2
+```
 
-### 3.6 接下來三週怎麼跑（5 分鐘）
+把 x[n] 寫成 N/2+1 個弦波的和：x[n] = Σ_k A[k]·cos(2π(k/N)f_s·t + φ[k])|_{t=n/f_s}；第 k 根就是頻率 k·f_s/N 的成分，振幅 A[k]，畫頻譜時縱軸用 20·log₁₀A[k]（dB）。例：f_s = 16 000、N = 512 → 每根 31.25 Hz；k = 32 → 1 000 Hz。
 
-- **11/9 進度討論會 ①**（助教主持）：各組 4 分鐘進度報告、組間**格式互測**（收端開 `--probe`）、問題診所。交進度報告 ①（11/15）。
-- **11/16 進度討論會 ②**：自動驗收互測（`run_mock_tests.py` 四種組合）、live 預演、buffer 掃描當場畫圖。交進度報告 ②＋小成品（11/22 與 SHA 一起）。
-- **11/22（日）18:00 截止；11/23 評測**：mock 用老師的 WAV 跑 `run_mock_tests.py` 兩個方向、live 用熱點；評測前老師先回答兩次討論會收集的問題。
-- 工作坊的指令與簽核表在 [lab.md](lab.md)；今天回家先把 lab.md 的 2.1「聽掉封包」跑一次。
+**Spectrogram 四步驟**（[stft_steps.html](../wk07_1019_audio-pcm/slides/stft_steps.html)）：framing（P、hop M）→ windowing（Hamming）→ zero padding（到 N）→ DFT；一列一個 frame、橫軸時間、縱軸頻率、亮度 dB。
 
-課後讀（原本第三節的內容，期末會用到）：第 7 週 2.5–2.6（baseline 導覽）、以及下面的「延伸：LPC／CELP 與感知編碼」。
+- **P 決定頻率解析度**（主瓣寬 ∝ f_s/P）：窄頻（32 ms）看到 harmonics，寬頻（4 ms）看到 pitch pulse 與 formant。
+- **N 只是畫幾根**（zero padding 是內插）。
+- **M 決定時間解析度**。
+- 窗函數：rectangular 的接縫不連續 → leakage（side lobe −13 dB）；Hamming 主瓣寬一倍、side lobe −41 dB。
+
+| macOS / Linux / WSL | Windows PowerShell |
+|---|---|
+| `python3 ../wk07_1019_audio-pcm/examples/window_demo.py` | `python ..\wk07_1019_audio-pcm\examples\window_demo.py` |
+| `python3 ../wk07_1019_audio-pcm/examples/stft_demo.py ../wk07_1019_audio-pcm/data/aeueo-16kHz.wav --ascii` | `python ..\wk07_1019_audio-pcm\examples\stft_demo.py ..\wk07_1019_audio-pcm\data\aeueo-16kHz.wav --ascii` |
+
+2023 的 Chapter 3 以「Mini Project 2 — 音訊的時頻分析」收尾，就是今年的 MP5（已截止；[第 7 週 1.7](../wk07_1019_audio-pcm/README.md) 有今年的介面與常見錯誤）。
+
+### 3.6 收尾（5 分鐘）
+
+- Team 2：11/9 工作坊前讀 [team2_core.md](team2_core.md)；11/9、11/16 全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做（每步 push）；11/22 截止、11/23 評測；規格已簡化為三層（基本層必過）。
+- 語音壓縮（μ-law、DPCM，Team 2 功能 4）：[audio_coding.md](audio_coding.md)，11/16 前看完。
 
 ---
 
-## 延伸閱讀：送參數、送感知得到的（課後讀）
-
-### source–filter 模型與 LPC／CELP：為什麼語音 codec 都是 20 ms
-
-第 7 週 1.3 講過：語音 = **聲源**（聲帶振動的脈衝串，週期 1/F₀；或氣音的雜訊）經過**聲道**（會變形的管子）濾波。聲道是一個 p 階的全極點濾波器，係數 a_k 由 20–30 ms 的 frame 算出（**LPC**，p ≈ 10–16）——和 2.3 的 p 階預測器是同一件事。
-所以可以**不送波形，送參數**：每 20 ms 送一組 a_k＋F₀＋增益＋有聲／無聲，解碼端自己合成（LPC-10：2.4 kb/s，像機器人）。**CELP**（GSM、AMR、Opus 的 SILK）改成「聲源從一本 codebook 挑一個合成出來最像原音的向量」，只送索引。
-**為什麼 20 ms**：LPC 假設 frame 內聲道不變；太短係數估不準、開銷大，太長聲道已經在變。Team 2 的 320 samples 就是語音 codec 的自然單位。
-
-### 感知編碼：MP3／AAC 概觀
-
-音樂沒有單一聲道模型，走另一條路：**不送人耳聽不到的部分**。每 frame（MP3：1152 sample）做 MDCT → 心理聲學模型算每個頻帶的**遮蔽門檻** → 門檻以下的粗量化、以上的細量化（雜訊藏在門檻下）→ Huffman。MP3 128 kb/s ≈ 壓縮率 0.09；是有失真壓縮，失真在量化但被遮蔽。
-
-### 真實 codec 的 PLC、FEC、DTX
-
-| 技術 | 做法 | Team 2 對應 |
-|---|---|---|
-| PLC：pitch 重複（G.711 App. I） | 重複上一個 pitch 週期、每包衰減、4 包後靜音 | `repeat` 的升級版；加分項「衰減」 |
-| 接縫平滑 | 補的 frame 與前後做 2–4 ms cross-fade | 加分項「淡入淡出」 |
-| FEC（Opus in-band） | 每包帶上一包的低品質版 | 多 20 ms 延遲、位元率多 20–30% |
-| DTX／CNG | 沒人講話不送，收端合成輕微雜訊 | 「靜音」與「斷線」要分開 |
-| 自適應 jitter buffer（WebRTC NetEQ） | buffer 隨量到的抖動自動調 | 報告第 2 題是手動版 |
-
-## 範例程式（examples/）
+## 範例程式（examples/）與本週用到的其他材料
 
 | 檔案 | 用途 | 執行 |
 |---|---|---|
-| [examples/mulaw_demo.py](examples/mulaw_demo.py) | μ-law 8-bit 與線性 8-bit 在不同音量下的 SQNR（2.2） | `python3 mulaw_demo.py [檔案.wav]` |
-| [examples/dpcm_demo.py](examples/dpcm_demo.py) | 1、2 階預測的 prediction gain 與熵；4-bit DPCM 的 SQNR（2.3） | `python3 dpcm_demo.py 檔案.wav` |
-| [../wk07_1019_audio-pcm/slides/jitter_buffer.html](../wk07_1019_audio-pcm/slides/jitter_buffer.html)、[../wk07_1019_audio-pcm/examples/jitter_sim.py](../wk07_1019_audio-pcm/examples/jitter_sim.py) | jitter buffer 的動畫與離線模擬（3.3） | 瀏覽器開啟；`python3 jitter_sim.py --jitter 30 --loss 0.05` |
-| [lab.md](lab.md) | Team 2 實作工作坊（11/9、11/16 討論會與自己互測用） | — |
-
-只用標準函式庫。
+| [commands.md](commands.md) | 上課跟著打的指令 | 上課時開著 |
+| [a2d_steps.html](../wk03_0921_team1-kickoff/slides/a2d_steps.html) | A/D 四步驟動畫（2.1） | 瀏覽器 |
+| [alias_demo.py](../wk03_0921_team1-kickoff/examples/alias_demo.py) | 3 kHz 與 5 kHz 在 8 kHz 取樣（2.3） | `python3 alias_demo.py` |
+| [quantize_demo.py](../wk03_0921_team1-kickoff/examples/quantize_demo.py) | 量化、SQNR（2.4） | `python3 quantize_demo.py [振幅]` |
+| [wav_bmp_viewer.html](../wk03_0921_team1-kickoff/slides/wav_bmp_viewer.html) | 播放、檔頭、換取樣率與 bit depth（2.5） | 瀏覽器 |
+| [frame_demo.py](../wk07_1019_audio-pcm/examples/frame_demo.py) | 波形量週期、F₀（3.3） | `python3 frame_demo.py 檔案.wav 秒` |
+| [window_demo.py](../wk07_1019_audio-pcm/examples/window_demo.py)、[stft_demo.py](../wk07_1019_audio-pcm/examples/stft_demo.py)、[stft_steps.html](../wk07_1019_audio-pcm/slides/stft_steps.html) | DFT、窗、spectrogram（3.5） | 見表格內指令 |
+| [examples/mulaw_demo.py](examples/mulaw_demo.py)、[examples/dpcm_demo.py](examples/dpcm_demo.py) | 語音壓縮（[audio_coding.md](audio_coding.md)） | `python3 mulaw_demo.py`、`python3 dpcm_demo.py 檔案.wav` |
+| [team2_core.md](team2_core.md)、[lab.md](lab.md) | Team 2 核心與實作工作坊 | — |
 
 ## 回家作業／下週前要做的事
 
-1. **Team 2**：照 [lab.md](lab.md) 的簽核表把驗收 0–7 跑過；**11/22（日）18:00** 登錄 SHA。
-2. **Team 2 新增功能 4（μ-law，必做）**：封包 type 0x04、320 bytes；先用 `mulaw_demo.py` 的公式做出來，用 `python_ref/voicelink.py send --codec mulaw` 當對手端確認 SQNR ≥ 30 dB。
-3. 11/9、11/16 Team 2 進度討論會 ①②（見各週講義）；11/23 評測（mock 用 `run_mock_tests.py` 加老師的 WAV、live 用熱點）。
+1. 讀 [team2_core.md](team2_core.md)；11/9 工作坊全班跟著 tutorial 做第 1–3 步，帶筆電、熱點、耳機。
+2. 用 `alias_demo.py` 改 f_s = 16 000、f = 11 000，預測會變成幾 Hz 再跑（答案：5 000）。
+3. 用 `quantize_demo.py 0.1`：振幅 0.1（−20 dBFS）時 8 bits 的 SQNR 剩幾 dB？這就是 μ-law 要解決的問題。
+4. 11/22 18:00 Team 2 截止；11/23 評測。
+
+## 素材來源與授權
+
+本講義整理自授課教師 2023 年的 Chapter 2、Chapter 3 講義（文字重寫）；2023 講義中的圖片（Wikimedia 的 ADC 符號與放大電路、beis.de 的 ΔΣ 圖、Springer Encyclopedia of Biometrics 的發音器官圖、Oppenheim 的量化圖）請直接看[原講義](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/tree/master/Chapter-2)，本講義不複製。範例程式與音檔的授權見第 3、7 週的 data/README。
 
 ## 參考
 
-- ITU-T G.711（1988）：<https://www.itu.int/rec/T-REC-G.711>——μ-law／A-law；Appendix I（1999）：PLC。
-- ITU-T G.726（1990），"40, 32, 24, 16 kbit/s Adaptive Differential Pulse Code Modulation (ADPCM)"：<https://www.itu.int/rec/T-REC-G.726>。
-- J.-M. Valin, K. Vos, T. Terriberry, "Definition of the Opus Audio Codec," RFC 6716, Sept. 2012：<https://www.rfc-editor.org/rfc/rfc6716>（SILK＝LPC／CELP 路線、CELT＝MDCT 路線、in-band FEC、PLC）。
-- M. R. Schroeder and B. S. Atal, "Code-excited linear prediction (CELP): High-quality speech at very low bit rates," *Proc. ICASSP*, 1985, pp. 937–940. [doi:10.1109/ICASSP.1985.1168147](https://doi.org/10.1109/ICASSP.1985.1168147)。
-- K. Brandenburg, "MP3 and AAC Explained," *AES 17th International Conference on High Quality Audio Coding*, Florence, Sept. 1999, pp. 99–110。作者所屬單位公開的 PDF：<https://www.ee.columbia.edu/~dpwe/papers/Brand99-mp3.pdf>——感知編碼的三要素。
-- X. Huang, A. Acero, H.-W. Hon, *Spoken Language Processing*, Prentice Hall, 2001, ch. 7（speech coding：PCM、ADPCM、LPC、CELP）。
-- 第 3 週 2.3–2.4（量化、SQNR）、第 7 週 1.3（F₀、source–filter）、2.3–2.4（jitter buffer、PLC）。
+- 2023 講義：[Chapter 2 Digital Data (Signal) Representation](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/tree/master/Chapter-2)（含 SpeechA2D 投影片與上課影片）、[Chapter 3 Digital Audio Representation](https://github.com/cychiang-ntpu/ntpu-ce-mmsp-2023/tree/master/Chapter-3)（含上課影片、fft_example）。
+- A. V. Oppenheim and R. W. Schafer, *Discrete-Time Signal Processing*, 3rd ed., Pearson, 2010, ch. 4（取樣、C/D、D/C、量化的例子）、ch. 8（DFT）、ch. 10（spectral analysis）。
+- J. Burg, *The Science of Digital Media*, Pearson, 2009, ch. 1（A/D、bit depth、dynamic range）、ch. 4（digital audio representation：PCM、dB、dBFS、感知）。
+- X. Huang, A. Acero, H.-W. Hon, *Spoken Language Processing*, Prentice Hall, 2001, ch. 2（語音產生、聽覺感知：ATH、等響曲線、Mel／Bark）、ch. 6（spectrogram）。
+- L. Docio-Fernandez and C. García Mateo, "Speech Production," in *Encyclopedia of Biometrics*, Springer, 2015. [doi:10.1007/978-1-4899-7488-4_199](https://doi.org/10.1007/978-1-4899-7488-4_199)（發音器官與 tube resonance 的圖）。
+- W. R. Bennett, "Spectra of Quantized Signals," *Bell System Technical Journal*, vol. 27, no. 3, pp. 446–472, July 1948. [doi:10.1002/j.1538-7305.1948.tb01340.x](https://doi.org/10.1002/j.1538-7305.1948.tb01340.x)（量化誤差當雜訊的模型）。
+- H. Nyquist (1928)、C. E. Shannon (1949)：取樣定理，見[第 7 週參考](../wk07_1019_audio-pcm/README.md#參考)。
+- ITU-T G.711（μ-law／A-law）：<https://www.itu.int/rec/T-REC-G.711>。
+- 第 3 週講義 2.1–2.6（麥克風、ADC 四步驟、WAV）、第 7 週講義 1.2–1.6（感知、frame、DFT、窗、STFT）。

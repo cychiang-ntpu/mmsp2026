@@ -6,6 +6,7 @@
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
 - 繳交：登錄 repo URL＋完整 commit SHA
 - 本輪四人組角色：**P＋D＋D＋V**（三人組 P＋D＋V）；分組名單於 10/19 公告
+- **11/1 簡化**：驗收分成基本／進階／加分三層（見「最低驗收」），只有基本層必過；並提供[手把手教學 tutorial/](tutorial/)，照著做七步就能從零做到過基本層與 μ-law。
 
 ## 一句話
 
@@ -173,7 +174,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=mulaw frames_out=1678 received=160
 - 報告要**用耳朵和用數字**比較：同樣掉 5%，哪一種比較不刺耳？為什麼 repeat 遇到連續掉包會變成「嗡」聲？
 - 進階（加分，不是必做）：重複的 frame 每次衰減（×0.5），或 zero／repeat 之間做 2 ms 的淡入淡出。
 
-## 量測與報告：buffer 要多大？
+## 量測與報告：buffer 要多大？（進階／加分；基本層只要回答上面兩題）
 
 用 `udp_impair.py` 固定一組參數（例如 loss 5%、jitter ±30 ms、reorder 5%），把 `--buffer` 從 20 掃到 200 ms，
 每個點跑 3 次，記 `concealed`、`late`、`avg_delay_ms`，畫成圖。報告回答：
@@ -184,21 +185,39 @@ STATS role=recv buffer_ms=60 plc=repeat codec=mulaw frames_out=1678 received=160
 4. live 模式從講話到對方聽到大概多久（自己想一個量法，例如拍手、或兩台電腦對著同一支錄音）？延遲由哪些部分組成？
 5. pcm 與 mulaw（有做 adpcm 的加上 adpcm）：位元率、SQNR、掉包 5% 時聽起來的差別；用耳朵和數字各說一次。
 
-## 最低驗收
+## 最低驗收（11/1 簡化：三層）
 
-評測用的 WAV 由老師當天給（16 kHz、單聲道、30 秒左右）。項目 0–7 是必過；評測會用 `python_ref/voicelink.py` 當對手端各跑一次（你們的 send 對它的 recv、它的 send 對你們的 recv）。
+評測用的 WAV 由老師當天給（16 kHz、單聲道、30 秒左右）。評測會用 `python_ref/voicelink.py` 當對手端各跑一次（你們的 send 對它的 recv、它的 send 對你們的 recv）；`tests/run_mock_tests.py --only 1,2,5` 就是基本層。
 
-0. 跨機器：兩台電腦（不是 127.0.0.1）能互通。
-1. `send → recv`，沒有搗蛋：輸出 WAV 的 PCM 與輸入**逐 byte 相同**，`lost=0 concealed=0`。
-2. 經過 `udp_impair.py --loss 0.05`：輸出 WAV 的 **frame 數與輸入相同**，`concealed` ≈ `lost`（±2），程式正常結束。
-3. 經過 `--reorder 0.1 --jitter 20`、`--buffer 100`：輸出與輸入逐 byte 相同（亂序被排回來）。
-4. 經過 `--dup 0.1`：輸出與輸入逐 byte 相同，`dup` > 0。
-5. 送端中途被殺掉（Ctrl-C）：recv 在 `--timeout` 內自己結束、WAV 檔完整可播、STATS 有印。
-6. 壞封包：對 recv 的 port 亂丟 100 個隨機 bytes，程式不當掉，之後仍能正常收。
-7. STATS 一行的格式與欄位正確，數字彼此一致（`frames_out = 收到且播出的 frame 數 + concealed`）。
-8. live：兩台電腦戴耳機通話 30 秒，聽得懂；當場把 `--plc` 換成 zero 再試。
-9. buffer 掃描圖（至少 5 個點、每點 3 次）與報告四題。
-10. **μ-law**：`send --codec mulaw` → recv，沒有搗蛋：輸出 WAV 對原檔的 SQNR ≥ 30 dB、長度相同、`send` 的 `bytes` 約為 pcm 的一半；經過 `--loss 0.05` 仍能正常結束、`concealed ≈ lost`。（加分：adpcm SQNR ≥ 20 dB。）
+### 基本層（必過；團隊分的 60%）
+
+做到這一層的程式其實只有三件事：**一包 20 ms 加 header → 收端用一個依 seq 排序的 buffer 先存 3 包再播 → 沒有就重複上一包**。[tutorial/](tutorial/) 的第 1–5 步就是這一層。
+
+| # | 項目 | 怎麼測 |
+|---|---|---|
+| B0 | 兩台電腦（不是 127.0.0.1）能互通 | 現場 |
+| B1 | `send → recv`，沒有搗蛋：輸出 WAV 的 PCM 與輸入**逐 byte 相同**、長度相同 | 測試 1 |
+| B2 | 經過 `udp_impair.py --loss 0.05`：輸出的 frame 數與輸入相同（掉的用 repeat 補），`concealed ≈ lost`（±2），程式正常結束 | 測試 2 |
+| B3 | 送端中途被殺掉：recv 在 `--timeout` 內自己結束、WAV 完整、STATS 有印 | 測試 5 |
+| B4 | STATS 一行裡 `frames_out`、`received`、`lost`、`concealed` 四個數正確且 `frames_out = 播出的真封包 + concealed`；其他欄位可以印 0 | 測試 7 只看這四個 |
+
+### 進階層（每項獨立計分；30%）
+
+| # | 項目 | 怎麼測 |
+|---|---|---|
+| A1 | 亂序的包排回正確位置：`--reorder 0.1 --jitter 20`、`--buffer 100` 時輸出逐 byte 相同 | 測試 3 |
+| A2 | `--plc zero` 也能用，報告用耳朵和數字比較兩種 | 現場 |
+| A3 | **μ-law**（功能 4）：`--codec mulaw` SQNR ≥ 30 dB、`bytes` 減半 | 測試 8 |
+| A4 | live：兩台電腦戴耳機通話 30 秒聽得懂（**單向**也算） | 現場 |
+
+### 加分層（10%）
+
+重複封包丟掉（測試 4）、壞封包不當掉（測試 6）、`late`／`dup`／`reordered`／`overflow`／`avg_delay_ms` 正確、buffer 掃描圖、ADPCM、PLC 衰減或淡入淡出、`--burst` 不爆記憶體。
+
+### 報告（兩題就好）
+
+1. 你們的 buffer 設多少 ms？用 `jitter_sim.py` 或實測說明為什麼。
+2. `repeat` 和 `zero` 在掉包 5% 時聽起來差在哪？為什麼？（想多寫的再加「量測與報告」那一節的題目。）
 
 ## 跨機器測試須知
 
@@ -218,13 +237,28 @@ STATS role=recv buffer_ms=60 plc=repeat codec=mulaw frames_out=1678 received=160
 
 | 週 | 日期 | 目標 |
 |---|---|---|
-| 1 | 10/19–10/25 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；定封包格式與 `docs/interface.md`；**兩台電腦 UDP 互通**。（10/23 是 MP1–MP5 截止，請先排好時間）|
-| 2 | 10/26–11/1（10/26 停課） | header、seq／ts、jitter buffer、PLC；mock 模式過驗收 1–7；`udp_impair.py` 自動化測試 |
-| 3 | 11/2–11/8（11/2 期中考） | live 模式；mock 模式過驗收 1–7（用 `tests/run_mock_tests.py`） |
-| 4 | 11/9–11/15 | 11/9 進度討論會 ①（格式互測、問題診所、交進度報告 ①）；buffer 掃描與圖；兩台電腦真實網路的量測 |
-| 5 | 11/16–11/22 | 11/16 進度討論會 ②（自動驗收互測、量測、live 預演、交進度報告 ②＋小成品）；投影片、報告四題、`docs/interface.md` 定稿；**11/22 18:00 前登錄 SHA** |
+| 1–2 | 10/19–11/1 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；**兩台電腦 UDP 互通** |
+| 3 | 11/2–11/8 | 11/2 第三節老師帶著做 [tutorial](tutorial/) 第 1–3 步（header、jitter buffer、repeat PLC）；回家做完第 3 步 → **基本層 B1–B3 過了** |
+| 4 | 11/9–11/15 | 11/9 進度討論會 ①（格式互測、問題診所、交進度報告 ①）；tutorial 第 4–5 步（完整 STATS、壞封包、亂序）→ 基本層全過、進階 A1 |
+| 5 | 11/16–11/22 | 11/16 進度討論會 ②（自動驗收互測、live 預演、交進度報告 ②＋小成品）；tutorial 第 6–7 步（μ-law、live）；投影片、報告兩題；**11/22 18:00 前登錄 SHA** |
 
-## baseline/：官方文字 baseline＋音訊／UDP wrapper（建議從這裡開始）
+## tutorial/：手把手七步（11/1 新增；從這裡開始）
+
+[`tutorial/TUTORIAL.md`](tutorial/TUTORIAL.md) 帶你從零寫出整支程式，每一步都是一支能編譯、能跑、能用 `run_mock_tests.py --only …` 驗的完整程式（`step1_raw.c` → `step7_live.c`），每一行都有註解：
+
+| 步 | 加什麼 | 過哪些驗收 |
+|---|---|---|
+| 1 | 讀 WAV、每 20 ms 送 640 bytes、收到就寫檔 | — |
+| 2 | 12 bytes header（seq、ts、ssrc）、BYE | — |
+| 3 | jitter buffer（依 seq 的環形陣列）、播放時鐘、repeat PLC、基本 STATS | B1、B2、B3、B4 |
+| 4 | late／dup／reordered／overflow／延遲、`--plc zero`、完整 STATS | A1、A2 |
+| 5 | 壞封包不當掉、ssrc 重置、seq 繞回 | 加分 |
+| 6 | `--codec mulaw` | A3 |
+| 7 | live `call`（麥克風→對方喇叭） | A4 |
+
+你們可以直接以第 7 步的程式為起點改成自己的（要能說明每一行在做什麼——口試會問），也可以自己從頭寫。
+
+## baseline/：官方文字 baseline＋音訊／UDP wrapper
 
 [`baseline/`](baseline/) 有三樣東西，都可以直接編譯執行：
 
