@@ -244,7 +244,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=mulaw frames_out=1678 received=160
 
 ## tutorial/：手把手七步（11/1 新增；從這裡開始）
 
-[`tutorial/TUTORIAL.md`](tutorial/TUTORIAL.md) 帶你從零寫出整支程式，每一步都是一支能編譯、能跑、能用 `run_mock_tests.py --only …` 驗的完整程式（`step1_raw.c` → `step7_live.c`），每一行都有註解：
+[`tutorial/TUTORIAL.md`](tutorial/TUTORIAL.md) 分兩部分。**Part A 拆解**：八支各 50–80 行的小程式，一支只做一件事——`m1_wav`（讀寫 WAV）、`m2_udp_send`／`m2_udp_recv`（UDP 一包就是一包）、`m3_clock`（20 ms 的時鐘）、`m4_mic_to_wav`（錄音）、`m5_play_wav`（播放）、`m6_header`（12 bytes header 打包／解析）、`m7_ringbuffer`（不用網路的 jitter buffer）、`m8_mulaw`（μ-law 編解碼）——先各自跑過、改過。**Part B 組裝**：七步把模組接成整支程式，每一步都是一支能編譯、能跑、能用 `run_mock_tests.py --only …` 驗的完整程式（`step1_raw.c` → `step7_live.c`），每一行都有註解：
 
 | 步 | 加什麼 | 過哪些驗收 |
 |---|---|---|

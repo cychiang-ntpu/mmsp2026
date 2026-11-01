@@ -69,3 +69,8 @@ team_projects/*/baseline/*.jpg
 # Python 的快取
 __pycache__/
 *.spec.txt
+team_projects/*/tutorial/*.exe
+team_projects/*/tutorial/*.o
+team_projects/*/tutorial/step[0-9]_*[!c]
+team_projects/*/tutorial/m[0-9]_*[!c]
+team_projects/*/tutorial/*.wav
