@@ -93,7 +93,9 @@ offset  長度  欄位
 ```
 
 - 每張 JPEG 切成 ⌈大小／1200⌉ 片，最後一片不補 0（長度由 UDP 封包長度得知）。
-- 開始送之前送 3 次 HELLO；結束送 3 次 BYE。接收端收到 HELLO（或新的 ssrc）→ 清空重組表與 queue、frame_id 歸零；收到 BYE → 把 queue 裡已完整的顯示完就結束（mock）或回到「等待連線」（live）。
+- 開始送之前送 3 次 HELLO（`frame_id` = 0）；結束送 3 次 BYE（`frame_id` = 共送了幾張）；兩者 `piece_idx` = `piece_cnt` = 0、沒有 payload。
+- 接收端收到 HELLO（或新的 ssrc）→ 清空重組表與 queue、frame_id 歸零（同一個 ssrc 的 HELLO 要是 seq 比目前看過的都新才算，亂序遲到的舊 HELLO 忽略）。
+- 收到 BYE → 把 queue 裡已完整的顯示完；mock 模式再**等 1 秒**看有沒有新的 HELLO（驗收 7 的「掛斷再連」就是這樣測），沒有就結束；live 模式回到「等待連線」。
 - header 不合法（magic 錯、長度 < 16、piece_idx ≥ piece_cnt、片段 > 1 200）直接丟掉並計數，**不可以當掉**。
 
 ### 重組、逾時與 bounded queue
@@ -128,7 +130,7 @@ STATS role=video-send frames=60 pieces=865 bytes=1021344 fps_target=5 fps_actual
 
 | 欄位 | 意義 |
 |---|---|
-| `frames_shown` | 真的顯示（或寫檔）的張數 |
+| `frames_shown` | 真的顯示（或寫檔）的張數（重連後累計，`shown.txt` 會看到 frame_id 重新從 0 開始） |
 | `frames_complete` | 收齊的張數（含後來被 queue 丟掉的） |
 | `frames_dropped_timeout`／`frames_dropped_queue` | 如上節 |
 | `pieces_received`／`pieces_lost`／`pieces_bad` | 收到的合法片數／由 seq 判斷沒收到的封包數／header 不合法的數 |

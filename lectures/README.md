@@ -1,6 +1,6 @@
 # 每週上課內容（lectures/）
 
-每週一 13:10–16:00，三節。週次為**日曆週**（9/7 為第 1 週，與 course_plan 的「第 N 週」一致）；第 4 週 9/28、第 8 週 10/26 停課，第 10、11 週（11/9、11/16）老師出國停課，不建資料夾。全學期地圖見 [../docs/course_plan.md](../docs/course_plan.md)。
+每週一 13:10–16:00，三節。週次為**日曆週**（9/7 為第 1 週，與 course_plan 的「第 N 週」一致）；第 4 週 9/28、第 8 週 10/26 停課，第 10、11 週（11/9、11/16）老師出國，改為助教主持的討論會。全學期地圖見 [../docs/course_plan.md](../docs/course_plan.md)。
 
 | 週 | 日期 | 主題 | 對應 | 資料夾 |
 |---|---|---|---|---|
@@ -11,7 +11,8 @@
 | 6 | 10/12 | Team 1 評測 | Team 1 | [wk06_1012_team1-eval/](wk06_1012_team1-eval/) |
 | 7 | 10/19 | 聲音的時頻分析（STFT）、MP5 講解、Team 2 開題、補驗時段 1 | Team 2、MP5 | [wk07_1019_audio-pcm/](wk07_1019_audio-pcm/) |
 | 9 | 11/2 | 期中考（[範例考題](wk09_1102_midterm-speech/midterm_sample.md)）、Team 2 實作工作坊 | 期中考、Team 2 | [wk09_1102_midterm-speech/](wk09_1102_midterm-speech/) |
-| 10、11 | 11/9、11/16 | 停課（老師出國）；Team 2 繼續實作 | Team 2 | — |
+| 10 | 11/9 | Team 1 回顧討論會（助教主持；報告、互測、一頁回顧＋小成品） | Team 1、Team 2 | [wk10_1109_team1-retro/](wk10_1109_team1-retro/) |
+| 11 | 11/16 | Team 2 進度討論會（助教主持；進度、互測、一頁進度報告＋小成品） | Team 2 | [wk11_1116_team2-progress/](wk11_1116_team2-progress/) |
 | 12 | 11/23 | Team 2 評測；Team 3 提早開題（規格導讀） | Team 2、Team 3 | [wk12_1123_team2-eval/](wk12_1123_team2-eval/) |
 | 13 | 11/30 | 影像表示、BMP、Team 3 問答、補驗時段 2 | Team 3 | [wk13_1130_image-bmp/](wk13_1130_image-bmp/) |
 | 14 | 12/7 | DCT、JPEG、MJPEG 分片、bounded queue、整合；期末上機模擬 | Team 3、期末 | [wk14_1207_dct-jpeg-mjpeg/](wk14_1207_dct-jpeg-mjpeg/) |
