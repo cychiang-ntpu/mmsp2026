@@ -6,7 +6,7 @@
 ## 做什麼
 
 接著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做第 4–6 步；做完第 6 步就是**能兩台通話的 voicelink**（step4–6 push 完，繳交 40 分到手）。第 3 步還沒過的組先補。每步做完 push。
-第三節開始寫這一輪真正的作業：**μ-law**（[mulaw_system/](../../team_projects/team2_voicelink/mulaw_system/README.md)：框架已給，程式裡四個 `★ 第 8 步` 就是要動手的地方；零件 m8）。回家做 [adpcm_huffman_system/](../../team_projects/team2_voicelink/adpcm_huffman_system/README.md)：ADPCM（零件 m9，demo 10 分）或／和 Huffman（demo 10 分）。
+第三節開始寫這一輪真正的作業：**μ-law**（[mulaw_system/](../../team_projects/team2_voicelink/mulaw_system/README.md)：框架已給，程式裡四個 `★ 第 8 步` 就是要動手的地方；零件 m8；demo +10）。回家做 [adpcm_huffman_system/](../../team_projects/team2_voicelink/adpcm_huffman_system/README.md)：ADPCM（零件 m9，demo +10）或／和 Huffman（demo +10）。
 
 | 節次 | 時間 | 步 | 做完要看到 | push 什麼 |
 |---|---|---|---|---|
@@ -29,5 +29,5 @@
 
 - 第 3 步沒過的組，今天第一節先把它過了，再往下。
 - 今天的繳交（規格①）：step4–6 各自一個資料夾 push，每步至少一個 commit、對應的 `--only` PASS 貼進 `TEAM_LOG.md`，step6 貼兩台 `call` 的 STATS 截圖；**今天 16:00 下課前**（GitHub Actions `team2-check` 綠勾）。互測不計分，但互測不過的程式 11/23 的 demo 也不會過。
-- 回家：11/22 前 `mulaw_system` 過 `--only 8`；`adpcm_huffman_system` 做 ADPCM（`--only 9`，demo 10 分）或／和 Huffman（`--only 10 --with-huffman`，demo 10 分）。team repo 照 `team2_voicelink/` 的結構，助教照路徑批改。
+- 回家：11/22 前 `mulaw_system` 過 `--only 8`（demo +10）；`adpcm_huffman_system` 做 ADPCM（`--only 9`，demo +10）或／和 Huffman（`--only 10 --with-huffman`，demo +10）。team repo 照 `team2_voicelink/` 的結構，助教照路徑批改。
 - 進度報告（[docs/templates/progress_report.md](../../docs/templates/progress_report.md)）寫進度表、卡住的問題、想問老師的三件事；11/22 與 SHA 一起交。

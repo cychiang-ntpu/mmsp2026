@@ -15,7 +15,7 @@
 
 **目標**：`call <my_port> <peer_ip> <peer_port>` 兩台電腦戴耳機通話；同一套 jitter buffer 與 PLC；按 Enter 結束印 STATS；`devices` 列裝置。聲音還是 raw PCM（640 bytes 一包）。
 
-**tutorial 到這裡結束**：做到第 6 步、兩台能通話，就是 11/23 demo 的第一個 10 分。接下來的 μ-law、ADPCM、Huffman 在 [`../../mulaw_system/`](../../mulaw_system/README.md) 與 [`../../adpcm_huffman_system/`](../../adpcm_huffman_system/README.md)——那兩個資料夾給的框架就是這支程式加一張 codec 表。
+**tutorial 到這裡結束**：做到第 6 步、兩台能通話，就是 11/23 demo 的 raw 通話 10 分（之後 μ-law、ADPCM、Huffman 各 +10）。接下來的 μ-law、ADPCM、Huffman 在 [`../../mulaw_system/`](../../mulaw_system/README.md) 與 [`../../adpcm_huffman_system/`](../../adpcm_huffman_system/README.md)——那兩個資料夾給的框架就是這支程式加一張 codec 表。
 
 **用到的模組**：m4（mic 那一半 → 湊 320 → m6 的 header → m2 的 `udp_send`）、m5（spk 那一半 → 向 m7 的 buffer 要 frame）。
 
@@ -92,7 +92,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=pcm frames_out=142 received=148 lo
 STATS role=send codec=pcm frames=150 bytes=97800 duration_ms=3000 pace=20
 ```
 
-兩台電腦戴耳機講話 30 秒聽得懂（單向也算；11/23 demo 的第一項 10 分）。`avg_delay_ms` ≈ buffer + 喇叭的輸出 buffer（約 40 ms），這是報告第 4 題「延遲由哪些部分組成」的一項。
+兩台電腦戴耳機講話 30 秒聽得懂（單向也算；11/23 demo 的 raw 通話 10 分）。`avg_delay_ms` ≈ buffer + 喇叭的輸出 buffer（約 40 ms），這是報告第 4 題「延遲由哪些部分組成」的一項。
 `received` 比 `frames_out` 多幾包是正常的：按 Enter 時 buffer 裡還有沒播完的。
 
 **常見錯誤**

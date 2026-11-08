@@ -72,7 +72,6 @@ SQNR 37.6 dB（規格 ≥ 30；m8 量的也是 37–38 dB）、bytes 剛好一�
 
 ### 這一步在評分裡
 
-μ-law 本身不單獨計分，但它是 **Huffman（adpcm_huffman_system，demo +10）的前提**（Huffman 疊在 μ-law 的 8-bit 碼字上；在 [adpcm_huffman_system](../adpcm_huffman_system/README.md) 做），
-也是**程式碼實質審查（30 分）**一定會看的部分：表有沒有用對、有沒有和 python_ref 互通、註解說不說得出為什麼。
+**11/23 demo：μ-law 做到（測試 8 PASS、現場切 `--codec mulaw` 通話）+10。** 它也是 Huffman 的前提（Huffman 疊在 μ-law 的 8-bit 碼字上；在 [adpcm_huffman_system](../adpcm_huffman_system/README.md) 做），而且是程式碼實質審查（最多 30）一定會看的部分：表有沒有用對、有沒有和 python_ref 互通、註解說不說得出為什麼。
 
 ---

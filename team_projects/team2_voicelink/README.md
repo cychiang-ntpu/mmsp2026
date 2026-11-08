@@ -6,7 +6,7 @@
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
 - 繳交：登錄 repo URL＋完整 commit SHA
 - 本輪四人組角色：**P＋D＋D＋V**（三人組 P＋D＋V）；分組名單於 10/19 公告
-- **11/9 定版**：[tutorial/](tutorial/TUTORIAL.md) 九個模組＋六步做出**能通話的 raw PCM voicelink**（第 6 步 live）。這一輪真正的作業是**加語音壓縮**，在 tutorial 旁邊兩個資料夾裡做：[`mulaw_system/`](mulaw_system/README.md)（μ-law）與 [`adpcm_huffman_system/`](adpcm_huffman_system/README.md)（ADPCM 或／和 Huffman），各給一個框架（第 6 步的程式＋一張 codec 表，`★` 標出要動手的地方）。評分 **40（m 與 step 全部 push）＋30（11/23 demo：第 6 步 live 10、ADPCM 10、Huffman 10）＋30（助教程式碼實質審查）**；**team repo 照這個資料夾的結構繳交**。見「驗收與評分」。
+- **11/9 定版**：[tutorial/](tutorial/TUTORIAL.md) 九個模組＋六步做出**能通話的 raw PCM voicelink**（第 6 步 live）。這一輪真正的作業是**加語音壓縮**，在 tutorial 旁邊兩個資料夾裡做：[`mulaw_system/`](mulaw_system/README.md)（μ-law）與 [`adpcm_huffman_system/`](adpcm_huffman_system/README.md)（ADPCM 或／和 Huffman），各給一個框架（第 6 步的程式＋一張 codec 表，`★` 標出要動手的地方）。評分 **40（m 與 step 全部 push）＋demo 最多 40（11/23：raw 通話 10、μ-law 10、ADPCM 10、Huffman 10）＋助教程式碼實質審查最多 30；**加總超過 100 以 100 計****；**team repo 照這個資料夾的結構繳交**。見「驗收與評分」。
 
 ## 從這裡開始（學生進入點，11/8 起）
 
@@ -16,7 +16,7 @@
 
 1. 跟著 [tutorial/TUTORIAL.md](tutorial/TUTORIAL.md) 做完九個模組（m1–m9）與六步（step1–step6），**每一個都 add／commit／push 到 team repo**——這就是 40 分。第 6 步做完就是能兩台通話的 voicelink（raw PCM）。
 2. 加壓縮：[`mulaw_system/`](mulaw_system/README.md) 加 μ-law（零件 m8）；[`adpcm_huffman_system/`](adpcm_huffman_system/README.md) 再加 ADPCM（零件 m9）或／和 Huffman（Team 1 的 Huffman）。兩個資料夾都給了框架，程式裡搜尋 `★` 就是要動手的地方。
-3. 11/22（日）18:00 前登錄 SHA；**11/23 demo 30 分**（第 6 步 live 10、ADPCM 10、Huffman 10）；之後一週助教看 repo，**程式碼實質審查 30 分**。
+3. 11/22（日）18:00 前登錄 SHA；**11/23 demo**：raw 通話 10、μ-law 10、ADPCM 10、Huffman 10（最多 40）；之後一週助教看 repo，**程式碼實質審查最多 30**。加總超過 100 以 100 計。
 
 ### team repo 的結構（助教照這個批改）
 
@@ -39,9 +39,9 @@ mmsp2026-team2-gXX/
 | **11/9（一）** 不上課：自習週 | 建 team repo（照這個資料夾的結構）；Part A 模組 m1–m9 各「跑一次、改一處」 | 每個模組、每一步各自一個資料夾 push；**m1–m9 全部在 11/11（三）18:00 前** | 繳交 40 的一部分 | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
 | **11/16（一）** 工作坊 ②（助教主持） | 第 4–6 步（做完＝能通話）；兩組互測；`mulaw_system` 開工 | **step1–6 全部在 11/16（一）16:00 下課前 push**（含 step6_live） | 繳交 40 的其餘部分 | [wk11](../../lectures/wk11_1116_team2-progress2/README.md) |
 | **11/22（日）18:00** | `mulaw_system` 過測試 8；`adpcm_huffman_system` 做 ADPCM（測試 9）或／和 Huffman（測試 10）；投影片含報告三題 | 登錄 repo URL＋commit SHA | — | — |
-| **11/23（一）** 評測 | D 兩台 live 3 分鐘、助教當場跑測試、P 報告 4 分鐘＋問答 2 分鐘 | 帶兩台筆電、耳機、熱點 | demo 30；之後一週審查 30 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
+| **11/23（一）** 評測 | D 兩台 live 3 分鐘、助教當場跑測試、P 報告 4 分鐘＋問答 2 分鐘 | 帶兩台筆電、耳機、熱點 | demo 最多 40（raw 10、μ-law 10、ADPCM 10、Huffman 10）；之後一週審查最多 30 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
 
-滿分 100；各項怎麼算在「[驗收與評分](#驗收與評分119-定版403030)」。
+40＋40＋30 加總超過 100 以 100 計；各項怎麼算在「[驗收與評分](#驗收與評分119-定版403030)」。
 
 ### 五個最常用的指令（Windows PowerShell；macOS／Linux 把 `mingw32-make` 換成 `make`、`.\x.exe` 換成 `./x`）
 
@@ -68,8 +68,8 @@ cd ..\..\mulaw_system; mingw32-make; .\voicelink.exe send 127.0.0.1 5004 ..\..\.
 | 位置 | 是什麼 | 你會在什麼時候用 |
 |---|---|---|
 | [tutorial/](tutorial/TUTORIAL.md) | 手把手教學總覽；m1–m9、step1–step6 每個各自一個資料夾，各有 README | 11/9、11/16 全程 |
-| [tutorial/step6_live/](tutorial/step6_live/README.md) | 能兩台通話的完整程式（raw PCM）；tutorial 的終點 | demo 的第一個 10 分 |
-| [mulaw_system/](mulaw_system/README.md) | **你們寫**：第 6 步＋codec 表的框架，加 μ-law（`★ 第 8 步`） | 11/16 第三節開工；測試 8 |
+| [tutorial/step6_live/](tutorial/step6_live/README.md) | 能兩台通話的完整程式（raw PCM）；tutorial 的終點 | demo 的 raw 通話 10 分 |
+| [mulaw_system/](mulaw_system/README.md) | **你們寫**：第 6 步＋codec 表的框架，加 μ-law（`★ 第 8 步`） | 11/16 第三節開工；測試 8；demo +10 |
 | [adpcm_huffman_system/](adpcm_huffman_system/README.md) | **你們寫**：同一個框架，加 ADPCM 或／和 Huffman（`★ 第 9 步`） | 11/22 前；測試 9、10；demo 各 +10 |
 | [baseline/wrapper/](baseline/wrapper/) | WAV／UDP／時鐘／音訊四個標頭 | 所有程式都用，一起複製 |
 | [baseline/udp_impair.py](baseline/udp_impair.py) | 掉包／亂序／抖動的搗蛋中繼 | 自己測 buffer 與 PLC |
@@ -316,9 +316,9 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 4. live 模式從講話到對方聽到大概多久（自己想一個量法，例如拍手、或兩台電腦對著同一支錄音）？延遲由哪些部分組成？
 5. **codec 比較表（必交）**：pcm／mulaw／adpcm（有做的加 huff-mulaw、huff-adpcm）各一列，欄位是每包 bytes、位元率 kb/s、SQNR dB、掉包 5% 時聽起來如何（一句話）。用老師的語音檔量。
 
-## 驗收與評分（11/9 定版：40＋30＋30）
+## 驗收與評分（11/9 定版：40＋40＋30，上限 100）
 
-評測用的 WAV 由老師當天給（16 kHz、單聲道、30 秒左右）。mock 測試用 `tests/run_mock_tests.py`，對手端是 `python_ref/voicelink.py`（你們的 send 對它的 recv、它的 send 對你們的 recv 各跑一次；測試 10 例外，是你們對你們）。滿分 100；Huffman 加分最多 +5，總分上限 100。
+評測用的 WAV 由老師當天給（16 kHz、單聲道、30 秒左右）。mock 測試用 `tests/run_mock_tests.py`，對手端是 `python_ref/voicelink.py`（你們的 send 對它的 recv、它的 send 對你們的 recv 各跑一次；測試 10 例外，是你們對你們）。三部分 **40 ＋ 最多 40 ＋ 最多 30**，加總超過 100 以 100 計。
 
 ### ① tutorial 繳交（40 分，組）
 
@@ -333,18 +333,18 @@ m1–m9 與 step1–step6 共 **15 項**都在 team repo 裡 → 40 分；**缺�
 **自動檢查**：team repo 根目錄放著 [`.github/workflows/team2-check.yml`](.github/workflows/team2-check.yml)（跟著結構複製過去就有），每次 push 都會跑 [`tests/check_submission.py`](tests/check_submission.py)：15 項各自「資料夾在、.c 在、make 零警告、該過的測試過」，Actions 綠勾就是 40 分；summary 那一行寫著缺幾項、扣幾分。自己在本機也能跑：`python tests/check_submission.py --wav <16k wav> --deadline-report`。
 11/9、11/16 工作坊當天助教只協助與記錄進度，**不另外計分、不抽問扣分**。
 
-### ② 11/23 demo（30 分，組）
+### ② 11/23 demo（最多 40 分，組；一項一項加）
 
 | 項目 | 怎麼看 | 分 |
 |---|---|---|
-| **做到第 6 步** | 兩台電腦（不是 127.0.0.1）戴耳機 `call` 30 秒聽得懂（單向也算）；助教當場跑測試 1–7（你們 ↔ python_ref 兩個方向）全過 | 10 |
-| **ADPCM**（`adpcm_huffman_system`） | 測試 9 PASS（兩個方向）＋現場切 `--codec adpcm` 通話 | 10 |
-| **Huffman**（`adpcm_huffman_system`） | 測試 10 PASS（你們對你們）＋現場切 `--codec huff-mulaw`，STATS 的 `bytes` 比 μ-law 少 | 10 |
+| **raw 通話**（第 6 步） | 兩台電腦（不是 127.0.0.1）戴耳機 `call` 30 秒聽得懂（單向也算）；助教當場跑測試 1–7（你們 ↔ python_ref 兩個方向）全過 | +10 |
+| **μ-law**（`mulaw_system`） | 測試 8 PASS（兩個方向）＋現場切 `--codec mulaw` 通話 | +10 |
+| **ADPCM**（`adpcm_huffman_system`） | 測試 9 PASS（兩個方向）＋現場切 `--codec adpcm` 通話 | +10 |
+| **Huffman**（`adpcm_huffman_system`） | 測試 10 PASS（你們對你們）＋現場切 `--codec huff-mulaw`，STATS 的 `bytes` 比 μ-law 少 | +10 |
 
-μ-law（`mulaw_system`）**不單獨計分**：它是 Huffman 的前提（Huffman 疊在 μ-law 碼字上），測試 8 要過，程式碼審查會看。
 P 報告 4 分鐘（codec 比較表、三題）＋問答 2 分鐘不另計分，但審查時會對照你們報告裡的數字。
 
-### ③ 程式碼實質審查（30 分；助教在 11/23 後一週內看登錄 SHA 的 repo）
+### ③ 程式碼實質審查（最多 30 分；助教在 11/23 後一週內看登錄 SHA 的 repo）
 
 | 看什麼 | 分 |
 |---|---|
@@ -352,7 +352,7 @@ P 報告 4 分鐘（codec 比較表、三題）＋問答 2 分鐘不另計分，
 | **程式品質**：零警告、函式切分合理、沒有死碼與複製貼上的殘骸、註解說得出「為什麼」、`docs/interface.md` 與程式一致、README 能照著建置 | 10 |
 | **個人貢獻（個人分）**：`git log` 看得出每個人自己寫的部分，和 `CONTRIBUTIONS.md` 一致；**沒有 C commit 的人這項 0 分**；審查期間可能請你當面解釋自己寫的一段 | 10 |
 
-①、②與③的前兩項是組分；③的第三項是個人分。個人總分 ＝ ① ＋ ② ＋ ③。
+①、②與③的前兩項是組分；③的第三項是個人分。個人總分 ＝ ① ＋ ② ＋ ③，**超過 100 以 100 計**（四個 codec 都做、審查也滿分的組可到 110，取 100）。
 
 ### 報告（放在 slides.pdf 裡，三題）
 
@@ -394,13 +394,13 @@ P 報告 4 分鐘（codec 比較表、三題）＋問答 2 分鐘不另計分，
 | 3 | jitter buffer（依 seq 的環形陣列）、播放時鐘、repeat PLC、基本 STATS | 測試 1、2、5 |
 | 4 | late／dup／reordered／overflow／延遲、`--plc zero`、完整 STATS | 測試 3、7 |
 | 5 | 壞封包不當掉、ssrc 重置、seq 繞回 | 測試 4、6 |
-| 6 | live `call`（麥克風→對方喇叭）、`devices`；**tutorial 到此為止** | 現場 live（demo 的第一個 10 分） |
+| 6 | live `call`（麥克風→對方喇叭）、`devices`；**tutorial 到此為止** | 現場 live（demo 的 raw 通話 10 分） |
 
 **接下來是作業**，在 tutorial 旁邊的兩個資料夾，各給一個框架（第 6 步的程式＋一張 codec 表，程式裡用 `★` 標出要動手的地方）：
 
 | 資料夾 | 加什麼 | 零件 | 驗收 |
 |---|---|---|---|
-| [`mulaw_system/`](mulaw_system/README.md) | codec 表加一列 μ-law（type 0x04、320 bytes） | m8 | 測試 8（和 python_ref 互通） |
+| [`mulaw_system/`](mulaw_system/README.md) | codec 表加一列 μ-law（type 0x04、320 bytes） | m8 | 測試 8（和 python_ref 互通）；demo +10 |
 | [`adpcm_huffman_system/`](adpcm_huffman_system/README.md) | 再加 ADPCM（0x05、160 bytes）或／和 Huffman（0x06，疊在 μ-law 碼字上） | m9、Team 1 的 Huffman | 測試 9、10；demo 各 +10 |
 
 ## baseline/：wrapper 與測試工具（不是程式；程式在 tutorial/ 與兩個系統資料夾）

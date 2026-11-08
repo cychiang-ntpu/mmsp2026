@@ -71,8 +71,8 @@
 📢 11/16（一）「Team 2 工作坊 ②」，助教主持，照常上課。今天 16:00 下課前 step1–6 要全部 push（Actions 綠勾）；離 11/22 登錄 SHA 只剩 6 天。
 來之前先把 tests/run_mock_tests.py 自己對自己跑一遍，帶結果來。
 接著做 tutorial 第 4–6 步，每步 push：第一節 第 4 步（完整 STATS、zero PLC（packet loss concealment，封包遺失補償））→ 第二節 第 5 步（壞封包）＋兩組互測 → 第三節 第 6 步 live 通話＋mulaw_system 開工
-step1–6 在 16:00 前都 push 完 = 繳交 40 分到手；11/22 前做 mulaw_system（--only 8 PASS）與 adpcm_huffman_system（ADPCM --only 9、Huffman --only 10，demo 各 10 分）。
-11/23 demo 30 分（live 通話 10、助教跑測試 1–9 共 10、報告問答 10）；之後一週程式碼實質審查 30 分（ADPCM 整合、正確性、品質、個人貢獻）。
+step1–6 在 16:00 前都 push 完 = 繳交 40 分到手；11/22 前做 mulaw_system（--only 8 PASS）與 adpcm_huffman_system（ADPCM --only 9、Huffman --only 10）。11/23 demo：raw 通話 10、μ-law 10、ADPCM 10、Huffman 10，一項一項加。
+11/23 demo 最多 40（raw 通話 10、μ-law 10、ADPCM 10、Huffman 10）；之後一週程式碼實質審查最多 30；40＋40＋30 超過 100 以 100 計。
 交：進度報告（docs/templates/progress_report.md）＋SHA，11/22（日）18:00 前。
 11/23 評測：每組兩台筆電、耳機、熱點，P 的 slides.pdf 要在 SHA 裡。
 講義：https://github.com/cychiang-ntpu/mmsp2026/blob/main/lectures/wk11_1116_team2-progress2/README.md

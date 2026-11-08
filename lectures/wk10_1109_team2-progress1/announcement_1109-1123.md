@@ -22,10 +22,10 @@ repo 裡的 GitHub Actions（team2-check）每次 push 會自動檢查 m1–m9�
 11/22（日）18:00 登錄 repo URL ＋ commit SHA（mulaw_system 過測試 8；adpcm_huffman_system 做 ADPCM／Huffman；slides.pdf 含報告三題）。
 11/23（一）demo 與口試日，流程同 Team 1：P 報告 4 分鐘 → D 兩台電腦現場通話 3 分鐘 → 問答 2 分鐘；第三節個人口試。帶兩台筆電、耳機、手機熱點。
 
-■ 評分（100）
+■ 評分（加總超過 100 以 100 計）
 40　m1–m9、step1–6 共 15 項都 push 到 team repo（各自一個資料夾、至少一個 commit、make 零警告）；缺一項扣 3。
-30　11/23 demo：做到 step6 兩台通話 10、ADPCM 10、Huffman 10。
-30　助教程式碼實質審查（11/23 後一週）：正確性與互通 10、程式品質 10、個人貢獻 10（看 git log，沒有自己的 C commit 就是 0）。
+最多 40　11/23 demo，一項一項加：兩台以 raw waveform 通話 +10、完成 μ-law +10、完成 ADPCM +10、完成 Huffman +10。
+最多 30　助教程式碼實質審查（11/23 後一週）：正確性與互通 10、程式品質 10、個人貢獻 10（看 git log，沒有自己的 C commit 就是 0）。
 
 問題貼 #team2-questions，助教線上回；11/16 現場可以問。
 ```

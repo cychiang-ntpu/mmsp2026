@@ -1,6 +1,6 @@
 # Team 2 VoiceLink 手把手教學：先拆成九個模組看懂，再六步組裝成能通話的 voicelink（raw PCM）；壓縮在 ../mulaw_system 與 ../adpcm_huffman_system
 
-> **11/9 起**：九個模組與六步**每一個都 push 到 team repo 就是 40 分**（各自一個資料夾、至少一個 commit、`make` 零警告；規格「驗收與評分」①）。第 6 步做完就是能通話的 voicelink（raw PCM），11/23 demo 到這裡 10 分。接下來在 [`../mulaw_system/`](../mulaw_system/README.md)（μ-law）與 [`../adpcm_huffman_system/`](../adpcm_huffman_system/README.md)（ADPCM／Huffman，各 10 分）加壓縮——那是這一輪真正要寫的東西，也是程式碼審查（30）看的地方。
+> **11/9 起**：九個模組與六步**每一個都 push 到 team repo 就是 40 分**（各自一個資料夾、至少一個 commit、`make` 零警告；規格「驗收與評分」①）。第 6 步做完就是能通話的 voicelink（raw PCM），11/23 demo 到這裡 raw 通話 10 分，之後每加一個 codec +10（三部分加總超過 100 以 100 計）。接下來在 [`../mulaw_system/`](../mulaw_system/README.md)（μ-law）與 [`../adpcm_huffman_system/`](../adpcm_huffman_system/README.md)（ADPCM／Huffman，各 10 分）加壓縮——那是這一輪真正要寫的東西，也是程式碼審查（30）看的地方。
 
 這份教學假設你修過一學期的 C，看過第 2 週的 `chat.c`（所以知道 socket 是什麼、`sendto`／`recvfrom` 長什麼樣），
 其他都從零講。分成兩部分：
@@ -176,7 +176,7 @@ tutorial 的六步給的是「能通話的 raw PCM voicelink」。壓縮在 tuto
 
 | 資料夾 | 做什麼 | 零件 | 驗收 | 分 |
 |---|---|---|---|---|
-| [`../mulaw_system/`](../mulaw_system/README.md) | 表裡加 μ-law：`--codec mulaw`，320 bytes 一包 | m8 | 測試 8（和 python_ref 互通） | Huffman 的前提；程式碼審查 |
+| [`../mulaw_system/`](../mulaw_system/README.md) | 表裡加 μ-law：`--codec mulaw`，320 bytes 一包 | m8 | 測試 8（和 python_ref 互通） | demo +10 |
 | [`../adpcm_huffman_system/`](../adpcm_huffman_system/README.md) | 再加 ADPCM（160 bytes）或／和 Huffman（疊在 μ-law 碼字上） | m9、Team 1 的 Huffman | 測試 9／測試 10 | demo 各 +10 |
 
 **繳交結構**：team repo 照 `team_projects/team2_voicelink/` 的資料夾結構（`baseline/`、`tutorial/`、`mulaw_system/`、`adpcm_huffman_system/`、`tests/`、`python_ref/`），助教照同樣的路徑批改。
@@ -186,6 +186,6 @@ tutorial 的六步給的是「能通話的 raw PCM voicelink」。壓縮在 tuto
 | step3 | 1,2,5 | 乾淨、掉包、送端被殺 |
 | step4 | 1,2,3,5,7 | ＋亂序、完整 STATS |
 | step5 | 1,2,3,4,5,6,7 | ＋重複、壞封包 |
-| step6 | 1–7 ＋ 現場 | mock 沒變；live 通話（demo 10 分） |
-| mulaw_system | 8 | μ-law |
+| step6 | 1–7 ＋ 現場 | mock 沒變；live 通話（demo raw 10 分） |
+| mulaw_system | 8 | μ-law（demo +10） |
 | adpcm_huffman_system | 9、10 | ADPCM（+10）、Huffman（+10） |

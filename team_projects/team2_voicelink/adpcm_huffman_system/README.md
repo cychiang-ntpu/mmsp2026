@@ -97,5 +97,5 @@ SQNR 和 μ-law 一樣、`bytes` 比 μ-law 少；**過測試 10**（你們的 s
 
 ### 這一步在評分裡
 
-- 11/23 demo：ADPCM 過測試 9 ＋ 現場切 `--codec adpcm` → **+10**；Huffman 過測試 10 ＋ 現場切 `--codec huff-mulaw` 看 `bytes` 變少 → **+10**。
+- 11/23 demo：ADPCM 過測試 9 ＋ 現場切 `--codec adpcm` → **+10**；Huffman 過測試 10 ＋ 現場切 `--codec huff-mulaw` 看 `bytes` 變少 → **+10**。（加上 raw 10、μ-law 10，demo 最多 40；三部分加總超過 100 以 100 計。）
 - 程式碼實質審查（30）：正確性與互通、程式品質、個人貢獻（`git log` 要看得出誰寫了哪個 codec）。

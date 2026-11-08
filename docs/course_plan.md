@@ -44,7 +44,7 @@
 個人 60：C 貢獻與協作 15＋P/D/V 角色履行 15＋個人口試 30。
 口試未達 15/30 → 該次上限 59，可於補驗時段補驗一次。
 
-**Team 2（11/9 定版）**：tutorial 六步做出能通話的 raw PCM voicelink，作業是在 `mulaw_system/`、`adpcm_huffman_system/` 兩個資料夾加壓縮；team repo 照 `team2_voicelink/` 的結構繳交。**tutorial 繳交 40**（m1–m9、step1–6 共 15 項各自一個資料夾 push，缺一項扣 3）＋**11/23 demo 30**（第 6 步兩台 live 10、ADPCM 10、Huffman 10）＋**助教程式碼實質審查 30**（正確性與互通 10、程式品質 10、個人貢獻 10）。不另辦口試；個人分是審查裡的「個人貢獻」。
+**Team 2（11/9 定版）**：tutorial 六步做出能通話的 raw PCM voicelink，作業是在 `mulaw_system/`、`adpcm_huffman_system/` 兩個資料夾加壓縮；team repo 照 `team2_voicelink/` 的結構繳交。**tutorial 繳交 40**（m1–m9、step1–6 共 15 項各自一個資料夾 push，缺一項扣 3）＋**11/23 demo 最多 40**（raw 通話 10、μ-law 10、ADPCM 10、Huffman 10）＋**助教程式碼實質審查最多 30**（正確性與互通 10、程式品質 10、個人貢獻 10），加總超過 100 以 100 計。不另辦口試；個人分是審查裡的「個人貢獻」。
 
 ## 分組與角色
 
