@@ -49,7 +49,7 @@ A-law 壓縮  y = sign(x) · A|x| / (1 + ln A)                 |x| < 1/A（小�
             y = sign(x) · (1 + ln(A|x|)) / (1 + ln A)        其餘（對數）             A = 87.6
 ```
 
-**和 Team 2 的關係**：功能 4 的 `--codec mulaw` 就是這件事——送端每個 16-bit sample 查表變 1 byte（一包 320 bytes），收端查表變回 16-bit，再交給 jitter buffer；PLC 一行都不用改。
+**和 Team 2 的關係**：功能 4 的 `--codec mulaw` 就是這件事——送端每個 16-bit sample 查表變 1 byte（一包 320 bytes），收端查表變回 16-bit，再交給 jitter buffer；PLC（packet loss concealment，封包遺失補償） 一行都不用改。
 
 試試看：
 

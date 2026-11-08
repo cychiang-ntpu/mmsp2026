@@ -210,7 +210,7 @@ Hamming window 把 frame 兩端平滑地壓到接近 0，接縫不再跳，side 
 
 **(c)** 整條管線**都應該是無失真的**：Huffman 是無失真，frame 與 TCP 不改內容。兩個要注意的邊界：(1) 以 UTF-8 字元為符號時，遇到不合法的 UTF-8 bytes 不能「修正」它（那就失真了），規格規定退回以 byte 為符號；(2) 以 16-bit sample 為符號時，WAV 的 `data` 以外的 chunk（檔頭、LIST）要原樣存在區塊裡（head／tail bytes），`data` 長度是奇數時最後一個 byte 也要保留——否則還原出來的檔案和原檔不同。驗收是「逐 byte 相同」，所以任何一個方塊有失真都會被抓到。
 
-**(d)** TCP send_all／recv_all 換成 `sendto`／`recvfrom`；「組 frame」改成「每 20 ms 一包的封包（header：seq、timestamp、ssrc）」；收端新增 **jitter buffer**（依 seq 排序、固定節奏取出）與 **遺失補償 PLC**；ack 拿掉（即時語音不等重傳），改成結束時的 BYE 與 STATS。（任三個即可。）
+**(d)** TCP send_all／recv_all 換成 `sendto`／`recvfrom`；「組 frame」改成「每 20 ms 一包的封包（header：seq、timestamp、ssrc）」；收端新增 **jitter buffer**（依 seq 排序、固定節奏取出）與 **遺失補償 PLC（packet loss concealment，封包遺失補償）**；ack 拿掉（即時語音不等重傳），改成結束時的 BYE 與 STATS。（任三個即可。）
 
 **(e) source coding 與 channel coding。**
 

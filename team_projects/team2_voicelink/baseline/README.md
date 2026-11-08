@@ -52,7 +52,7 @@ PASS: 225082 bytes 的 PCM 逐 byte 相同（352 包，最後一包補 198 bytes
 - `recv`：`udp_recv` 收到什麼就接在後面（**到達順序 = 播放順序**）→ 寫成 WAV。
 - `call`：麥克風的 callback 湊滿 320 個 sample 就 `sendto`；另一條執行緒把收到的包放進一個 8 格的 ring；
   喇叭的 callback 從 ring 拿一包來播，ring 空的就播靜音。
-- **沒有**：header、seq／timestamp、jitter buffer、PLC、BYE、STATS。這些就是你們的作業；`voicelink_raw.c`
+- **沒有**：header、seq／timestamp、jitter buffer、PLC（packet loss concealment，封包遺失補償）、BYE、STATS。這些就是你們的作業；`voicelink_raw.c`
   開頭的註解說了每一樣該放在哪個函式裡。
 
 ## 把 udp_impair.py 夾在中間：會壞在哪裡

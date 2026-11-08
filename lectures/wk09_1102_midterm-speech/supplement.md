@@ -176,7 +176,7 @@ MP2 的 function generator 就是在模擬一台 A/D：產生 x_c(t) → 取樣 
 **語音**：發音器官的結構（肺 → 聲帶 → 咽、口腔、鼻腔 → 嘴唇）可以簡化成 **source–filter 模型**：
 - **聲源**：聲帶振動（有聲音，週期 1/F₀）或氣流通過狹縫的湍流（無聲音，像雜訊）。
 - **濾波器**：聲道是一根會變形的管子（tube resonance model），不同形狀有不同的共振頻率（**formant**），決定是哪個母音。
-- 數位模型：脈衝串或雜訊 → 聲道濾波器 → 輻射 → 語音；頻譜 = 聲源頻譜（harmonics）× 聲道頻率響應（formant 包絡）。這就是第 7 週 1.3 與 Team 2 PLC「pitch 重複」的根據，也是 [audio_coding.md](audio_coding.md) LPC／CELP 的出發點。
+- 數位模型：脈衝串或雜訊 → 聲道濾波器 → 輻射 → 語音；頻譜 = 聲源頻譜（harmonics）× 聲道頻率響應（formant 包絡）。這就是第 7 週 1.3 與 Team 2 PLC（packet loss concealment，封包遺失補償）「pitch 重複」的根據，也是 [audio_coding.md](audio_coding.md) LPC／CELP 的出發點。
 - 影片（2023 連結）：聲帶振動的內視鏡影像（Sean Parker Institute for the Voice）、tube resonance（voicescienceworks.org）、Vibration of the Vocal Folds 動畫。
 
 **樂器**：

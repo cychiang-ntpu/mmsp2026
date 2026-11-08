@@ -9,7 +9,7 @@
 | 3 | 參考的 send → 你們的 recv：PCM 逐 byte 相同 | `run_mock_tests.py` 測試 1 |
 | 4 | `run_mock_tests.py` 你們 vs 你們：1–7 全 PASS | 終端機輸出 |
 | 5 | buffer 掃描至少 3 個點、CSV 已 commit | repo |
-| 6 | live 通話 30 秒、兩種 PLC 都試過 | 助教現場聽 |
+| 6 | live 通話 30 秒、兩種 PLC（packet loss concealment，封包遺失補償） 都試過 | 助教現場聽 |
 | 7 | `docs/interface.md` 與規格一致 | repo |
 | 8 | `--codec mulaw`：你們 send → 參考 recv，SQNR ≥ 30 dB、bytes 減半 | STATS 與 `run_mock_tests.py` 測試 8 |
 

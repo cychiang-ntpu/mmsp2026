@@ -216,7 +216,7 @@ seq 是 16-bit 會**繞回**（65535 → 0）：比較「誰在前面」要用�
 
 ```
 到達（不規則）──▶ [ jitter buffer：依 seq 排序 ] ──▶ 每 20 ms 拿「下一個 seq」──▶ 喇叭
-                                                       │ 沒有？→ PLC 補一個（concealed）
+                                                       │ 沒有？→ PLC（packet loss concealment，封包遺失補償） 補一個（concealed）
                                                        │ 來晚了？→ 丟（late）
 ```
 

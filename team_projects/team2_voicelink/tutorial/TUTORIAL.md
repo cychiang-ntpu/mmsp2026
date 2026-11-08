@@ -12,7 +12,7 @@ Part B 的七步：
 ```
 step1_raw      640 bytes 一包、沒有 header                       ← 和 baseline/voicelink_raw 一樣笨
 step2_header   + 12 bytes header（magic/type/seq/ts/ssrc）+ BYE   ← 看得到 seq 跳號了
-step3_buffer   + jitter buffer + 播放時鐘 + PLC repeat + STATS    ← 過測試 1,2,5（基本層的核心）
+step3_buffer   + jitter buffer + 播放時鐘 + PLC（packet loss concealment，封包遺失補償） repeat + STATS    ← 過測試 1,2,5（基本層的核心）
 step4_counters + late/dup/reordered/overflow/延遲 + --plc + --burst ← 過測試 1,2,3,5,7
 step5_robust   + 壞封包、ssrc 換了、seq 繞回、--bind、結束碼        ← 過測試 1–7（基本層＋加分層的一部分）
 step6_mulaw    + --codec mulaw（功能 4）                           ← 過測試 8（進階層 A3）

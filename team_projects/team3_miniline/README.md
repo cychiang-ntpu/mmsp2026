@@ -18,7 +18,7 @@
 | | Team 1 文字 | Team 2 語音 | Team 3 視訊 |
 |---|---|---|---|
 | 傳輸 | TCP，frame 長度前綴 | UDP，一包 = 一個 20 ms frame | UDP，**一個 frame = 很多包** |
-| 掉包 | TCP 重傳 | 補一個 frame（PLC） | 整個 frame 都不能用 → **丟掉整張**，等下一張 |
+| 掉包 | TCP 重傳 | 補一個 frame（PLC（packet loss concealment，封包遺失補償）） | 整個 frame 都不能用 → **丟掉整張**，等下一張 |
 | 時間 | 不急 | 20 ms 一拍 | 200 ms 一張；顯示跟不上就**丟舊的** |
 | 大小 | 任意 | 固定 640 bytes | JPEG 每張大小不同（10–25 KB），要切片 |
 

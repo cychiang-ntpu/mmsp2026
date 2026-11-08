@@ -1,6 +1,6 @@
 # python_ref/：VoiceLink 的純 Python 完整版（mock 模式）
 
-`voicelink.py` 是 Team 2 規格（[`../README.md`](../README.md)）的 **mock 模式**完整實作：`send`／`recv`、封包格式、jitter buffer、PLC、STATS。
+`voicelink.py` 是 Team 2 規格（[`../README.md`](../README.md)）的 **mock 模式**完整實作：`send`／`recv`、封包格式、jitter buffer、PLC（packet loss concealment，封包遺失補償）、STATS。
 只用標準函式庫，Python 3.8 以上都能跑。它有兩個用途：
 
 1. **對照用**：每一步都用最直白的高階寫法（`struct.pack`、`dict`、`select`），旁邊的註解標了「★ 對應 C」——你們的 C 程式就是把這些翻譯成環狀陣列、`recvfrom` 逾時、單調時鐘。

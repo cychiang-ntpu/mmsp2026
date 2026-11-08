@@ -7,7 +7,7 @@
 > **跟著打指令請開 [commands.md](commands.md)**。
 > 期中考範例：[midterm_sample.md](midterm_sample.md)／[詳解](midterm_sample_solutions.md)。
 >
-> **Team 2 的同學注意**：10/19 沒講到的 Team 2 核心（為什麼 UDP、封包、jitter buffer、PLC）整理在 [team2_core.md](team2_core.md)，11/9 工作坊前讀完；11/9、11/16 全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 一步一步做。語音壓縮（μ-law、DPCM）在 [audio_coding.md](audio_coding.md)。
+> **Team 2 的同學注意**：10/19 沒講到的 Team 2 核心（為什麼 UDP、封包、jitter buffer、PLC（packet loss concealment，封包遺失補償））整理在 [team2_core.md](team2_core.md)，11/9 工作坊前讀完；11/9、11/16 全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 一步一步做。語音壓縮（μ-law、DPCM）在 [audio_coding.md](audio_coding.md)。
 
 第二、三節用的是授課教師 2023 年的 Chapter 2、Chapter 3 講義**原文**（[ch2_2023.md](ch2_2023.md)、[ch3_2023.md](ch3_2023.md)，含圖與上課影片連結），內容比兩節課能講的多：課堂挑重點，其餘課後讀。本課程的範例程式、公式整理與實測數字另放在 [supplement.md](supplement.md)。
 
