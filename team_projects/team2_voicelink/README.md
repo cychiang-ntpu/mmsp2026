@@ -96,15 +96,25 @@ Team 1 用 TCP：掉一個封包，TCP 會重傳，後面的資料全部排隊�
 
 ### 命令列介面
 
+四個子命令。`<…>` 一定要給，`[…]` 可省略。
+
+| 子命令 | 指令 | 做什麼 |
+|---|---|---|
+| **send**（mock） | `voicelink send <ip> <port> <in.wav> [--burst] [--codec pcm\|mulaw\|adpcm]` | 讀 WAV，照 20 ms 的節奏一包一包送到 `<ip>:<port>`。`--burst` 不等 20 ms 一口氣全送（用來看 buffer 的用處） |
+| **recv**（mock） | `voicelink recv <port> <out.wav> [--bind <ip>] [--buffer <ms>] [--plc zero\|repeat] [--timeout <ms>]` | 在 `<port>` 收封包，排序、補償，照 20 ms 的節奏寫成 `<out.wav>`；結束時印一行 STATS |
+| **call**（live） | `voicelink call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero\|repeat] [--codec pcm\|mulaw\|adpcm]` | 麥克風 → 對方喇叭、對方 → 自己喇叭，雙向通話；按 Enter 結束並印 STATS |
+| **devices** | `voicelink devices` | 列出電腦上的麥克風與喇叭 |
+
+例：
+
 ```
-voicelink send <ip> <port> <in.wav> [--burst] [--codec pcm|mulaw|adpcm]
-    mock：讀 WAV 照 20 ms 節奏送（--burst 一口氣全送，用來看 buffer 的用處）
-voicelink recv <port> <out.wav> [--bind <ip>] [--buffer <ms>] [--plc zero|repeat] [--timeout <ms>]
-    mock：收、排序、補償，寫成 WAV，結束印 STATS
-voicelink call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero|repeat] [--codec pcm|mulaw|adpcm]
-    live：雙向通話，按 Enter 結束，結束印 STATS
-voicelink devices
-    列出麥克風與喇叭
+# 同一台電腦自測：先開 recv，再開 send
+voicelink recv 5004 out.wav
+voicelink send 127.0.0.1 5004 in.wav
+
+# 兩台電腦通話：A（IP 192.168.1.10）與 B（IP 192.168.1.20）各打一行
+voicelink call 5005 192.168.1.20 5005        # 在 A
+voicelink call 5005 192.168.1.10 5005        # 在 B
 ```
 
 | 參數 | 預設 | 意義 |
