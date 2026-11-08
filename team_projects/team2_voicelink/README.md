@@ -8,6 +8,58 @@
 - 本輪四人組角色：**P＋D＋D＋V**（三人組 P＋D＋V）；分組名單於 10/19 公告
 - **11/8 改版（取代 11/1 的三層）**：[tutorial/](tutorial/) 第 7 步 `step7_live.c` 是**官方給的起點**（能傳 raw PCM、有 header／jitter buffer／PLC／STATS／live 通話）。這一輪真正的作業是**在它上面加語音壓縮**：μ-law（必做）、ADPCM（必做）、Huffman（加分）。評分見「驗收與評分」。
 
+## 從這裡開始（學生進入點，11/8 起）
+
+這一頁就是 Team 2 的全部：規格、評分、時程、tutorial 與工具都從這裡連出去。不用再看別的頁面才知道要做什麼。
+
+### 這一輪要做什麼（30 秒版）
+
+1. 跟著 [tutorial/TUTORIAL.md](tutorial/TUTORIAL.md) 做完八個模組與七步——第 7 步 `step7_live.c` 是**官方起點**，複製進 team repo 就拿到起點層 40 分。
+2. 在起點上加三種語音壓縮：**μ-law**（必做 15，tutorial 第 6 步有手把手）、**ADPCM**（必做 15，要自己寫）、**Huffman**（加分 10）。
+3. 11/22（日）18:00 前登錄 SHA；11/23 評測＋口試（個人 20）。
+
+### 四個日期各要做到什麼
+
+| 日期 | 做什麼 | 繳交 | 分 | 講義 |
+|---|---|---|---|---|
+| **11/9（一）** 工作坊 ①（助教主持） | Part A 模組 m1–m8 各「跑一次、改一處」；第 1–3 步 | 每支模組的兩次輸出貼 Slack；每步一個 commit＋過關證據 | 個人 8＋組 6 | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
+| **11/16（一）** 工作坊 ②（助教主持） | 第 4–7 步（做完＝起點）；兩組互測；「改一處」小題；ADPCM 開工 | 每步 commit＋證據；互測的對方 STATS；小題 push | 組 16 | [wk11](../../lectures/wk11_1116_team2-progress2/README.md) |
+| **11/22（日）18:00** | ADPCM 做到測試 9 PASS；有餘力做 Huffman（測試 10）；投影片含報告三題 | 登錄 repo URL＋commit SHA | — | — |
+| **11/23（一）** 評測 | 助教跑測試 1–10；P 報告 4 分鐘、D 兩台 live 3 分鐘、問答 2 分鐘；第三節個人口試 | 帶兩台筆電、耳機、熱點 | 起點 40＋壓縮 30＋加分 10＋口試 20 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
+
+滿分 100（含加分 10）；各項怎麼算在「[驗收與評分](#驗收與評分118-改版)」。口試未達 10/20 可於 11/30 補驗一次。
+
+### 五個最常用的指令（Windows PowerShell；macOS／Linux 把 `mingw32-make` 換成 `make`、`.\x.exe` 換成 `./x`）
+
+```powershell
+cd team_projects\team2_voicelink\tutorial
+mingw32-make                      # 編出全部模組與七步（只編一步：mingw32-make step7）
+$W = "..\..\..\lectures\wk07_1019_audio-pcm\data\speech_osr_16k.wav"   # 34 秒的測試語音（16 kHz 單聲道）
+
+# 自己對自己（兩個視窗）：先 recv 再 send；收端結束會印一行 STATS、寫出 out.wav
+.\step7_live.exe recv 5004 out.wav --buffer 60 --plc repeat
+.\step7_live.exe send 127.0.0.1 5004 $W --codec mulaw
+
+# 自動驗收（Git Bash 或 PowerShell 都可）：測試 1–9；加 --with-huffman 跑 10
+python ..\tests\run_mock_tests.py ".\step7_live.exe send" ".\step7_live.exe recv" $W
+```
+
+更多指令與參數：「[命令列介面](#命令列介面)」；壞網路模擬：`baseline/udp_impair.py`；對手端：`python_ref/voicelink.py`。
+
+### 這個資料夾裡有什麼
+
+| 位置 | 是什麼 | 你會在什麼時候用 |
+|---|---|---|
+| [tutorial/](tutorial/TUTORIAL.md) | 手把手教學：m1–m8 模組、step1–step7 | 11/9、11/16 全程 |
+| [tutorial/step7_live.c](tutorial/step7_live.c) | **官方起點**，完整主程式 | 複製進 team repo 的 `src/` 後開始加 codec |
+| [baseline/wrapper/](baseline/wrapper/) | WAV／UDP／時鐘／音訊四個標頭 | 起點要用，一起複製 |
+| [baseline/udp_impair.py](baseline/udp_impair.py) | 掉包／亂序／抖動的搗蛋中繼 | 自己測 buffer 與 PLC |
+| [python_ref/voicelink.py](python_ref/voicelink.py) | Python 完整版（含 ADPCM） | 評測對手端；寫 ADPCM 時對照 `adpcm_encode`／`adpcm_decode` |
+| [tests/run_mock_tests.py](tests/run_mock_tests.py) | 自動驗收測試 1–10 | 每做完一步就跑 |
+| 第 9 週 [audio_coding.md](../../lectures/wk09_1102_midterm-speech/audio_coding.md) | μ-law／A-law／ADPCM 的原理，圖文版 | 寫 codec 前讀 |
+
+下面是完整規格。第一次看先讀「名詞解釋」，再看「固定的部分」與「驗收與評分」。
+
 ## 一句話
 
 把 Team 1 的「可靠但會等」換成「不等但會掉」：用 **UDP** 傳 **20 ms 一包**的 16 kHz 語音，

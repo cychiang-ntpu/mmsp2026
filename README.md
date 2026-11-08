@@ -65,7 +65,8 @@ mmsp2026/
 ## 每週講義
 
 每週上課用的講義、範例程式與回家作業都在 [lectures/](lectures/README.md)，上課前先打開當週資料夾。
-本週：[第 9 週（11/2）期中考、Team 2 實作工作坊](lectures/wk09_1102_midterm-speech/README.md)（[期中考範例考題](lectures/wk09_1102_midterm-speech/midterm_sample.pdf)）；上一份講義：[第 7 週（10/19）聲音的時頻分析（STFT、MP5）、Team 2 開題](lectures/wk07_1019_audio-pcm/README.md)。
+**Team 2 進行中（11/9、11/16 工作坊，11/23 評測）：學生進入點是 [team_projects/team2_voicelink/README.md](team_projects/team2_voicelink/README.md)**，時程、評分、指令、tutorial 都從那裡連出去。
+上一份講義：[第 9 週（11/2）期中考、語音實驗](lectures/wk09_1102_midterm-speech/README.md)。
 
 ## 第一堂課 checklist
 
