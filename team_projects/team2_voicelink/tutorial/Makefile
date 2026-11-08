@@ -5,7 +5,7 @@
 #
 #   make            進每個資料夾編（m1_wav … m8_mulaw、step1_raw … step7_live）
 #   make modules    只編 Part A 的八個模組；make stepN 只編第 N 步；也可以直接 cd 進資料夾自己 make
-#   make check      先跑不用互動的模組 m3／m6／m7／m8 並檢查結果，再用 tests/run_mock_tests.py 自動驗收：
+#   make check      先跑不用互動的模組 m3／m6／m7／m8／m9 並檢查結果，再用 tests/run_mock_tests.py 自動驗收：
 #                   step3 跑測試 1,2,5；step4 跑 1,2,3,5,7；step5 跑 1–7；step6 跑 8（μ-law）
 #                   預設兩邊都是自己（C send → C recv）；make check-ref 改用 python_ref 當送端（評測就是這樣跑）
 #   make clean      刪掉編出來的東西
@@ -23,7 +23,7 @@ else
     RM_F = rm -f
 endif
 
-MODULES = m1_wav m2_udp m3_clock m4_mic_to_wav m5_play_wav m6_header m7_ringbuffer m8_mulaw
+MODULES = m1_wav m2_udp m3_clock m4_mic_to_wav m5_play_wav m6_header m7_ringbuffer m8_mulaw m9_adpcm
 STEPS   = step1_raw step2_header step3_buffer step4_counters step5_robust step6_mulaw step7_live
 WAV  = ../../../lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav
 PORT = 5604
@@ -54,7 +54,7 @@ define RUN_CHECK
 	then echo "$(1) tests $(3): PASS" >> .check_result; else echo "$(1) tests $(3): FAIL" >> .check_result; fi
 endef
 
-check-modules: m3_clock m6_header m7_ringbuffer m8_mulaw
+check-modules: m3_clock m6_header m7_ringbuffer m8_mulaw m9_adpcm
 	@echo "=== m3_clock ==="; if m3_clock/m3_clock$(EXE) | tail -2; then echo "m3_clock: PASS" >> .check_result; \
 	else echo "m3_clock: FAIL" >> .check_result; fi
 	@echo "=== m6_header ==="; if m6_header/m6_header$(EXE) | grep "OK"; then echo "m6_header: PASS" >> .check_result; \
@@ -66,6 +66,9 @@ check-modules: m3_clock m6_header m7_ringbuffer m8_mulaw
 	@echo "=== m8_mulaw ==="; if m8_mulaw/m8_mulaw$(EXE) $(WAV) m8_out.wav | grep "SQNR"; \
 	then echo "m8_mulaw: PASS" >> .check_result; \
 	else echo "m8_mulaw: FAIL" >> .check_result; fi
+	@echo "=== m9_adpcm ==="; if m9_adpcm/m9_adpcm$(EXE) $(WAV) m9_out.wav | grep "SQNR"; \
+	then echo "m9_adpcm: PASS" >> .check_result; \
+	else echo "m9_adpcm: FAIL" >> .check_result; fi
 
 check: step3_buffer step4_counters step5_robust step6_mulaw
 	@$(RM_F) .check_result
@@ -88,6 +91,6 @@ check-ref: step3_buffer step4_counters step5_robust step6_mulaw
 
 clean:
 	@for d in $(MODULES) $(STEPS); do $(MAKE) --no-print-directory -C $$d clean; done
-	-$(RM_F) audio.o .check_result m8_out.wav
+	-$(RM_F) audio.o .check_result m8_out.wav m9_out.wav
 
 .PHONY: all modules $(MODULES) $(STEPS) step1 step2 step3 step4 step5 step6 step7 check check-modules check-ref clean

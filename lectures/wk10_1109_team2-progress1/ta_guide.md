@@ -46,7 +46,7 @@
 |---|---|---|
 | 13:10–14:00 | 第 4 步 counters（第 3 步沒過的先補） | 帶看 late／dup／reordered 的判斷式與 `--plc zero` |
 | 14:10–15:00 | 第 5 步 robust＋第 6 步 μ-law；兩組互測（1↔3、2↔4…） | 帶看壞封包檢查與 μ-law 查表；互測跑 `run_mock_tests.py` 兩個方向 |
-| 15:10–15:45 | 第 7 步 live（15 分鐘）＋ ADPCM 開工（20 分鐘） | 沒麥克風的用 `python_ref` 當聲源；ADPCM 指到 `python_ref/voicelink.py` 的 `adpcm_encode`／`adpcm_reconstruct` 與第 9 週 `dpcm_demo.py`，目標 `--only 9` 跑得完 |
+| 15:10–15:45 | 第 7 步 live（15 分鐘）＋ ADPCM 開工（20 分鐘） | 沒麥克風的用 `python_ref` 當聲源；ADPCM 先帶做零件 `tutorial/m9_adpcm`（`--trace 8` 投影逐 sample 的表、`--frame 0` 與 `--fixed-step 100` 聽差別），再指到 m9 README 第 6 節「搬進 step7」，目標 `--only 9` 跑得完 |
 | 15:45–16:00 | 收尾：進度報告＋SHA 11/22 18:00；11/23 評測要帶的東西 | |
 
 ## 會後

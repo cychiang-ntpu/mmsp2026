@@ -1,12 +1,12 @@
-# Team 2 VoiceLink 手把手教學：先拆成八個模組看懂，再七步組裝成官方起點（step7）＋μ-law
+# Team 2 VoiceLink 手把手教學：先拆成九個模組看懂，再七步組裝成官方起點（step7）＋μ-law；m9 是 ADPCM 的零件
 
 > **11/8 起**：第 7 步 `step7_live.c` 就是作業的**官方起點**（起點層 40 分）。這份教學的目的是讓你們**讀懂**起點的每一行，因為接下來要在它上面加 ADPCM（必做）與 Huffman（加分）——見規格「驗收與評分」。
 
 這份教學假設你修過一學期的 C，看過第 2 週的 `chat.c`（所以知道 socket 是什麼、`sendto`／`recvfrom` 長什麼樣），
 其他都從零講。分成兩部分：
 
-- **Part A 拆解**：八個 50–80 行的小程式 `m1_wav.c` … `m8_mulaw.c`，每個只做**一件事**、印出看得見的結果。
-  先把每一塊零件玩過一遍（讀 WAV、寄一張 UDP 明信片、每 20 ms 醒來、錄音、放音、打包 header、環狀 buffer、μ-law）。
+- **Part A 拆解**：九個 50–130 行的小程式 `m1_wav.c` … `m9_adpcm.c`，每個只做**一件事**、印出看得見的結果。
+  先把每一塊零件玩過一遍（讀 WAV、寄一張 UDP 明信片、每 20 ms 醒來、錄音、放音、打包 header、環狀 buffer、μ-law、ADPCM）。
 - **Part B 組裝**：七個程式 `step1_raw.c` … `step7_live.c`，每一個都是前一個的「超集」，把零件接起來變成規格的 `voicelink`。
 
 Part B 的七步：
@@ -51,9 +51,9 @@ Windows 的 PowerShell 沒有 `sh`，`check` 請在 Git Bash 裡跑；單一步�
 
 # Part A 拆解：一次只看一個模組
 
-每個模組都是獨立的一支程式，只用 wrapper 的標頭，50–80 行，註解比程式多。建議順序 m1 → m8，每個 10 分鐘：跑一次、看輸出、改一個地方再跑一次。
+每個模組都是獨立的一支程式，只用 wrapper 的標頭，50–80 行，註解比程式多。建議順序 m1 → m9，每個 10 分鐘（m8、m9 各 20 分鐘，它們是功能 4 的兩個 codec，README 寫得比較長、邊做邊學）：跑一次、看輸出、改一個地方再跑一次。
 
-為什麼要先拆成模組：整支 voicelink 有八個互不相干的零件（讀 WAV、寄 UDP、準時醒來、錄音、放音、打包 header、環狀 buffer、μ-law），
+為什麼要先拆成模組：整支 voicelink 有九個互不相干的零件（讀 WAV、寄 UDP、準時醒來、錄音、放音、打包 header、環狀 buffer、μ-law、ADPCM），
 一次全部看會糊掉；每個零件單獨拿出來跑、改一處、看結果，10 分鐘就能確定「這一塊我懂了」，Part B 組裝時才知道哪一行是哪個零件。
 
 | 模組 | 為什麼要有它 | 在 Part B 變成 |
@@ -64,7 +64,8 @@ Windows 的 PowerShell 沒有 `sh`，`check` 請在 Git Bash 裡跑；單一步�
 | m4、m5 | live 通話的麥克風與喇叭是 callback 驅動的，先在沒有網路時看懂它什麼時候被叫、一次給多少 | step7 的 `audio_cb` |
 | m6 | 每包前面 12 bytes 的 header 要和 python_ref 互通，位元組順序一個都不能錯，先用 hex 確認 | step2 的 `pack_header`／`parse_header` |
 | m7 | Team 2 的心臟：亂序放回、重複丟掉、沒到就補、拍子一定前進——先用 8 個數字想清楚 | step3 的 `jb_put`／`jb_tick` |
-| m8 | 功能 4 的第一個 codec；先在檔案上把表與 SQNR 做對，之後 ADPCM 也用同一套量法 | step6 的 μ-law 編解碼 |
+| m8 | 功能 4 的第一個 codec（C1）；先在檔案上把表與 SQNR 做對 | step6 的 μ-law 編解碼 |
+| m9 | 功能 4 的第二個 codec（C2）：只送「差」、刻度自己調；`--trace` 看編碼器每一步在想什麼 | **沒有現成的 step**：你們要自己加進 step7 的 `--codec adpcm` |
 
 每個模組資料夾的 README 開頭都有「這個模組的目的」四點：做什麼、為什麼要先做它、在 Part B 哪裡用到、做完要能回答什麼。
 
@@ -122,6 +123,14 @@ live 模式的喇叭就是這樣餵的——只是「下一段」改成向 jitte
 **看什麼**：第 9 週 2.2 的公式照抄，建兩張表（`enc[65536]`、`dec[256]`），之後每個 sample 查一次表。bytes 剛好一半；SQNR ≈ 37 dB（規格 ≥ 30）。
 
 → 完整說明、指令、程式碼導讀與「改一個地方」在 **[m8_mulaw/README.md](m8_mulaw/README.md)**（程式：`m8_mulaw/m8_mulaw.c`）。
+
+## m9_adpcm.c：ADPCM 壓成 4 bits 再解回來——只送「差」、刻度自己調
+
+**看什麼**：ADPCM 三個字母三個想法——**D** 不送 sample 送「和預測值的差」、**PCM** 把差用 4 bits（1 bit 正負＋3 bits 大小）量化、**A** 刻度 step 看剛才的碼自己放大縮小，兩邊同一張表所以不用送。
+最重要的一句話：預測要用**重建值**不用原始值（編碼端裡藏一個解碼器，兩邊呼叫同一個 `adpcm_reconstruct`）。`--trace 8` 逐 sample 印出預測、殘差、step、碼、重建；`--frame 0`／`--fixed-step` 兩個開關讓你聽到「為什麼每包歸零」與「為什麼要自適應」。
+和 `python_ref` 同一張表、同樣初值，所以搬進 step7 之後能互通、過測試 9。
+
+→ 完整說明、逐行解讀、四個實驗、搬進 step7 的步驟與常見錯誤在 **[m9_adpcm/README.md](m9_adpcm/README.md)**（程式：`m9_adpcm/m9_adpcm.c`）。
 
 # Part B 組裝：七步做出 voicelink
 

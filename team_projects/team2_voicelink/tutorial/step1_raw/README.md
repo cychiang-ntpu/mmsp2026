@@ -1,6 +1,6 @@
 ## 第 1 步｜step1_raw.c：把 WAV 切成 20 ms 一包用 UDP 送出去
 
-[← 教學總覽](../TUTORIAL.md)｜上一個：[m8 μ-law](../m8_mulaw/README.md)｜下一個：[第 2 步 header](../step2_header/README.md)
+[← 教學總覽](../TUTORIAL.md)｜上一個：[m9 ADPCM](../m9_adpcm/README.md)｜下一個：[第 2 步 header](../step2_header/README.md)
 
 ### 在這個資料夾
 

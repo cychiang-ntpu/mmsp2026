@@ -14,7 +14,7 @@
 
 ### 這一輪要做什麼（30 秒版）
 
-1. 跟著 [tutorial/TUTORIAL.md](tutorial/TUTORIAL.md) 做完八個模組與七步（每個各自一個資料夾、有自己的 README）——第 7 步 `step7_live/step7_live.c` 是**官方起點**，複製進 team repo 就拿到起點層 40 分。
+1. 跟著 [tutorial/TUTORIAL.md](tutorial/TUTORIAL.md) 做完九個模組與七步（每個各自一個資料夾、有自己的 README）——第 7 步 `step7_live/step7_live.c` 是**官方起點**，複製進 team repo 就拿到起點層 40 分。
 2. 在起點上加三種語音壓縮：**μ-law**（必做 15，tutorial 第 6 步有手把手）、**ADPCM**（必做 15，要自己寫）、**Huffman**（加分 10）。
 3. 11/22（日）18:00 前登錄 SHA；11/23 評測＋口試（個人 20）。
 
@@ -322,7 +322,7 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 | C1 | **μ-law**：`--codec mulaw`，SQNR ≥ 30 dB、`bytes` ≈ 一半、`--loss 0.05` 仍正常 | 測試 8 | 15 |
 | C2 | **ADPCM**：`--codec adpcm`，SQNR ≥ 20 dB、`bytes` ≈ 四分之一（含 header 0.264）、`--loss 0.05` 仍正常 | 測試 9 | 15 |
 
-μ-law 在 tutorial 第 6 步有手把手（m8 是零件）；ADPCM **沒有** C 的範例，只有第 9 週 `dpcm_demo.py` 與 `python_ref` 的 Python 版可以對照——這是這一輪要自己寫的部分。
+μ-law 在 tutorial 第 6 步有手把手（m8 是零件）。ADPCM 的**演算法**在零件 [m9_adpcm](tutorial/m9_adpcm/README.md) 裡（檔案進、檔案出，`--trace` 可以看每一步），但**沒有現成的 step**：把它改成「每包 320 個 sample 獨立編／解、type 0x05、接進 send／recv 與 jitter buffer、和 python_ref 互通」是你們要自己寫的部分（m9 README 第 6 節列了步驟與常見錯誤）。
 
 ### 加分層（10 分）
 
@@ -365,7 +365,7 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 
 ## tutorial/：手把手七步（11/1 新增；從這裡開始）
 
-[`tutorial/TUTORIAL.md`](tutorial/TUTORIAL.md) 分兩部分。**Part A 拆解**：八支各 50–80 行的小程式，一支只做一件事——`m1_wav`（讀寫 WAV）、`m2_udp_send`／`m2_udp_recv`（UDP 一包就是一包）、`m3_clock`（20 ms 的時鐘）、`m4_mic_to_wav`（錄音）、`m5_play_wav`（播放）、`m6_header`（12 bytes header 打包／解析）、`m7_ringbuffer`（不用網路的 jitter buffer）、`m8_mulaw`（μ-law 編解碼）——先各自跑過、改過。**Part B 組裝**：七步把模組接成整支程式，每一步都是一支能編譯、能跑、能用 `run_mock_tests.py --only …` 驗的完整程式（`step1_raw/` → `step7_live/`），每一行都有註解。**每個模組與每一步各自一個資料夾**，裡面有自己的 `README.md`、`.c`、`Makefile`，可以單獨 `cd` 進去 `make`：
+[`tutorial/TUTORIAL.md`](tutorial/TUTORIAL.md) 分兩部分。**Part A 拆解**：九支各 50–130 行的小程式，一支只做一件事——`m1_wav`（讀寫 WAV）、`m2_udp_send`／`m2_udp_recv`（UDP 一包就是一包）、`m3_clock`（20 ms 的時鐘）、`m4_mic_to_wav`（錄音）、`m5_play_wav`（播放）、`m6_header`（12 bytes header 打包／解析）、`m7_ringbuffer`（不用網路的 jitter buffer）、`m8_mulaw`（μ-law 編解碼）、`m9_adpcm`（ADPCM 編解碼，`--trace` 逐 sample 看）——先各自跑過、改過。**Part B 組裝**：七步把模組接成整支程式，每一步都是一支能編譯、能跑、能用 `run_mock_tests.py --only …` 驗的完整程式（`step1_raw/` → `step7_live/`），每一行都有註解。**每個模組與每一步各自一個資料夾**，裡面有自己的 `README.md`、`.c`、`Makefile`，可以單獨 `cd` 進去 `make`：
 
 | 步 | 加什麼 | 過哪些驗收 |
 |---|---|---|
