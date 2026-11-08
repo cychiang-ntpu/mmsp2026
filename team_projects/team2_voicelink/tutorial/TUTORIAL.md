@@ -41,8 +41,8 @@ step6_live     + call／devices（麥克風 ↔ 喇叭，執行緒）           
 各資料夾的 README 開頭都會重新定義 `$W`（因為多一層，路徑多一個 `..`）。下面所有指令都用 `$W` 代表那個 7 秒的測試 WAV（16 kHz、單聲道）。要聽真的語音就換成同一個資料夾的 `speech_osr_16k.wav`（34 秒）。
 每一步的測試都要開**兩個**（或三個）終端機視窗：收端先開、再開送端；夾搗蛋中繼時中繼第二個開。
 
-`make`（`mingw32-make`）會把 Part A 的模組和 Part B 的七步全部編出來（`make modules` 只編模組）。
-`make check`（Git Bash／macOS／Linux）先跑不用互動的模組 m3／m6／m7／m8 並檢查結果，再自動跑 step3–step6 該過的測試、印總表；
+`make`（`mingw32-make`）會把 Part A 的模組和 Part B 的六步全部編出來（`make modules` 只編模組）。
+`make check`（Git Bash／macOS／Linux）先跑不用互動的模組 m3／m6／m7／m8 並檢查結果，再自動跑 step3–step6 該過的測試（step6 的 mock 模式也要全過）、印總表；
 `make check-ref` 改用 Python 版當送端（評測就是這樣跑）。
 Windows 的 PowerShell 沒有 `sh`，`check` 請在 Git Bash 裡跑；單一步的指令在 PowerShell 都能跑。
 
@@ -131,7 +131,7 @@ live 模式的喇叭就是這樣餵的——只是「下一段」改成向 jitte
 
 → 完整說明、逐行解讀、四個實驗、搬進系統的步驟與常見錯誤在 **[m9_adpcm/README.md](m9_adpcm/README.md)**（程式：`m9_adpcm/m9_adpcm.c`）。
 
-# Part B 組裝：七步做出 voicelink
+# Part B 組裝：六步做出能通話的 voicelink（raw PCM）
 
 ## 第 1 步｜step1_raw.c：把 WAV 切成 20 ms 一包用 UDP 送出去
 

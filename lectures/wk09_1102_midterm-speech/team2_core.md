@@ -70,7 +70,7 @@ magic 'V' | type | seq(2) | ts(4) | ssrc(4) | 640 bytes PCM        多 byte 欄�
 
 ### 5 手把手：跟著 tutorial 做第 1–3 步
 
-[team_projects/team2_voicelink/tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 七步，每步一支完整、有註解的程式。課堂上投影 `step2_header.c` 與 `step3_buffer.c` 的差異：header 怎麼打包（`put_u16`／`put_u32`）、環形 buffer 怎麼用 `seq % 16` 當索引、播放時鐘怎麼用「下一拍的時間」當 `udp_recv` 的 timeout 所以不用執行緒、沒有就 `memcpy` 上一個 frame（repeat）。做完第 3 步就過起點層的測試 1、2、5。
+[team_projects/team2_voicelink/tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 六步，每步一支完整、有註解的程式（第 6 步 live 就是能通話的 voicelink；μ-law／ADPCM／Huffman 在 mulaw_system/ 與 adpcm_huffman_system/ 自己加）。課堂上投影 `step2_header.c` 與 `step3_buffer.c` 的差異：header 怎麼打包（`put_u16`／`put_u32`）、環形 buffer 怎麼用 `seq % 16` 當索引、播放時鐘怎麼用「下一拍的時間」當 `udp_recv` 的 timeout 所以不用執行緒、沒有就 `memcpy` 上一個 frame（repeat）。做完第 3 步就過起點層的測試 1、2、5。
 
 ### 5b 新功能 4：μ-law 壓縮（進階 A3）、ADPCM（加分）
 
@@ -82,8 +82,8 @@ ADPCM（2.3 的做法，4 bits、160 bytes、type 0x05）是加分：每個 fram
 
 評分（規格「驗收與評分」，11/9 定版）：**tutorial 繳交 40**（m1–m9、step1–6 共 15 項各自一個資料夾 push，缺一項扣 3）＋**11/23 demo 30**（第 6 步兩台 live 10、ADPCM 10、Huffman 10）＋**助教程式碼實質審查 30**（正確性與互通 10、程式品質 10、個人貢獻 10）。team repo 照 `team2_voicelink/` 的結構繳交。
 
-- **11/9 工作坊 ①**（助教主持）：全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做 Part A 模組與第 1–3 步，每步 push。
-- **11/16 工作坊 ②**：第 4–7 步（完整 STATS、壞封包、μ-law、live）、組間互測、live 預演；進度報告＋小成品 11/22 與 SHA 一起交。
+- **11/9 自習週**（不上課、助教不到場）：各組自己做 Part A 模組 m1–m9，各自 commit，11/11（三）18:00 前 push；team repo 的 Actions 自動檢查。
+- **11/16 工作坊 ②**（電腦教室、點名、助教現場主持）：第 4–6 步，16:00 前 step1–6 全部 push；第三節 mulaw_system 開工。
 - **11/22（日）18:00 截止；11/23 評測**：mock 用老師的 WAV 跑 `run_mock_tests.py` 兩個方向、live 用熱點；評測前老師先回答兩次討論會收集的問題。
 - 工作坊的指令與簽核表在 [lab.md](lab.md)；先把 lab.md 的 2.1「聽掉封包」跑一次。
 

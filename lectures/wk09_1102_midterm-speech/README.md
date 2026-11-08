@@ -7,7 +7,7 @@
 > **跟著打指令請開 [commands.md](commands.md)**。
 > 期中考範例：[midterm_sample.md](midterm_sample.md)／[詳解](midterm_sample_solutions.md)。
 >
-> **Team 2 的同學注意**：10/19 沒講到的 Team 2 核心（為什麼 UDP、封包、jitter buffer、PLC（packet loss concealment，封包遺失補償））整理在 [team2_core.md](team2_core.md)，11/9 工作坊前讀完；11/9、11/16 全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 一步一步做。語音壓縮（μ-law、DPCM）在 [audio_coding.md](audio_coding.md)。
+> **Team 2 的同學注意**：10/19 沒講到的 Team 2 核心（為什麼 UDP、封包、jitter buffer、PLC（packet loss concealment，封包遺失補償））整理在 [team2_core.md](team2_core.md)，11/9 工作坊前讀完；11/9 自習（m1–m9 11/11 前 push）、11/16 工作坊跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 一步一步做。語音壓縮（μ-law、DPCM）在 [audio_coding.md](audio_coding.md)。
 
 第二、三節用的是授課教師 2023 年的 Chapter 2、Chapter 3 講義**原文**（[ch2_2023.md](ch2_2023.md)、[ch3_2023.md](ch3_2023.md)，含圖與上課影片連結），內容比兩節課能講的多：課堂挑重點，其餘課後讀。本課程的範例程式、公式整理與實測數字另放在 [supplement.md](supplement.md)。
 
@@ -50,7 +50,7 @@
 
 ### 收尾（5 分鐘）
 
-- Team 2：11/9 工作坊前讀 [team2_core.md](team2_core.md)；11/9、11/16 全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做（每步 push）；11/22 截止、11/23 評測；**11/9 規格定版**：tutorial 六步（m1–m9、step1–6 全部 push ＝ 40 分）做出能通話的 raw PCM voicelink，作業是在 `mulaw_system/`、`adpcm_huffman_system/` 加 μ-law、ADPCM、Huffman（demo 30、程式碼審查 30）。
+- Team 2：11/9 工作坊前讀 [team2_core.md](team2_core.md)；11/9 自習（m1–m9 11/11 前 push）、11/16 工作坊跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做（每步 push）；11/22 截止、11/23 評測；**11/9 規格定版**：tutorial 六步（m1–m9、step1–6 全部 push ＝ 40 分）做出能通話的 raw PCM voicelink，作業是在 `mulaw_system/`、`adpcm_huffman_system/` 加 μ-law、ADPCM、Huffman（demo 30、程式碼審查 30）。
 - 語音壓縮（μ-law、DPCM，Team 2 功能 4）：[audio_coding.md](audio_coding.md)，11/16 前看完。
 
 ---

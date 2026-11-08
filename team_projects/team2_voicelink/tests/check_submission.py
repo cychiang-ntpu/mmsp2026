@@ -104,6 +104,8 @@ def check_step(root, name, only, wav, port, buffer_ms):
     if not ok or not only or not wav:
         return ok, why
     exe = os.path.join(folder, name + EXE)
+    if name == "step3_buffer":
+        buffer_ms = min(buffer_ms, 60)             # 第 3 步的環狀陣列只有 16 格（cap = 4 × buffer frames）：--buffer 最多 80
     rc, out = run([PY, os.path.join(root, "tests", "run_mock_tests.py"), f"{exe} send", f"{exe} recv", wav,
                    "--only", only, "--port", str(port), "--buffer", str(buffer_ms)], timeout=900)
     summ = next((l for l in out.splitlines() if l.startswith("summary:")), "（沒有 summary）")

@@ -36,7 +36,7 @@ mmsp2026-team2-gXX/
 
 | 日期 | 做什麼 | 繳交 | 分 | 講義 |
 |---|---|---|---|---|
-| **11/9（一）** 工作坊 ①（助教主持） | Part A 模組 m1–m9 各「跑一次、改一處」；第 1–3 步 | 每個模組、每一步各自一個資料夾 push；**m1–m9 全部在 11/11（三）18:00 前** | 繳交 40 的一部分 | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
+| **11/9（一）** 不上課：自習週 | 建 team repo（照這個資料夾的結構）；Part A 模組 m1–m9 各「跑一次、改一處」 | 每個模組、每一步各自一個資料夾 push；**m1–m9 全部在 11/11（三）18:00 前** | 繳交 40 的一部分 | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
 | **11/16（一）** 工作坊 ②（助教主持） | 第 4–6 步（做完＝能通話）；兩組互測；`mulaw_system` 開工 | **step1–6 全部在 11/16（一）16:00 下課前 push**（含 step6_live） | 繳交 40 的其餘部分 | [wk11](../../lectures/wk11_1116_team2-progress2/README.md) |
 | **11/22（日）18:00** | `mulaw_system` 過測試 8；`adpcm_huffman_system` 做 ADPCM（測試 9）或／和 Huffman（測試 10）；投影片含報告三題 | 登錄 repo URL＋commit SHA | — | — |
 | **11/23（一）** 評測 | D 兩台 live 3 分鐘、助教當場跑測試、P 報告 4 分鐘＋問答 2 分鐘 | 帶兩台筆電、耳機、熱點 | demo 30；之後一週審查 30 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
@@ -380,7 +380,7 @@ P 報告 4 分鐘（codec 比較表、三題）＋問答 2 分鐘不另計分，
 |---|---|---|
 | 1–2 | 10/19–11/1 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；**兩台電腦 UDP 互通** |
 | 3 | 11/2–11/8 | 11/2 第三節老師帶著做 [tutorial](tutorial/) 第 1–3 步（header、jitter buffer、repeat PLC） |
-| 4 | 11/9–11/15 | 11/9 工作坊 ①：Part A 模組＋第 1–3 步，每步 push；**m1–m9 在 11/11 18:00 前全部 push**；回家做到第 5 步 |
+| 4 | 11/9–11/15 | 11/9 不上課（自習週）：建 team repo、Part A 模組 m1–m9 各自 commit，**11/11（三）18:00 前全部 push**（Actions 自動檢查）；有餘力先做第 1–3 步 |
 | 5 | 11/16–11/22 | 11/16 工作坊 ②：第 4–6 步，**16:00 下課前 step1–6 全部 push（繳交 40 分到手）**；`mulaw_system` 開工（m8 → 表加一列 → 測試 8）；回家做 `adpcm_huffman_system`（m9 → ADPCM 測試 9；Huffman 測試 10）、組間互測；投影片、報告三題、進度報告；**11/22 18:00 前登錄 SHA** |
 
 ## tutorial/：手把手六步（從這裡開始）＋兩個系統資料夾（你們寫）
