@@ -46,8 +46,8 @@
 | **μ-law** | G.711 的對數量化：16-bit → 8-bit，小聲時階距細、大聲時粗 | 讓 SQNR 幾乎不隨音量變；一個查表就能做 |
 | **ADPCM**（adaptive differential pulse code modulation，自適應差分脈衝編碼調變） | 只送「和預測值的差」並把量化階距隨訊號自動調整（4 bits／sample） | 語音相鄰 sample 很像，殘差小很多（prediction gain） |
 | **SQNR**（signal-to-quantization-noise ratio，訊號對量化雜訊比） | 訊號功率 ÷ 量化（或編解碼）誤差功率，dB | 評測 μ-law 用它而不是逐 byte 相同 |
-| **STATS** | 程式結束時印的一行統計，欄位固定 | 評測用正規表示式抓，報告的圖從這裡來 |
-| **BYE／HELLO** | 送端結束時送的封包（BYE）；Team 3 才有 HELLO | UDP 沒有連線，所以「結束」要自己告訴對方；掉了就靠逾時 |
+| **STATS**（statistics 的縮寫，統計行） | 程式結束時印的一行統計，欄位固定 | 評測用正規表示式抓，報告的圖從這裡來 |
+| **BYE／HELLO**（不是縮寫，就是「再見」／「哈囉」：告訴對方「我結束了」／「我開始了」的控制封包） | 送端結束時送的封包（BYE）；Team 3 才有 HELLO | UDP 沒有連線，所以「結束」要自己告訴對方；掉了就靠逾時 |
 
 ## 為什麼不用 TCP
 
