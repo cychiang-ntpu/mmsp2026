@@ -13,6 +13,13 @@
 程式：[`m8_mulaw.c`](m8_mulaw.c)（每一行都有註解，先讀檔頭的「用法／看到什麼／試著改」）。
 
 
+### 這個模組的目的
+
+- **做什麼**：把一個 WAV 用 μ-law 壓成 8 bits／sample 再解回來，算 bytes 比例與 SQNR。
+- **為什麼要先做它**：功能 4 的第一個 codec（C1，必做）。先在檔案上把編碼表、解碼表、SQNR 做對，step6 只是把它套進 send（編）與 recv（解）；接下來自己寫 ADPCM 時，量 SQNR 的方法也是這一支。
+- **在 Part B 的哪裡用到**：step6 的 `mulaw_init`／`mulaw_encode`／`mulaw_decode`。
+- **做完要能回答**：bytes 為什麼剛好一半？SQNR 37 dB 是什麼意思？為什麼小聲的地方 μ-law 比線性 8-bit 清楚？
+
 **看什麼**：第 9 週 2.2 的公式照抄，建兩張表（`enc[65536]`、`dec[256]`），之後每個 sample 查一次表。bytes 剛好一半；SQNR ≈ 37 dB（規格 ≥ 30）。
 
 | macOS / Linux | Windows PowerShell |

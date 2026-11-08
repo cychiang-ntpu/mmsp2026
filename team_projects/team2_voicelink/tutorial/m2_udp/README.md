@@ -13,6 +13,13 @@
 程式：[`m2_udp_send.c`](m2_udp_send.c)、[`m2_udp_recv.c`](m2_udp_recv.c)（每一行都有註解，先讀檔頭的「用法／看到什麼／試著改」）。
 
 
+### 這個模組的目的
+
+- **做什麼**：兩個程式用 UDP 互寄一行字：一次 `sendto` 就是一個 datagram，對方一次 `recvfrom` 拿到整張。
+- **為什麼要先做它**：Team 2 不用 TCP、改用 UDP，整個作業的「掉包、亂序、重複」都從這裡來。先親手看到「一張明信片就是一包、不會半行、不會黏行、寄丟了送端也不知道」，step1 的 send／recv 迴圈就只是把這兩支程式的「一行字」換成「640 bytes 的聲音」。
+- **在 Part B 的哪裡用到**：step1 的 `cmd_send`／`cmd_recv`；`udp_recv` 的逾時參數在 step3 變成播放時鐘。
+- **做完要能回答**：UDP 和 TCP 差在哪三件事？送到沒人在聽的位址，`udp_send` 會報錯嗎？
+
 **看什麼**：UDP 沒有 connect／accept。送端 `udp_open(&u, NULL, 0)`（隨便一個 port）＋ `udp_set_peer`（記下寄給誰）＋ `udp_send`；
 收端 `udp_open(&u, NULL, port)` ＋ `udp_recv`（有逾時）。打一行寄一張明信片，對面一次收一整張——不會半行、不會黏行（TCP 才會）。
 

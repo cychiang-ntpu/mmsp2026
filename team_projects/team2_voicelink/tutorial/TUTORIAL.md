@@ -53,6 +53,21 @@ Windows 的 PowerShell 沒有 `sh`，`check` 請在 Git Bash 裡跑；單一步�
 
 每個模組都是獨立的一支程式，只用 wrapper 的標頭，50–80 行，註解比程式多。建議順序 m1 → m8，每個 10 分鐘：跑一次、看輸出、改一個地方再跑一次。
 
+為什麼要先拆成模組：整支 voicelink 有八個互不相干的零件（讀 WAV、寄 UDP、準時醒來、錄音、放音、打包 header、環狀 buffer、μ-law），
+一次全部看會糊掉；每個零件單獨拿出來跑、改一處、看結果，10 分鐘就能確定「這一塊我懂了」，Part B 組裝時才知道哪一行是哪個零件。
+
+| 模組 | 為什麼要有它 | 在 Part B 變成 |
+|---|---|---|
+| m1 | 聲音全部是 16 kHz 單聲道 16-bit 的 WAV，不會讀寫就什麼都做不了 | step1 的讀檔／寫檔 |
+| m2 | 整個作業的「掉包、亂序、重複」都來自 UDP；先親手看到一包就是一包、寄丟了送端不知道 | step1 的 send／recv 迴圈 |
+| m3 | 送端每 20 ms 一包、收端每 20 ms 播一包，都靠「絕對時刻」的時鐘；用「睡 20 ms」會越來越慢 | step1 的節奏、step3 的播放時鐘 |
+| m4、m5 | live 通話的麥克風與喇叭是 callback 驅動的，先在沒有網路時看懂它什麼時候被叫、一次給多少 | step7 的 `audio_cb` |
+| m6 | 每包前面 12 bytes 的 header 要和 python_ref 互通，位元組順序一個都不能錯，先用 hex 確認 | step2 的 `pack_header`／`parse_header` |
+| m7 | Team 2 的心臟：亂序放回、重複丟掉、沒到就補、拍子一定前進——先用 8 個數字想清楚 | step3 的 `jb_put`／`jb_tick` |
+| m8 | 功能 4 的第一個 codec；先在檔案上把表與 SQNR 做對，之後 ADPCM 也用同一套量法 | step6 的 μ-law 編解碼 |
+
+每個模組資料夾的 README 開頭都有「這個模組的目的」四點：做什麼、為什麼要先做它、在 Part B 哪裡用到、做完要能回答什麼。
+
 ## m1_wav.c：讀 WAV、印格式、寫出前 1 秒
 
 **看什麼**：`wav.h` 的 `wav_read(path, &w)` 把整個檔案讀進 `wav_t`（一個 struct：取樣率、聲道、bits、`pcm` 指標、sample 數）；

@@ -13,6 +13,13 @@
 程式：[`m5_play_wav.c`](m5_play_wav.c)（每一行都有註解，先讀檔頭的「用法／看到什麼／試著改」）。
 這支程式用到麥克風／喇叭，`make` 會先把 `../../baseline/wrapper/audio.c`（miniaudio）編成 `../audio.o`，第一次要 10–20 秒。
 
+### 這個模組的目的
+
+- **做什麼**：透過 callback 把一個 WAV 餵給喇叭：每次喇叭要 n 個 sample，你從檔案的下一段複製過去。
+- **為什麼要先做它**：live 模式的喇叭端。把「從檔案拿下一段」換成「向 jitter buffer 要一個 frame、沒有就 PLC」就是 step7 的播放。這裡先體會：來不及餵就會「欠載」（喀喀聲），所以 recv 永遠不能等。
+- **在 Part B 的哪裡用到**：step7 的 `audio_cb` 播放那一半。
+- **做完要能回答**：檔案播完為什麼還要繼續填 0？餵一半會聽到什麼？
+
 **看什麼**：喇叭每次 callback 跟你要 `n` 個 sample，你從檔案的下一段複製過去；檔案播完就填 0。
 live 模式的喇叭就是這樣餵的——只是「下一段」改成向 jitter buffer 要一個 frame、沒有就 PLC。
 
