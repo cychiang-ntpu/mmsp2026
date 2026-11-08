@@ -177,6 +177,13 @@ static const codec_t *codec_by_type(uint8_t type) {
     return NULL;
 }
 
+/* --codec 給了表裡沒有的名字：把表裡有的名字列出來，順便提醒該去哪裡加（學生最常撞到的錯誤） */
+static void codec_unknown(const char *name) {
+    fprintf(stderr, "錯誤: 不認識的 codec「%s」。CODECS 表裡目前有：", name);
+    for (size_t i = 0; i < N_CODECS; i++) fprintf(stderr, "%s%s", i ? "、" : "", CODECS[i].name);
+    fprintf(stderr, "\n      要加新的 codec：在 voicelink.c 搜尋「★」，照 README.md 的步驟在 CODECS 表加一列並寫出它的 encode／decode。\n");
+}
+
 static void pack_header(uint8_t *p, uint8_t type, uint16_t seq, uint32_t ts, uint32_t ssrc) {
     p[0] = MAGIC;
     p[1] = type;
@@ -782,8 +789,11 @@ int main(int argc, char **argv) {
         if (!ok) fprintf(stderr, "錯誤: port 不合法：%s\n", argv[3]);
         for (int i = 5; ok && i < argc; i++) {
             if (strcmp(argv[i], "--burst") == 0) burst = 1;
-            else if (strcmp(argv[i], "--codec") == 0 && i + 1 < argc && codec_by_name(argv[i + 1]) != NULL)
-                codec = codec_by_name(argv[++i]);
+            else if (strcmp(argv[i], "--codec") == 0 && i + 1 < argc) {
+                codec = codec_by_name(argv[i + 1]);
+                if (!codec) { codec_unknown(argv[i + 1]); ok = 0; }
+                i++;
+            }
             else if (strcmp(argv[i], "--seq0") == 0 && i + 1 < argc && parse_int(argv[i + 1]) >= 0)
                 seq0 = parse_int(argv[++i]) & 0xFFFF;
             else { fprintf(stderr, "錯誤: 不認識的選項或值不對：%s\n", argv[i]); ok = 0; }
@@ -820,7 +830,10 @@ int main(int argc, char **argv) {
             if (strcmp(name, "--buffer") == 0 && val && parse_int(val) > 0)          buffer_ms = parse_int(val);
             else if (strcmp(name, "--plc") == 0 && val && strcmp(val, "zero") == 0)   plc_zero = 1;
             else if (strcmp(name, "--plc") == 0 && val && strcmp(val, "repeat") == 0) plc_zero = 0;
-            else if (strcmp(name, "--codec") == 0 && val && codec_by_name(val) != NULL) codec = codec_by_name(val);
+            else if (strcmp(name, "--codec") == 0 && val) {
+                codec = codec_by_name(val);
+                if (!codec) { codec_unknown(val); ok = 0; }
+            }
             else { fprintf(stderr, "錯誤: 不認識的選項或值不對：%s\n", name); ok = 0; }
         }
         rc = ok ? cmd_call(my_port, argv[3], peer_port, buffer_ms, plc_zero, codec) : 2;

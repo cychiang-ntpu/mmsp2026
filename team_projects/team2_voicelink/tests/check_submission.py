@@ -127,6 +127,8 @@ def check_system(root, name, codecs, wav, port, buffer_ms):
     if rc != 0:
         return False, why + "；voicelink devices 結束碼 %d" % rc
     text = open(src, encoding="utf-8", errors="replace").read()
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)             # 先拿掉註解：框架的 ★ 提示裡也寫著 { "mulaw", … }
+    text = re.sub(r"//[^\n]*", "", text)
     notes = []
     all_ok = True
     for codec, test in codecs.items():

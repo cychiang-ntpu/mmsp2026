@@ -9,6 +9,9 @@
 """
 import struct
 import sys
+for _s in (sys.stdout, sys.stderr):                       # Windows 主控台預設不是 UTF-8，中文會變亂碼
+    if hasattr(_s, "reconfigure"):
+        _s.reconfigure(encoding="utf-8", errors="replace")
 
 
 def read_pcm(path):
