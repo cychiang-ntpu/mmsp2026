@@ -184,23 +184,47 @@ magic type
 
 ### 量測輸出（STATS）
 
-程式結束時印**一行**到 stderr（評測用正規表示式抓，欄位順序與名稱不可改）：
+程式結束時印**一行**到 stderr（評測用正規表示式抓，**欄位順序與名稱不可改**；基本層只看粗體的四個數，其餘可以印 0）。
+
+**recv 印的**：
 
 ```
 STATS role=recv buffer_ms=60 plc=repeat codec=mulaw frames_out=1678 received=1601 lost=77 late=3 dup=0 reordered=12 overflow=0 concealed=80 avg_delay_ms=58.3 max_delay_ms=112.0
 ```
 
-| 欄位 | 意義 |
-|---|---|
-| `codec` | pcm／mulaw／adpcm（收端依封包 type；一個都沒收到時印 pcm）|
-| `frames_out` | 交給喇叭／寫進 WAV 的 frame 數（含補償的）|
-| `received` | 收到的合法 AUDIO 封包數（含重複、遲到）|
-| `lost` | 從 seq 判斷沒收到的包數（亂序後仍沒到的才算）|
-| `late`、`dup`、`reordered`、`overflow` | 如上節 |
-| `concealed` | PLC 補的 frame 數（= 播放時 buffer 沒有那個 seq 的次數）|
-| `avg_delay_ms`、`max_delay_ms` | 封包「到達」到「被播放」的時間差的平均與最大值（只算真的播出去的包）|
+| 欄位 | 意義 | 上面例子的意思 |
+|---|---|---|
+| `role` | 這一行是誰印的：`recv` 或 `send` | 收端 |
+| `buffer_ms` | 執行時用的 `--buffer` | 先存 60 ms（3 包）再播 |
+| `plc` | 執行時用的 `--plc`：`repeat` 或 `zero` | 掉包用重複上一包補 |
+| `codec` | 收到的封包是哪種編碼（看 type）：`pcm`／`mulaw`／`adpcm`；一個都沒收到時印 `pcm` | 對方用 μ-law 送 |
+| **`frames_out`** | 交給喇叭／寫進 WAV 的 frame 總數，含補償的；= 播出去的真封包 + `concealed` | 共播了 1678 個 20 ms（33.6 秒） |
+| **`received`** | 收到的合法 AUDIO 封包數（重複、遲到的也算在內；壞封包不算） | 收到 1601 包 |
+| **`lost`** | 從 seq 判斷「應該有但一直沒到」的包數（亂序後來到的不算） | 77 包在網路上不見了 |
+| `late` | 到了但它的拍子已經過了、被丟掉的包數 | 3 包來不及 |
+| `dup` | 同一個 seq 收到第二次、被丟掉的包數 | 沒有重複 |
+| `reordered` | seq 比較小卻比較晚到、但還來得及被排回去的包數（不算遺失） | 12 包亂序但救回來了 |
+| `overflow` | buffer 滿了、丟掉最舊那包的次數 | 沒發生 |
+| **`concealed`** | PLC 補的 frame 數 = 播放時鐘到了但 buffer 裡沒有那個 seq 的次數；正常情況 ≈ `lost` + `late` | 補了 80 個（77 掉 + 3 遲到） |
+| `avg_delay_ms` | 封包「到達」到「被播放」的時間差的平均（只算真的播出去的包）；大約等於 `buffer_ms` | 平均在 buffer 裡等 58 ms |
+| `max_delay_ms` | 同上的最大值 | 最久的一包等了 112 ms |
 
-`send` 也印一行：`STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20`（`bytes` 是送上線的 UDP payload 總和，mulaw 時約一半）。
+數字之間要對得起來（評測會檢查）：`frames_out = (received − late − dup − overflow) + concealed`。
+
+**send 印的**：
+
+```
+STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
+```
+
+| 欄位 | 意義 | 上面例子的意思 |
+|---|---|---|
+| `role` | `send` | 送端 |
+| `codec` | 用的 `--codec` | 沒壓縮 |
+| `frames` | 送了幾個 20 ms frame（= 幾個 AUDIO 封包） | 1678 包 |
+| `bytes` | 送上線的 UDP payload 總和（header + 聲音資料，不含 BYE）；pcm 是 652 × frames，mulaw 約一半 | 1 094 056 bytes |
+| `duration_ms` | 從第一包到最後一包花的時間；照 20 ms 送應該 ≈ frames × 20 | 33.56 秒 |
+| `pace` | 每包間隔多少 ms；正常 20，`--burst` 時 0 | 照時間送 |
 
 ## 遺失補償（PLC）的要求
 
