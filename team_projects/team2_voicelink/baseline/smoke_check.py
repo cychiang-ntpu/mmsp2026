@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""smoke_check.py  —  make smoke 用：確認 voicelink_raw 的 send → recv 沒有改到任何一個 byte。
+"""smoke_check.py  —  比對兩個 WAV 的 PCM 是否逐 byte 相同（tutorial 第 1 步：確認 send → recv 沒有改到任何一個 byte）。
 
     python smoke_check.py <原始.wav> <收到的.wav>
 

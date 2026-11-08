@@ -1,6 +1,6 @@
 # Team 2 VoiceLink 手把手教學：先拆成九個模組看懂，再七步組裝成官方起點（step7）＋μ-law；m9 是 ADPCM 的零件
 
-> **11/8 起**：第 7 步 `step7_live.c` 就是作業的**官方起點**（起點層 40 分）。這份教學的目的是讓你們**讀懂**起點的每一行，因為接下來要在它上面加 ADPCM（必做）與 Huffman（加分）——見規格「驗收與評分」。
+> **11/9 起**：九個模組與七步**每一個都 push 到 team repo 就是 40 分**（各自一個資料夾、至少一個 commit、`make` 零警告；規格「驗收與評分」①）。第 7 步 `step7_live.c` 就是作業的**官方起點**：讀懂它的每一行，因為接下來要在它上面加 ADPCM（必做）與 Huffman（加分），那是 11/23 demo（30）與程式碼審查（30）看的東西。
 
 這份教學假設你修過一學期的 C，看過第 2 週的 `chat.c`（所以知道 socket 是什麼、`sendto`／`recvfrom` 長什麼樣），
 其他都從零講。分成兩部分：
@@ -12,13 +12,13 @@
 Part B 的七步：
 
 ```
-step1_raw      640 bytes 一包、沒有 header                       ← 和 baseline/voicelink_raw 一樣笨
+step1_raw      640 bytes 一包、沒有 header                       ← 最笨的版本：聽聽看掉包有多難聽
 step2_header   + 12 bytes header（magic/type/seq/ts/ssrc）+ BYE   ← 看得到 seq 跳號了
-step3_buffer   + jitter buffer + 播放時鐘 + PLC（packet loss concealment，封包遺失補償） repeat + STATS    ← 過測試 1,2,5（起點層的核心）
+step3_buffer   + jitter buffer + 播放時鐘 + PLC（packet loss concealment，封包遺失補償） repeat + STATS    ← 過測試 1,2,5（jitter buffer 是整支程式的核心）
 step4_counters + late/dup/reordered/overflow/延遲 + --plc + --burst ← 過測試 1,2,3,5,7
-step5_robust   + 壞封包、ssrc 換了、seq 繞回、--bind、結束碼        ← 過測試 1–7（起點層 S1–S6）
-step6_mulaw    + --codec mulaw（功能 4）                           ← 過測試 8（壓縮層 C1 μ-law）
-step7_live     + call／devices（麥克風 ↔ 喇叭，執行緒）             ← 起點層 S0；**這就是官方起點**
+step5_robust   + 壞封包、ssrc 換了、seq 繞回、--bind、結束碼        ← 過測試 1–7
+step6_mulaw    + --codec mulaw（功能 4）                           ← 過測試 8（μ-law）
+step7_live     + call／devices（麥克風 ↔ 喇叭，執行緒）             ← **這就是官方起點**
 ```
 
 每一步都可以單獨編譯、單獨執行、單獨測；想知道「這一步到底改了什麼」就 `diff step3_buffer/step3_buffer.c step4_counters/step4_counters.c`。
@@ -64,8 +64,8 @@ Windows 的 PowerShell 沒有 `sh`，`check` 請在 Git Bash 裡跑；單一步�
 | m4、m5 | live 通話的麥克風與喇叭是 callback 驅動的，先在沒有網路時看懂它什麼時候被叫、一次給多少 | step7 的 `audio_cb` |
 | m6 | 每包前面 12 bytes 的 header 要和 python_ref 互通，位元組順序一個都不能錯，先用 hex 確認 | step2 的 `pack_header`／`parse_header` |
 | m7 | Team 2 的心臟：亂序放回、重複丟掉、沒到就補、拍子一定前進——先用 8 個數字想清楚 | step3 的 `jb_put`／`jb_tick` |
-| m8 | 功能 4 的第一個 codec（C1）；先在檔案上把表與 SQNR 做對 | step6 的 μ-law 編解碼 |
-| m9 | 功能 4 的第二個 codec（C2）：只送「差」、刻度自己調；`--trace` 看編碼器每一步在想什麼 | **沒有現成的 step**：你們要自己加進 step7 的 `--codec adpcm` |
+| m8 | 功能 4 的第一個 codec；先在檔案上把表與 SQNR 做對 | step6 的 μ-law 編解碼 |
+| m9 | 功能 4 的第二個 codec：只送「差」、刻度自己調；`--trace` 看編碼器每一步在想什麼 | **沒有現成的 step**：你們要自己加進 step7 的 `--codec adpcm` |
 
 每個模組資料夾的 README 開頭都有「這個模組的目的」四點：做什麼、為什麼要先做它、在 Part B 哪裡用到、做完要能回答什麼。
 
@@ -146,7 +146,7 @@ live 模式的喇叭就是這樣餵的——只是「下一段」改成向 jitte
 
 → 完整說明、指令、程式碼導讀與「改一個地方」在 **[step2_header/README.md](step2_header/README.md)**（程式：`step2_header/step2_header.c`）。
 
-## 第 3 步｜step3_buffer.c：jitter buffer、播放時鐘、PLC——起點層的核心
+## 第 3 步｜step3_buffer.c：jitter buffer、播放時鐘、PLC——整支程式的核心
 
 **目標**：收端先存 `--buffer` ms 再播，之後每 20 ms 一拍向 buffer 要「下一個 seq」，有就播、沒有就補，拍子一定前進；過測試 1、2、5。
 
@@ -187,8 +187,8 @@ live 模式的喇叭就是這樣餵的——只是「下一段」改成向 jitte
 
 | 步驟 | 要過的測試（`--only`） | 規格的驗收項目 |
 |---|---|---|
-| step3 | 1,2,5 | 起點層 S1、S2、S4 |
-| step4 | 1,2,3,5,7 | 起點層 S3、S5 |
-| step5 | 1,2,3,4,5,6,7 | 起點層 S6（dup、壞封包） |
-| step6 | 8 | 壓縮層 C1 μ-law |
-| step7 | 現場 | 起點層 S0 live；**官方起點**。接下來：加 `--codec adpcm`（C2，測試 9）、`huff-*`（X1，測試 10） |
+| step3 | 1,2,5 | 乾淨、掉包、送端被殺 |
+| step4 | 1,2,3,5,7 | ＋亂序、完整 STATS |
+| step5 | 1,2,3,4,5,6,7 | ＋重複、壞封包 |
+| step6 | 8 | μ-law |
+| step7 | 現場 | live 通話；**官方起點**。接下來：加 `--codec adpcm`（測試 9）、`huff-*`（測試 10）——demo 與程式碼審查看的就是這些 |

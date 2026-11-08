@@ -6,7 +6,7 @@
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
 - 繳交：登錄 repo URL＋完整 commit SHA
 - 本輪四人組角色：**P＋D＋D＋V**（三人組 P＋D＋V）；分組名單於 10/19 公告
-- **11/8 改版（取代 11/1 的三層）**：[tutorial/](tutorial/) 第 7 步 [`step7_live/step7_live.c`](tutorial/step7_live/step7_live.c) 是**官方給的起點**（能傳 raw PCM、有 header／jitter buffer／PLC／STATS／live 通話）。這一輪真正的作業是**在它上面加語音壓縮**：μ-law（必做）、ADPCM（必做）、Huffman（加分）。評分見「驗收與評分」。
+- **11/9 定版**：[tutorial/](tutorial/) 第 7 步 [`step7_live/step7_live.c`](tutorial/step7_live/step7_live.c) 是**官方給的起點**（能傳 raw PCM、有 header／jitter buffer／PLC／STATS／live 通話）。這一輪真正的作業是**在它上面加語音壓縮**：μ-law（必做）、ADPCM（必做）、Huffman（加分）。評分 **40（tutorial 繳交）＋30（11/23 demo）＋30（程式碼審查）**，見「驗收與評分」。
 
 ## 從這裡開始（學生進入點，11/8 起）
 
@@ -14,20 +14,20 @@
 
 ### 這一輪要做什麼（30 秒版）
 
-1. 跟著 [tutorial/TUTORIAL.md](tutorial/TUTORIAL.md) 做完九個模組與七步（每個各自一個資料夾、有自己的 README）——第 7 步 `step7_live/step7_live.c` 是**官方起點**，複製進 team repo 就拿到起點層 40 分。
-2. 在起點上加三種語音壓縮：**μ-law**（必做 15，tutorial 第 6 步有手把手）、**ADPCM**（必做 15，要自己寫）、**Huffman**（加分 10）。
-3. 11/22（日）18:00 前登錄 SHA；11/23 評測＋口試（個人 20）。
+1. 跟著 [tutorial/TUTORIAL.md](tutorial/TUTORIAL.md) 做完九個模組與七步（每個各自一個資料夾、有自己的 README），**每一個都 add／commit／push 到 team repo**——這就是 40 分。第 7 步 `step7_live/step7_live.c` 是**官方起點**。
+2. 在起點上加語音壓縮：**μ-law**（tutorial 第 6 步有手把手）、**ADPCM**（零件 m9 有演算法，接進封包是你們的工作）、**Huffman**（加分）。
+3. 11/22（日）18:00 前登錄 SHA；**11/23 demo 30 分**（live 通話、助教跑測試、報告與問答）；之後一週老師與助教看 repo，**程式碼實質審查 30 分**。
 
 ### 四個日期各要做到什麼
 
 | 日期 | 做什麼 | 繳交 | 分 | 講義 |
 |---|---|---|---|---|
-| **11/9（一）** 工作坊 ①（助教主持） | Part A 模組 m1–m8 各「跑一次、改一處」；第 1–3 步 | 每支模組的兩次輸出貼 Slack；每步一個 commit＋過關證據 | 個人 8＋組 6 | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
-| **11/16（一）** 工作坊 ②（助教主持） | 第 4–7 步（做完＝起點）；兩組互測；「改一處」小題；ADPCM 開工 | 每步 commit＋證據；互測的對方 STATS；小題 push | 組 16 | [wk11](../../lectures/wk11_1116_team2-progress2/README.md) |
+| **11/9（一）** 工作坊 ①（助教主持） | Part A 模組 m1–m9 各「跑一次、改一處」；第 1–3 步 | 每個模組、每一步各自一個資料夾 push 到 team repo（11/15 18:00 前） | 繳交 40 的前 12 項（m1–m9、step1–3） | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
+| **11/16（一）** 工作坊 ②（助教主持） | 第 4–7 步（做完＝起點）；兩組互測；ADPCM 開工（先做 m9） | step4–7 push（11/22 18:00 前） | 繳交 40 的後 4 項 | [wk11](../../lectures/wk11_1116_team2-progress2/README.md) |
 | **11/22（日）18:00** | ADPCM 做到測試 9 PASS；有餘力做 Huffman（測試 10）；投影片含報告三題 | 登錄 repo URL＋commit SHA | — | — |
-| **11/23（一）** 評測 | 助教跑測試 1–10；P 報告 4 分鐘、D 兩台 live 3 分鐘、問答 2 分鐘；第三節個人口試 | 帶兩台筆電、耳機、熱點 | 起點 40＋壓縮 30＋加分 10＋口試 20 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
+| **11/23（一）** 評測 | D 兩台 live 3 分鐘、助教當場跑測試 1–9、P 報告 4 分鐘＋問答 2 分鐘 | 帶兩台筆電、耳機、熱點 | demo 30；之後一週程式碼審查 30 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
 
-滿分 100（含加分 10）；各項怎麼算在「[驗收與評分](#驗收與評分118-改版)」。口試未達 10/20 可於 11/30 補驗一次。
+滿分 100（Huffman 加分最多 +5，總分上限 100）；各項怎麼算在「[驗收與評分](#驗收與評分119-定版403030)」。
 
 ### 五個最常用的指令（Windows PowerShell；macOS／Linux 把 `mingw32-make` 換成 `make`、`.\x.exe` 換成 `./x`）
 
@@ -127,7 +127,7 @@ Team 1 用 TCP：掉一個封包，TCP 會重傳，後面的資料全部排隊�
 
 - 每次執行都要印 STATS（格式固定，見下）。報告要分析：**buffer 大小 vs 補償次數 vs 延遲**（見「量測與報告」）。
 
-### 功能 4｜語音壓縮：μ-law（必做）、ADPCM（必做）、Huffman（加分）（11/8 改版：這一輪的主題）
+### 功能 4｜語音壓縮：μ-law（必做）、ADPCM（必做）、Huffman（加分）（這一輪的主題）
 
 - `--codec mulaw`：送端把每個 16-bit sample 用 **G.711 μ-law** 壓成 8 bits（一包 **320 bytes**，位元率 128 kb/s → 一半），收端解回 16-bit 再播。第 9 週 2.2 講過的公式；用查表或分段折線都可以，但**編碼端與解碼端要用同一條曲線**。
 - 收到的 WAV 不會逐 byte 相同（有失真），驗收改看 **SQNR**：用老師的語音檔，mock 模式沒有搗蛋時，輸出對原檔的 SQNR ≥ 30 dB（第 9 週 `mulaw_demo.py` 實測約 36–38 dB）。
@@ -297,42 +297,40 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 4. live 模式從講話到對方聽到大概多久（自己想一個量法，例如拍手、或兩台電腦對著同一支錄音）？延遲由哪些部分組成？
 5. **codec 比較表（必交）**：pcm／mulaw／adpcm（有做的加 huff-mulaw、huff-adpcm）各一列，欄位是每包 bytes、位元率 kb/s、SQNR dB、掉包 5% 時聽起來如何（一句話）。用老師的語音檔量。
 
-## 驗收與評分（11/8 改版）
+## 驗收與評分（11/9 定版：40＋30＋30）
 
-評測用的 WAV 由老師當天給（16 kHz、單聲道、30 秒左右）。mock 測試用 `tests/run_mock_tests.py`，對手端是 `python_ref/voicelink.py`（你們的 send 對它的 recv、它的 send 對你們的 recv 各跑一次；測試 10 例外，是你們對你們）。滿分 100（含加分 10）。
+評測用的 WAV 由老師當天給（16 kHz、單聲道、30 秒左右）。mock 測試用 `tests/run_mock_tests.py`，對手端是 `python_ref/voicelink.py`（你們的 send 對它的 recv、它的 send 對你們的 recv 各跑一次；測試 10 例外，是你們對你們）。滿分 100；Huffman 加分最多 +5，總分上限 100。
 
-### 起點層（40 分）：step7 原樣就過
+### ① tutorial 繳交（40 分，組）
 
-| # | 項目 | 怎麼測 | 分 |
-|---|---|---|---|
-| S0 | 兩台電腦（不是 127.0.0.1）`call` 通話 30 秒聽得懂（單向也算） | 現場 | 10 |
-| S1 | 沒有搗蛋：輸出 WAV 與輸入**逐 byte 相同** | 測試 1 | 5 |
-| S2 | `--loss 0.05`：frame 數相同、`concealed ≈ lost`、正常結束 | 測試 2 | 5 |
-| S3 | 亂序＋抖動、`--buffer 100`：逐 byte 相同 | 測試 3 | 5 |
-| S4 | 送端中途被殺：recv 自己結束、WAV 完整、STATS 有印 | 測試 5 | 5 |
-| S5 | STATS 欄位全對：`frames_out = (received − late − dup − overflow) + concealed` | 測試 7 | 5 |
-| S6 | 重複包丟掉、壞封包不當掉 | 測試 4、6 | 5 |
+m1–m9 與 step1–step7 共 **16 項，每項 2.5 分**。每一項要在 team repo 裡：
 
-這一層的目的只有一件事：**確認你們把 tutorial 做完、repo 建好、兩台能通**。11/9、11/16 工作坊照 tutorial 做到第 7 步就是這 40 分。
+- **各自一個資料夾**（照 tutorial 的結構：`tutorial/m1_wav/`、…、`tutorial/step7_live/`），裡面有 `.c`、`Makefile`，`make` **零警告**。
+- **至少一個 commit**，訊息寫清楚是哪一項、誰做的（例：`m7 ringbuffer：改到達順序看 REPEAT 變 4 次（王小明）`）。
+- **該項的檢查有過**：m 模組把 README「做完要能回答」的答案寫進 commit 訊息或 `TEAM_LOG.md`；step3–step6 把對應的 `run_mock_tests.py --only …` PASS 輸出貼進 `TEAM_LOG.md`；step7 貼兩台 `call` 的 STATS 截圖。
 
-### 壓縮層（30 分）：這一輪真正要寫的東西
+截止：**m1–m9 ＋ step1–3 → 11/15（日）18:00**；**step4–7 → 11/22（日）18:00**。逾期補交的項目減半。
+11/9、11/16 工作坊當天助教只協助與記錄進度，**不另外計分、不抽問扣分**。
 
-| # | 項目 | 怎麼測 | 分 |
-|---|---|---|---|
-| C1 | **μ-law**：`--codec mulaw`，SQNR ≥ 30 dB、`bytes` ≈ 一半、`--loss 0.05` 仍正常 | 測試 8 | 15 |
-| C2 | **ADPCM**：`--codec adpcm`，SQNR ≥ 20 dB、`bytes` ≈ 四分之一（含 header 0.264）、`--loss 0.05` 仍正常 | 測試 9 | 15 |
+### ② 11/23 demo（30 分，組）
 
-μ-law 在 tutorial 第 6 步有手把手（m8 是零件）。ADPCM 的**演算法**在零件 [m9_adpcm](tutorial/m9_adpcm/README.md) 裡（檔案進、檔案出，`--trace` 可以看每一步），但**沒有現成的 step**：把它改成「每包 320 個 sample 獨立編／解、type 0x05、接進 send／recv 與 jitter buffer、和 python_ref 互通」是你們要自己寫的部分（m9 README 第 6 節列了步驟與常見錯誤）。
+| 項目 | 怎麼看 | 分 |
+|---|---|---|
+| **live 通話** | 兩台電腦（不是 127.0.0.1）戴耳機 `call` 30 秒聽得懂（單向也算）；當場切 `--codec mulaw` → `adpcm`、`--plc repeat` → `zero` 聽差別 | 10 |
+| **mock 測試** | 助教當場跑測試 1–9（你們 ↔ python_ref 兩個方向）：1–7 共 4 分、8 μ-law 3 分、9 ADPCM 3 分 | 10 |
+| **報告＋問答** | P 報告 4 分鐘：codec 比較表、報告三題；問答 2 分鐘，每個人都可能被點到 | 10 |
+| 加分 **Huffman** | 測試 10 PASS（你們對你們）＋現場切 `huff-mulaw` 看 STATS 的 `bytes` 變少 | +5 |
 
-### 加分層（10 分）
+### ③ 程式碼實質審查（30 分；11/23 後一週內，老師與助教看登錄 SHA 的 repo）
 
-| # | 項目 | 怎麼測 | 分 |
-|---|---|---|---|
-| X1 | **Huffman**：`--codec huff-mulaw` 或 `huff-adpcm`，SQNR 不變、`bytes` 比底層 codec 更少、兩台互通 | 測試 10（你們對你們）＋現場 | 10 |
+| 看什麼 | 分 |
+|---|---|
+| **ADPCM 整合**：frame 版編解碼正確（第 2 個 sample 換 index、nibble 高 4 bits 先、clamp、最後一包補 0）、和 python_ref 互通、註解說得出為什麼這樣做 | 10 |
+| **μ-law 與 jitter buffer／PLC 的正確性**：不只是過測試——邊界（seq 繞回、ssrc 換了、buffer 滿）怎麼處理、STATS 的算法對不對 | 5 |
+| **程式品質**：零警告、函式切分合理、沒有死碼與複製貼上的殘骸、`docs/interface.md` 與程式一致、README 能照著建置 | 5 |
+| **個人貢獻（個人分）**：`git log` 看得出每個人自己寫的部分，和 `CONTRIBUTIONS.md` 一致；**沒有 C commit 的人這項 0 分**；審查期間可能請你當面解釋自己寫的一段 | 10 |
 
-### 口試（20 分，個人）
-
-每人 2–3 分鐘：指著自己 commit 的一段 codec 程式講它在做什麼（10）；一題概念（μ-law 為什麼小聲音也清楚；ADPCM 為什麼要用重建值預測、每包歸零的代價；Huffman 表為什麼可以不送；seq 與 ts 為什麼分開）（10）。未達 10/20 可於 11/30 補驗時段 2 補考一次。
+①、②與③的前三項是組分；③的第四項是個人分。個人總分 ＝ ① ＋ ② ＋ ③。
 
 ### 報告（放在 slides.pdf 裡，三題）
 
@@ -352,7 +350,7 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 - **P（口頭報告）**：評測當天報告架構、封包格式、jitter buffer 的設計決策、量測結果與報告四題。
 - **D（展示整合）×2**：一位負責**網路與 buffer**（`send`／`recv`／封包、jitter buffer、PLC、`main`）；一位負責**音訊與 live**（裝置、`call`、兩台電腦的現場展示、延遲量測）。三人組由一位 D 兼兩者，live 以能通話為準。
 - **V（測試驗證）**：`tests/`、`make test`、用 `udp_impair.py` 的自動化測試、壞封包測試、buffer 掃描的腳本與原始數據。
-- 每個人都要有 C 程式的 commit；個人口試會問你自己寫的部分，也會問隊友寫的部分。
+- 每個人都要有 C 程式的 commit；程式碼審查的個人分（10）就看 `git log` 裡你自己寫的部分，沒有 commit 就是 0。
 
 ## 建議時程
 
@@ -361,7 +359,7 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 | 1–2 | 10/19–11/1 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；**兩台電腦 UDP 互通** |
 | 3 | 11/2–11/8 | 11/2 第三節老師帶著做 [tutorial](tutorial/) 第 1–3 步（header、jitter buffer、repeat PLC） |
 | 4 | 11/9–11/15 | 11/9 工作坊 ①：Part A 模組＋第 1–3 步，每步 push；回家做到第 5 步（11/15 前 push） |
-| 5 | 11/16–11/22 | 11/16 工作坊 ②：第 6 步 μ-law、第 7 步 live → **起點層 40 分到手**；開始寫 **ADPCM**（C2）、組間互測；投影片、報告三題、進度報告；**11/22 18:00 前登錄 SHA** |
+| 5 | 11/16–11/22 | 11/16 工作坊 ②：第 4–7 步 push（繳交 40 分到手）；先做 m9 再把 **ADPCM** 接進 step7、組間互測；投影片、報告三題、進度報告；**11/22 18:00 前登錄 SHA** |
 
 ## tutorial/：手把手七步（11/1 新增；從這裡開始）
 
@@ -371,25 +369,25 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 |---|---|---|
 | 1 | 讀 WAV、每 20 ms 送 640 bytes、收到就寫檔 | — |
 | 2 | 12 bytes header（seq、ts、ssrc）、BYE | — |
-| 3 | jitter buffer（依 seq 的環形陣列）、播放時鐘、repeat PLC、基本 STATS | S1、S2、S4 |
-| 4 | late／dup／reordered／overflow／延遲、`--plc zero`、完整 STATS | S3、S5 |
-| 5 | 壞封包不當掉、ssrc 重置、seq 繞回 | S6 |
-| 6 | `--codec mulaw` | C1 |
-| 7 | live `call`（麥克風→對方喇叭） | S0 |
+| 3 | jitter buffer（依 seq 的環形陣列）、播放時鐘、repeat PLC、基本 STATS | 測試 1、2、5 |
+| 4 | late／dup／reordered／overflow／延遲、`--plc zero`、完整 STATS | 測試 3、7 |
+| 5 | 壞封包不當掉、ssrc 重置、seq 繞回 | 測試 4、6 |
+| 6 | `--codec mulaw` | 測試 8 |
+| 7 | live `call`（麥克風→對方喇叭） | 現場 live（demo 的第一項） |
 
-**第 7 步就是官方起點**：把 `step7_live/step7_live.c`（連同 `baseline/wrapper/`）複製進 team repo 的 `src/`，起點層 40 分就在那裡；接著在它的 `--codec` 分支加 ADPCM（必做）與 Huffman（加分）。口試會問你們改的部分每一行在做什麼。
+**第 7 步就是官方起點**：把 `step7_live/step7_live.c`（連同 `baseline/wrapper/`）複製進 team repo 的 `src/`；接著在它的 `--codec` 分支加 ADPCM（必做）與 Huffman（加分）。程式碼審查會看你們改的部分每一行在做什麼。
 
-## baseline/：官方文字 baseline＋音訊／UDP wrapper
+## baseline/：wrapper 與測試工具（不是程式起點；起點在 tutorial/step7_live）
 
-[`baseline/`](baseline/) 有三樣東西，都可以直接編譯執行：
+[`baseline/`](baseline/) 只放三樣**所有程式都要用、但你們不用改**的東西：
 
 | 檔案 | 是什麼 |
 |---|---|
-| `chat.c` | 第 2 週的文字聊天（TCP／UDP 都有），Team 3 整合時要用；這一輪不用改 |
-| `voicelink_raw.c`＋`wrapper/` | **音訊／UDP wrapper**：`wav.h`（讀寫 WAV）、`udp.h`（開 socket、`sendto`／`recvfrom`＋逾時）、`audio.h`（麥克風與喇叭，用 miniaudio）、`clock.h`（單調時鐘與 20 ms 的 sleep）。`voicelink_raw` 用它們做**最天真的串流**：640 bytes 一包、沒有 header、收到什麼就寫什麼。經過 `udp_impair.py` 之後聽聽看壞在哪裡——這就是你們要解決的問題 |
-| `udp_impair.py` | 搗蛋的中繼：`python3 udp_impair.py <聽的port> <轉給的ip> <port> --loss 0.05 --jitter 30 --reorder 0.1 --dup 0.02`，評測用同一支 |
+| `wrapper/` | 四個標頭＋一個 .c：`wav.h`（讀寫 WAV）、`udp.h`（UDP socket＋big-endian 工具；Windows／POSIX 差異抹平）、`clock.h`（單調時鐘、精準的 20 ms sleep）、`audio.h`／`audio.c`（麥克風與喇叭，用 miniaudio）。tutorial 每支程式都 `-I../../baseline/wrapper`；複製 step7 進 team repo 時要一起帶走 |
+| `udp_impair.py` | 搗蛋的中繼：`python3 udp_impair.py <聽的port> <轉給的ip> <port> --loss 0.05 --jitter 30 --reorder 0.1 --dup 0.02`，`tests/run_mock_tests.py` 與評測都用它 |
+| `smoke_check.py` | 比對兩個 WAV 的 PCM 是否逐 byte 相同（tutorial 第 1 步用） |
 
-`voicelink_raw.c` 的 `send`／`recv`／`call` 骨架、命令列解析、WAV 與裝置處理都是完成的；你們要做的是把 header、seq／ts、jitter buffer、PLC、STATS 加進去。可以在它上面改，也可以只拿 wrapper 重寫。
+以前這裡還有一支 `voicelink_raw.c`（天真串流），已被 tutorial 第 1 步取代、11/9 移除；第 2 週的 `chat.c` 在 [team1_textlink/baseline/](../team1_textlink/baseline/)。
 
 ## python_ref/：純 Python 的完整版（對照用、評測的對手端）
 

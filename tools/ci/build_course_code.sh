@@ -48,11 +48,9 @@ run "stft_demo：窄頻 32 ms（自寫 FFT）" $PY $D/stft_demo.py lectures/wk07
 run "make_samples_js.py 可重現 samples.js" $PY $D/make_samples_js.py
 if git diff --quiet -- lectures/wk07_1019_audio-pcm/slides/samples.js 2>/dev/null; then ok "wk07 samples.js 與 data/ 裡的檔案一致"; else bad "wk07 samples.js 與 data/ 不一致：請重跑 make_samples_js.py 後 commit"; fi
 
-echo "== Team 2 baseline（wrapper＋voicelink_raw＋chat.c）=="
+echo "== Team 2 baseline（wrapper：audio.c 零警告）=="
 D=team_projects/team2_voicelink/baseline
 run "make" $MAKE -B -C $D; nowarn "Team 2 baseline"
-run "voicelink_raw devices（沒有音訊裝置也要正常結束）" $D/voicelink_raw$EXE devices
-run "make smoke（本機 UDP：send → recv 逐 byte 相同）" $MAKE -C $D smoke
 
 echo "== Team 2 python_ref：驗收 1–7（本機 UDP，經 udp_impair.py）=="
 run "run_mock_tests.py（python_ref 對 python_ref）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$PY team_projects/team2_voicelink/python_ref/voicelink.py" "$PY team_projects/team2_voicelink/python_ref/voicelink.py" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5390 --buffer 200

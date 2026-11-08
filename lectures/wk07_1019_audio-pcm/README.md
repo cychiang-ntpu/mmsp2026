@@ -179,7 +179,7 @@ mp5 spec <w_ms> <hamming|rectangular> <dft_ms> <hop_ms> <in.wav> <out.txt>
 
 ### 2.1 為什麼不用 TCP（5 分鐘）
 
-第 2 週的 `chat.c` 就有 UDP 模式（[baseline/chat.c](../../team_projects/team2_voicelink/baseline/chat.c) 第 5 區段 `udp_setup`）。回想兩者的差別：
+第 2 週的 `chat.c` 就有 UDP 模式（[team1_textlink/baseline/chat.c](../../team_projects/team1_textlink/baseline/chat.c) 第 5 區段 `udp_setup`）。回想兩者的差別：
 
 | | TCP（Team 1） | UDP（Team 2） |
 |---|---|---|
@@ -250,7 +250,7 @@ buffer 裡沒有那個 seq 時，喇叭還是要東西。兩種最簡單的補�
 
 [baseline/](../../team_projects/team2_voicelink/baseline/) 給你們：
 - **wrapper/**：`wav.h`（讀寫 WAV，照 chunk 走）、`udp.h`（開 socket、`sendto`／`recvfrom` 加逾時、big-endian 工具）、`clock.h`（單調時鐘、精準的 20 ms sleep）、`audio.h`（麥克風與喇叭，用 miniaudio；`audio_start_duplex(callback)` 每 320 個 sample 叫你一次）。
-- **voicelink_raw.c**：用 wrapper 做的**最天真**串流：640 bytes 一包、沒有 header、收到什麼寫什麼。
+- **voicelink_raw.c**：用 wrapper 做的**最天真**串流：640 bytes 一包、沒有 header、收到什麼寫什麼。（11/9 起已改成 [tutorial/step1_raw/](../../team_projects/team2_voicelink/tutorial/step1_raw/README.md)，指令把 `voicelink_raw` 換成 `step1_raw` 即可；`voicelink_raw.c` 已移除。）
 - **udp_impair.py**：搗蛋的中繼。
 
 現場做（兩個視窗；教室用熱點時可以兩台電腦）：

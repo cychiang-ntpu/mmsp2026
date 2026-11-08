@@ -1,6 +1,6 @@
 # Team 2 的核心：不等、會掉、要補（11/9 討論會前必讀；10/19 沒講到的部分）
 
-> 搭配 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 第 1–3 步做一遍，起點層的測試 1、2、5 就過了。
+> 搭配 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 第 1–3 步做一遍，測試 1、2、5 就過了。
 
 
 ### 1 為什麼不用 TCP
@@ -80,7 +80,7 @@ ADPCM（2.3 的做法，4 bits、160 bytes、type 0x05）是加分：每個 fram
 
 ### 6 接下來三週怎麼跑
 
-評分（規格「驗收與評分」，11/8 改版）：**起點層 40**（tutorial 第 7 步原樣：測試 1–7 與兩台 live）、**壓縮層 30**（μ-law 15、ADPCM 15）、**加分 10**（Huffman）、**口試 20**；另有 11/9、11/16 工作坊的過程分 30。
+評分（規格「驗收與評分」，11/9 定版）：**tutorial 繳交 40**（m1–m9、step1–7 各自一個資料夾 push 到 team repo，每項 2.5）＋**11/23 demo 30**（live 通話 10、助教跑測試 1–9 共 10、報告與問答 10；Huffman +5）＋**程式碼實質審查 30**（ADPCM 整合 10、μ-law 與 buffer 正確性 5、程式品質 5、個人貢獻 10）。
 
 - **11/9 工作坊 ①**（助教主持）：全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做 Part A 模組與第 1–3 步，每步 push。
 - **11/16 工作坊 ②**：第 4–7 步（完整 STATS、壞封包、μ-law、live）、組間互測、live 預演；進度報告＋小成品 11/22 與 SHA 一起交。

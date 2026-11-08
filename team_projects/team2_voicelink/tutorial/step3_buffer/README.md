@@ -1,4 +1,4 @@
-## 第 3 步｜step3_buffer.c：jitter buffer、播放時鐘、PLC——起點層的核心
+## 第 3 步｜step3_buffer.c：jitter buffer、播放時鐘、PLC——整支程式的核心
 
 [← 教學總覽](../TUTORIAL.md)｜上一個：[第 2 步 header](../step2_header/README.md)｜下一個：[第 4 步 counters](../step4_counters/README.md)
 
@@ -113,7 +113,7 @@ BYE 的結尾怎麼算：三個 BYE 的 seq 各 +1，第一個掉了就會多算
 | `python3 ../../baseline/udp_impair.py 5005 127.0.0.1 5004 --loss 0.05 --seed 1` | `python ..\..\baseline\udp_impair.py 5005 127.0.0.1 5004 --loss 0.05 --seed 1` |
 | `python3 ../../python_ref/voicelink.py send 127.0.0.1 5005 $W` | `python ..\..\python_ref\voicelink.py send 127.0.0.1 5005 $W` |
 
-自動驗收（一個視窗就好，腳本自己開 recv／中繼／send；`--only 1,2,5` 是 S1、S2、S4）：
+自動驗收（一個視窗就好，腳本自己開 recv／中繼／send；`--only 1,2,5` 是這一步要過的三項）：
 
 | macOS / Linux | Windows PowerShell |
 |---|---|

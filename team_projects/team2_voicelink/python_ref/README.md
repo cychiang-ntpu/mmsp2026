@@ -118,7 +118,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=pcm frames_out=352 received=343 lo
 
 ## 自動化驗收
 
-[`../tests/run_mock_tests.py`](../tests/run_mock_tests.py) 自己啟動 `udp_impair.py`，跑規格「驗收與評分」的測試 1–7（起點層，pcm）、8 mulaw 與 9 adpcm（壓縮層）；
+[`../tests/run_mock_tests.py`](../tests/run_mock_tests.py) 自己啟動 `udp_impair.py`，跑規格「驗收與評分」的測試 1–7（pcm）、8 mulaw、9 adpcm；
 第 10 個測試 Huffman 是加分項，要加 `--with-huffman` 才跑，否則印 `[SKIP]`（Python 版不會解 0x06，所以第 10 項兩端都要用你們的程式）；
 `send_cmd`／`recv_cmd` 可以各自指定 Python 版或你們的 C 版，所以四種組合都能自動測：
 

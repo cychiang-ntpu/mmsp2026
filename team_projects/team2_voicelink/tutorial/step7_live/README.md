@@ -35,7 +35,7 @@ m8（`--codec mulaw`）。
   ```
 - **鎖（mutex）**：兩條執行緒都碰 `jb`，不加鎖會在 `jb_put` 寫到一半時被 `jb_tick` 讀到。規則：**任何讀寫 jb 的地方都在 `lock_take` / `lock_give` 之間，
   鎖裡不做慢的事**（解碼在鎖外做、不 printf、不等網路）。平台差異（Windows `CRITICAL_SECTION`／POSIX `pthread_mutex`）包成四個小函式，
-  和 `baseline/voicelink_raw.c`、第 2 週 `chat.c` 同一套。
+  和第 2 週 `chat.c` 同一套。
 - **結束**：Enter → `running = 0` → `audio_stop()`（之後 callback 不會再來）→ 送 3 次 BYE → `thread_join`。對方收到 BYE 或看到新的 ssrc 就 `jb_reset`。
 - `send`／`recv` 一行都沒改——`diff ../step6_mulaw/step6_mulaw.c step7_live.c` 全是「加」。
 
@@ -91,7 +91,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=pcm frames_out=142 received=148 lo
 STATS role=send codec=pcm frames=150 bytes=97800 duration_ms=3000 pace=20
 ```
 
-兩台電腦戴耳機講話 30 秒聽得懂（單向也算，起點層 S0）。`avg_delay_ms` ≈ buffer + 喇叭的輸出 buffer（約 40 ms），這是報告第 4 題「延遲由哪些部分組成」的一項。
+兩台電腦戴耳機講話 30 秒聽得懂（單向也算；11/23 demo 的第一項）。`avg_delay_ms` ≈ buffer + 喇叭的輸出 buffer（約 40 ms），這是報告第 4 題「延遲由哪些部分組成」的一項。
 `received` 比 `frames_out` 多幾包是正常的：按 Enter 時 buffer 裡還有沒播完的。
 
 **常見錯誤**

@@ -16,7 +16,7 @@
 ### 這個模組的目的
 
 - **做什麼**：把一個 WAV 用 μ-law 壓成 8 bits／sample 再解回來，算 bytes 比例與 SQNR。
-- **為什麼要先做它**：功能 4 的第一個 codec（C1，必做 15 分）。先在檔案上把編碼表、解碼表、SQNR 做對，step6 只是把它套進 send（編）與 recv（解）；接下來的 m9 ADPCM 與你們自己寫的 Huffman，量 SQNR 的方法也是這一支。
+- **為什麼要先做它**：功能 4 的第一個 codec（必做）。先在檔案上把編碼表、解碼表、SQNR 做對，step6 只是把它套進 send（編）與 recv（解）；接下來的 m9 ADPCM 與你們自己寫的 Huffman，量 SQNR 的方法也是這一支。
 - **在 Part B 的哪裡用到**：step6 的 `mulaw_init`／`mulaw_encode`／`mulaw_decode`。
 - **做完要能回答**：bytes 為什麼剛好一半？SQNR 37 dB 是什麼意思？為什麼小聲的地方 μ-law 比線性 8-bit 清楚？
 
@@ -121,4 +121,4 @@ ln(1 + x)/ln 2 幾乎是直線，等於退化成**線性 8-bit**。SQNR 會掉�
 | m6 | header 打包／解析 | step2 的 `pack_header`／`parse_header` |
 | m7 | 環狀 buffer＋時鐘 | step3 的 `jb_put`／`jb_tick` |
 | m8 | μ-law 查表 | step6 的 `mulaw_init`／`mulaw_encode`／`mulaw_decode` |
-| m9 | ADPCM 編解碼 | 你們要自己加進 step7 的 `--codec adpcm`（C2） |
+| m9 | ADPCM 編解碼 | 你們要自己加進 step7 的 `--codec adpcm` |
