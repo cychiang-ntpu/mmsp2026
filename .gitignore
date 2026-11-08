@@ -71,7 +71,10 @@ __pycache__/
 *.spec.txt
 team_projects/*/tutorial/*.exe
 team_projects/*/tutorial/*.o
-team_projects/*/tutorial/step[0-9]_*[!c]
-team_projects/*/tutorial/m[0-9]_*[!c]
+# tutorial 每個模組／步驟各自一個資料夾：只忽略裡面編出來的執行檔（沒有副檔名的 Unix 執行檔）
+team_projects/*/tutorial/step[0-9]_*/step[0-9]_*[!c]
+team_projects/*/tutorial/m[0-9]_*/m[0-9]_*[!c]
+team_projects/*/tutorial/*/*.exe
+team_projects/*/tutorial/*/*.wav
 team_projects/*/tutorial/*.wav
 .check_result
