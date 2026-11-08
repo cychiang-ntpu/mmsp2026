@@ -85,18 +85,18 @@ foreach ($c in $cmds) {
 Write-Host '=== 3. two-window parts ===' -ForegroundColor Cyan
 if ($Week -like 'wk07*') {
     # Team 2: wrapper builds warning-free, tutorial step7 (the official starting point) builds and lists devices, python_ref acceptance suite
-    Set-Location "$repo	eam_projects	eam2_voicelinkaseline"
+    Set-Location "$repo\team_projects\team2_voicelink\baseline"
     $out = (mingw32-make -B 2>&1 | Out-String)
     Note ($LASTEXITCODE -eq 0 -and $out -notmatch 'warning') 'baseline: wrapper audio.c compiles with zero warnings' ((($out -split "`n") | Where-Object { $_.Trim() } | Select-Object -Last 1) -join '')
-    Set-Location "$repo	eam_projects	eam2_voicelink	utorial"
+    Set-Location "$repo\team_projects\team2_voicelink\tutorial"
     $out = (mingw32-make step7 2>&1 | Out-String)
     Note ($LASTEXITCODE -eq 0 -and $out -notmatch 'warning') 'tutorial: mingw32-make step7 (official starting point) builds with zero warnings' ''
     $out = (.\step7_live\step7_live.exe devices 2>&1 | Out-String)
     Note ($LASTEXITCODE -eq 0) 'tutorial: step7_live devices exits 0 (with or without audio devices)' ((($out -split "`n") | Where-Object { $_.Trim() } | Select-Object -Last 1) -join '')
-    Set-Location "$repo	eam_projects	eam2_voicelink	ests"
-    $out = (python run_mock_tests.py 'python ..\python_refoicelink.py' 'python ..\python_refoicelink.py' "$repo\lectures\$Week\dataeueo-16kHz.wav" --port 5420 2>&1 | Out-String)
+    Set-Location "$repo\team_projects\team2_voicelink\tests"
+    $out = (python run_mock_tests.py 'python ..\python_ref\voicelink.py' 'python ..\python_ref\voicelink.py' "$repo\lectures\$Week\data\aeueo-16kHz.wav" --port 5420 2>&1 | Out-String)
     Note ($LASTEXITCODE -eq 0 -and $out -notmatch 'FAIL') 'python_ref: acceptance tests 1-7 through udp_impair.py' ((($out -split "`n") | Where-Object { $_ -match 'PASS|FAIL' } | Select-Object -Last 1) -join '')
-    Set-Location "$repo	eam_projects	eam2_voicelink\python_ref"
+    Set-Location "$repo\team_projects\team2_voicelink\python_ref"
     $out = (python voicelink.py recv 5421 probe.wav --probe --timeout 1500 2>&1 | Out-String)
     Note ($out -match 'STATS role=recv') 'python_ref recv --probe exits by itself on timeout and prints STATS' ''
 } else {
