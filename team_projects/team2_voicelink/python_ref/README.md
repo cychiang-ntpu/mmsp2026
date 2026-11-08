@@ -87,7 +87,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=pcm frames_out=352 received=343 lo
 |---|---|---|---|---|
 | `pcm`（預設） | 0x01 | 12＋640 bytes | 256 kb/s（線上 260.8） | 逐 byte 相同 |
 | `mulaw` | 0x04 | 12＋320 bytes | 128 kb/s（線上 132.8） | 有失真，看 SQNR |
-| `adpcm`（加分） | 0x05 | 12＋160 bytes | 64 kb/s（線上 68.8） | 有失真，看 SQNR |
+| `adpcm`（必做） | 0x05 | 12＋160 bytes | 64 kb/s（線上 68.8） | 有失真，看 SQNR |
 
 **μ-law 用的曲線**：和第 9 週 `examples/mulaw_demo.py` 一模一樣（μ = 255 的連續公式，不是 G.711 的分段折線）：
 `y = sign(x)·ln(1 + μ|x|)／ln(1 + μ)`（x = sample／32768），`q = clamp(round(y·128), −128, 127)`，存成 1 byte = q + 128；
@@ -118,8 +118,8 @@ STATS role=recv buffer_ms=60 plc=repeat codec=pcm frames_out=352 received=343 lo
 
 ## 自動化驗收
 
-[`../tests/run_mock_tests.py`](../tests/run_mock_tests.py) 自己啟動 `udp_impair.py`，跑規格「最低驗收」第 1–7 項（pcm）與第 10 項（第 8 個測試 mulaw；
-第 9 個測試 adpcm 是加分項，要加 `--with-adpcm` 才跑，否則印 `[SKIP]`）；
+[`../tests/run_mock_tests.py`](../tests/run_mock_tests.py) 自己啟動 `udp_impair.py`，跑規格「驗收與評分」的測試 1–7（起點層，pcm）、8 mulaw 與 9 adpcm（壓縮層）；
+第 10 個測試 Huffman 是加分項，要加 `--with-huffman` 才跑，否則印 `[SKIP]`（Python 版不會解 0x06，所以第 10 項兩端都要用你們的程式）；
 `send_cmd`／`recv_cmd` 可以各自指定 Python 版或你們的 C 版，所以四種組合都能自動測：
 
 ```
@@ -127,7 +127,8 @@ cd tests
 python run_mock_tests.py "python ../python_ref/voicelink.py send" "python ../python_ref/voicelink.py recv" in.wav
 python run_mock_tests.py "../build/voicelink send"               "python ../python_ref/voicelink.py recv" in.wav
 python run_mock_tests.py "python ../python_ref/voicelink.py send" "../build/voicelink recv"               in.wav
-python run_mock_tests.py "python ../python_ref/voicelink.py send" "../build/voicelink recv"               in.wav --with-adpcm --only 8,9
+python run_mock_tests.py "python ../python_ref/voicelink.py send" "../build/voicelink recv"               in.wav --only 8,9
+python run_mock_tests.py "../build/voicelink send"               "../build/voicelink recv"               in.wav --with-huffman --only 10
 ```
 
 ## 量測時會看到的一件事：第一包決定了時鐘

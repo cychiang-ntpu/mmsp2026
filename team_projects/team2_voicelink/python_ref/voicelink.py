@@ -154,7 +154,7 @@ def extend_seq(seq, highest):
     return highest + diff
 
 
-# =============================================================== 2b. codec：μ-law（功能 4 必做）與 ADPCM（加分）
+# =============================================================== 2b. codec：μ-law 與 ADPCM（功能 4，兩個都必做）；Huffman（0x06，加分）這裡沒有實作
 # 兩個 codec 都是「一個 frame 獨立編碼」：每包 320 個 sample 進、320 bytes（μ-law）或 160 bytes（ADPCM）出，
 # 不依賴前一包的任何狀態。所以掉了一包，下一包照樣能解——PLC 在解碼後的 16-bit 上補，程式一行都不用改。
 # 送端：encode(640 bytes PCM) → payload；收端：decode(payload) → 640 bytes PCM，再進 jitter buffer。

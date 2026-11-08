@@ -5,8 +5,10 @@
 
 ## 做什麼
 
-三節課就是**全班一起照 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做第 1–3 步**，做完就過規格的基本層（B1–B4）。
+三節課就是**全班一起照 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做第 1–3 步**。
 每一步做完都要 **push 到 team repo**（以組為單位），下課前交半成品。
+
+> **11/8 規格改版**：tutorial 的第 7 步 `step7_live.c` 就是官方起點（起點層 40 分）；作業真正要寫的是**語音壓縮**：μ-law（必做 15）、ADPCM（必做 15）、Huffman（加分 10），口試 20。詳見規格「[驗收與評分](../../team_projects/team2_voicelink/README.md#驗收與評分118-改版)」。所以這兩週的工作坊是「把起點讀懂」，11/16 之後才是寫自己的東西。
 
 | 節次 | 時間 | 步 | 做完要看到 | push 什麼 |
 |---|---|---|---|---|
@@ -26,4 +28,6 @@
 
 - 帶筆電（每組至少兩台）、熱點、耳機；來之前 `git pull`、baseline `make` 編得過。
 - 可以直接複製 tutorial 的 step 程式再改，但口試會問每一行在做什麼。
-- 半成品的評分：11/15 前 team repo 有第 3 步且 `--only 1,2,5` PASS → 基本層算完成一半（評測當天再跑一次確認）。
+- 今天的評量（過程分，個人 8＋組 6）：
+  - **Part A 模組 8 分（個人）**：每支模組跑原版、照檔頭「試著改」改一處，把兩次輸出貼到 Slack 討論串（m2 的 send／recv 合 1 分、m4／m5 合 1 分；沒麥克風的公用電腦 m4 貼「沒有裝置」訊息即可）。m6 要圈出哪兩個 byte 是 seq，m7 要寫一句哪一拍變了。
+  - **第 1–3 步各 2 分（組）**：1 分 commit（11/15 18:00 前補 push 也算）＋ 1 分「過關證據」：step1 貼 out.wav 與輸入的 bytes 數、step2 貼收端前 5 行 seq／ts、step3 貼 `--only 1,2,5` PASS 與 `--buffer 20`／`100` 的 STATS 各一行；助教桌邊抽問一題（表在 [ta_guide.md](ta_guide.md)），答出才給這 1 分。

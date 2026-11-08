@@ -11,8 +11,8 @@
 | 6 | 10/12 | Team 1 評測 | Team 1 | [wk06_1012_team1-eval/](wk06_1012_team1-eval/) |
 | 7 | 10/19 | 聲音的時頻分析（STFT）、MP5 講解、Team 2 開題、補驗時段 1 | Team 2、MP5 | [wk07_1019_audio-pcm/](wk07_1019_audio-pcm/) |
 | 9 | 11/2 | 期中考（[範例考題](wk09_1102_midterm-speech/midterm_sample.md)）、Team 2 實作工作坊 | 期中考、Team 2 | [wk09_1102_midterm-speech/](wk09_1102_midterm-speech/) |
-| 10 | 11/9 | Team 2 工作坊 ①：全班跟著 tutorial 做第 1–3 步，每步 push（助教主持） | Team 2 | [wk10_1109_team2-progress1/](wk10_1109_team2-progress1/) |
-| 11 | 11/16 | Team 2 工作坊 ②：tutorial 第 4–7 步、互測、live（助教主持） | Team 2 | [wk11_1116_team2-progress2/](wk11_1116_team2-progress2/) |
+| 10 | 11/9 | Team 2 工作坊 ①：Part A 模組＋tutorial 第 1–3 步，每步 push（助教主持） | Team 2 | [wk10_1109_team2-progress1/](wk10_1109_team2-progress1/) |
+| 11 | 11/16 | Team 2 工作坊 ②：tutorial 第 4–7 步（＝官方起點）、互測、live、ADPCM 開工（助教主持） | Team 2 | [wk11_1116_team2-progress2/](wk11_1116_team2-progress2/) |
 | 12 | 11/23 | Team 2 評測；Team 3 提早開題（規格導讀） | Team 2、Team 3 | [wk12_1123_team2-eval/](wk12_1123_team2-eval/) |
 | 13 | 11/30 | 影像表示、BMP、Team 3 問答、補驗時段 2 | Team 3 | [wk13_1130_image-bmp/](wk13_1130_image-bmp/) |
 | 14 | 12/7 | DCT、JPEG、MJPEG 分片、bounded queue、整合；期末上機模擬 | Team 3、期末 | [wk14_1207_dct-jpeg-mjpeg/](wk14_1207_dct-jpeg-mjpeg/) |

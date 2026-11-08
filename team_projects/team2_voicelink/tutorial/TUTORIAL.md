@@ -1,4 +1,6 @@
-# Team 2 VoiceLink 手把手教學：先拆成八個模組看懂，再七步組裝到過基本層＋μ-law
+# Team 2 VoiceLink 手把手教學：先拆成八個模組看懂，再七步組裝成官方起點（step7）＋μ-law
+
+> **11/8 起**：第 7 步 `step7_live.c` 就是作業的**官方起點**（起點層 40 分）。這份教學的目的是讓你們**讀懂**起點的每一行，因為接下來要在它上面加 ADPCM（必做）與 Huffman（加分）——見規格「驗收與評分」。
 
 這份教學假設你修過一學期的 C，看過第 2 週的 `chat.c`（所以知道 socket 是什麼、`sendto`／`recvfrom` 長什麼樣），
 其他都從零講。分成兩部分：
@@ -12,11 +14,11 @@ Part B 的七步：
 ```
 step1_raw      640 bytes 一包、沒有 header                       ← 和 baseline/voicelink_raw 一樣笨
 step2_header   + 12 bytes header（magic/type/seq/ts/ssrc）+ BYE   ← 看得到 seq 跳號了
-step3_buffer   + jitter buffer + 播放時鐘 + PLC（packet loss concealment，封包遺失補償） repeat + STATS    ← 過測試 1,2,5（基本層的核心）
+step3_buffer   + jitter buffer + 播放時鐘 + PLC（packet loss concealment，封包遺失補償） repeat + STATS    ← 過測試 1,2,5（起點層的核心）
 step4_counters + late/dup/reordered/overflow/延遲 + --plc + --burst ← 過測試 1,2,3,5,7
-step5_robust   + 壞封包、ssrc 換了、seq 繞回、--bind、結束碼        ← 過測試 1–7（基本層＋加分層的一部分）
-step6_mulaw    + --codec mulaw（功能 4）                           ← 過測試 8（進階層 A3）
-step7_live     + call／devices（麥克風 ↔ 喇叭，執行緒）             ← 進階層 A4
+step5_robust   + 壞封包、ssrc 換了、seq 繞回、--bind、結束碼        ← 過測試 1–7（起點層 S1–S6）
+step6_mulaw    + --codec mulaw（功能 4）                           ← 過測試 8（壓縮層 C1 μ-law）
+step7_live     + call／devices（麥克風 ↔ 喇叭，執行緒）             ← 起點層 S0；**這就是官方起點**
 ```
 
 每一步都可以單獨編譯、單獨執行、單獨測；想知道「這一步到底改了什麼」就 `diff step3_buffer.c step4_counters.c`。
@@ -383,7 +385,7 @@ Python 版收我們的封包時要印 `STATS role=recv ... frames_out=352 receiv
 
 ---
 
-## 第 3 步｜step3_buffer.c：jitter buffer、播放時鐘、PLC——基本層的核心
+## 第 3 步｜step3_buffer.c：jitter buffer、播放時鐘、PLC——起點層的核心
 
 **目標**：收端先存 `--buffer` ms 再播，之後每 20 ms 一拍向 buffer 要「下一個 seq」，有就播、沒有就補，拍子一定前進；過測試 1、2、5。
 
@@ -428,7 +430,7 @@ m2（`udp_recv` 的逾時 = 離下一拍的時間）。
 - **三種結束**：BYE（知道結尾 seq → 把 buffer 播完再停）、`--timeout` 沒封包（送端死了 → 把等待期間補的 frame 從輸出去掉）、
   第一包等 30 秒都沒來。**永遠不會無限等**（規格）。
 - **輸出截到 BYE 的 ts**：最後一包補的 0 去掉，沒搗蛋時輸出就和輸入逐 byte 相同、長度也相同。
-- **STATS**：規格的一行，這一步先填 `frames_out`／`received`／`lost`／`concealed`，其他印 0（基本層 B4 只看這四個）。
+- **STATS**：規格的一行，這一步先填 `frames_out`／`received`／`lost`／`concealed`，其他印 0（第 4 步再補齊）。
   `lost` = 從第一個播的 seq 到結尾「應該有幾包」− 「真的到過幾包」（`unique`）。
 
 **程式碼**（`diff step2_header.c step3_buffer.c`；整個 buffer 包成 `jb_t` 和五個函式，第 7 步會原封不動拿去 live 用）
@@ -485,7 +487,7 @@ BYE 的結尾怎麼算：三個 BYE 的 seq 各 +1，第一個掉了就會多算
 | `python3 ../baseline/udp_impair.py 5005 127.0.0.1 5004 --loss 0.05 --seed 1` | `python ..\baseline\udp_impair.py 5005 127.0.0.1 5004 --loss 0.05 --seed 1` |
 | `python3 ../python_ref/voicelink.py send 127.0.0.1 5005 $W` | `python ..\python_ref\voicelink.py send 127.0.0.1 5005 $W` |
 
-自動驗收（一個視窗就好，腳本自己開 recv／中繼／send；`--only 1,2,5` 是基本層）：
+自動驗收（一個視窗就好，腳本自己開 recv／中繼／send；`--only 1,2,5` 是 S1、S2、S4）：
 
 | macOS / Linux | Windows PowerShell |
 |---|---|
@@ -835,7 +837,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=pcm frames_out=142 received=148 lo
 STATS role=send codec=pcm frames=150 bytes=97800 duration_ms=3000 pace=20
 ```
 
-兩台電腦戴耳機講話 30 秒聽得懂（單向也算，進階層 A4）。`avg_delay_ms` ≈ buffer + 喇叭的輸出 buffer（約 40 ms），這是報告第 4 題「延遲由哪些部分組成」的一項。
+兩台電腦戴耳機講話 30 秒聽得懂（單向也算，起點層 S0）。`avg_delay_ms` ≈ buffer + 喇叭的輸出 buffer（約 40 ms），這是報告第 4 題「延遲由哪些部分組成」的一項。
 `received` 比 `frames_out` 多幾包是正常的：按 Enter 時 buffer 裡還有沒播完的。
 
 **常見錯誤**
@@ -857,8 +859,8 @@ STATS role=send codec=pcm frames=150 bytes=97800 duration_ms=3000 pace=20
 
 | 步驟 | 要過的測試（`--only`） | 規格的驗收項目 |
 |---|---|---|
-| step3 | 1,2,5 | 基本層 B1 B2 B3（B4 的四個數） |
-| step4 | 1,2,3,5,7 | 進階層 A1、加分層的計數器 |
-| step5 | 1,2,3,4,5,6,7 | 加分層：dup、壞封包 |
-| step6 | 8 | 進階層 A3 μ-law |
-| step7 | 現場 | 基本層 B0、進階層 A4 live |
+| step3 | 1,2,5 | 起點層 S1、S2、S4 |
+| step4 | 1,2,3,5,7 | 起點層 S3、S5 |
+| step5 | 1,2,3,4,5,6,7 | 起點層 S6（dup、壞封包） |
+| step6 | 8 | 壓縮層 C1 μ-law |
+| step7 | 現場 | 起點層 S0 live；**官方起點**。接下來：加 `--codec adpcm`（C2，測試 9）、`huff-*`（X1，測試 10） |

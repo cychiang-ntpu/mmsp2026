@@ -6,7 +6,7 @@
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
 - 繳交：登錄 repo URL＋完整 commit SHA
 - 本輪四人組角色：**P＋D＋D＋V**（三人組 P＋D＋V）；分組名單於 10/19 公告
-- **11/1 簡化**：驗收分成基本／進階／加分三層（見「最低驗收」），只有基本層必過；並提供[手把手教學 tutorial/](tutorial/)，照著做七步就能從零做到過基本層與 μ-law。
+- **11/8 改版（取代 11/1 的三層）**：[tutorial/](tutorial/) 第 7 步 `step7_live.c` 是**官方給的起點**（能傳 raw PCM、有 header／jitter buffer／PLC／STATS／live 通話）。這一輪真正的作業是**在它上面加語音壓縮**：μ-law（必做）、ADPCM（必做）、Huffman（加分）。評分見「驗收與評分」。
 
 ## 一句話
 
@@ -75,12 +75,13 @@ Team 1 用 TCP：掉一個封包，TCP 會重傳，後面的資料全部排隊�
 
 - 每次執行都要印 STATS（格式固定，見下）。報告要分析：**buffer 大小 vs 補償次數 vs 延遲**（見「量測與報告」）。
 
-### 功能 4｜語音壓縮：μ-law（必做）、ADPCM（加分）（11/1 新增）
+### 功能 4｜語音壓縮：μ-law（必做）、ADPCM（必做）、Huffman（加分）（11/8 改版：這一輪的主題）
 
 - `--codec mulaw`：送端把每個 16-bit sample 用 **G.711 μ-law** 壓成 8 bits（一包 **320 bytes**，位元率 128 kb/s → 一半），收端解回 16-bit 再播。第 9 週 2.2 講過的公式；用查表或分段折線都可以，但**編碼端與解碼端要用同一條曲線**。
 - 收到的 WAV 不會逐 byte 相同（有失真），驗收改看 **SQNR**：用老師的語音檔，mock 模式沒有搗蛋時，輸出對原檔的 SQNR ≥ 30 dB（第 9 週 `mulaw_demo.py` 實測約 36–38 dB）。
 - PLC 在**解碼之後**的 16-bit 上做（repeat 重複的是解碼後的 frame），所以 PLC 的程式不用改。
-- 加分：`--codec adpcm`：4-bit DPCM／ADPCM（一包 160 bytes、64 kb/s），第 9 週 2.3 的做法；SQNR ≥ 20 dB 即可。報告要比較三種 codec 的位元率、SQNR、以及掉包時 PLC 的效果（ADPCM 掉一包後要怎麼重新同步預測器？）。
+- `--codec adpcm`（必做）：4-bit ADPCM（一包 **160 bytes**、64 kb/s，原來的四分之一），第 9 週 2.3 與 [audio_coding.md](../../lectures/wk09_1102_midterm-speech/audio_coding.md) 的做法：只送「和預測值的差」、量化階距 Δ 隨上一個碼字放大或縮小。驗收 SQNR ≥ 20 dB（`python_ref` 在 7 秒母音檔約 21 dB）。**每一包獨立編碼**（預測器與 Δ 在每包開頭歸零），所以掉一包不會拖累下一包——報告要說明為什麼要這樣設計、代價是什麼。
+- `--codec huff-mulaw`／`--codec huff-adpcm`（加分）：把 μ-law 的 8-bit 碼字（或 ADPCM 的 4-bit 碼字）再做一次 **Huffman 編碼**（Team 1 做過）。表是**固定的**：用老師給的語音檔（例如第 7 週 `speech_osr_16k.wav`）統計一次、寫死在程式裡（存成 `docs/huffman_table.txt` 一起交），兩端用同一張表，所以不用把表送過去（這張表就是期中考講的「事先約好的 side information」）。每個符號都要有碼（出現次數 0 的當 1），每包獨立編碼。μ-law 的碼字在安靜段很集中，通常能再省 15–30%；ADPCM 的碼字分布比較平，可能只省 5–10%——**報告要量出來並解釋為什麼**。payload 格式見封包格式的 0x06。`python_ref` 不會解 0x06，加分驗收是「你們的 send 對你們的 recv」（測試 10）。
 
 ## 固定的部分（各組一律相同，評測會照這個跑）
 
@@ -100,9 +101,9 @@ Team 1 用 TCP：掉一個封包，TCP 會重傳，後面的資料全部排隊�
 
 | 子命令 | 指令 | 做什麼 |
 |---|---|---|
-| **send**（mock） | `voicelink send <ip> <port> <in.wav> [--burst] [--codec pcm\|mulaw\|adpcm]` | 讀 WAV，照 20 ms 的節奏一包一包送到 `<ip>:<port>`。`--burst` 不等 20 ms 一口氣全送（用來看 buffer 的用處） |
+| **send**（mock） | `voicelink send <ip> <port> <in.wav> [--burst] [--codec <名稱>]` | 讀 WAV，照 20 ms 的節奏一包一包送到 `<ip>:<port>`。`--burst` 不等 20 ms 一口氣全送（用來看 buffer 的用處） |
 | **recv**（mock） | `voicelink recv <port> <out.wav> [--bind <ip>] [--buffer <ms>] [--plc zero\|repeat] [--timeout <ms>]` | 在 `<port>` 收封包，排序、補償，照 20 ms 的節奏寫成 `<out.wav>`；結束時印一行 STATS |
-| **call**（live） | `voicelink call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero\|repeat] [--codec pcm\|mulaw\|adpcm]` | 麥克風 → 對方喇叭、對方 → 自己喇叭，雙向通話；按 Enter 結束並印 STATS |
+| **call**（live） | `voicelink call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero\|repeat] [--codec <名稱>]` | 麥克風 → 對方喇叭、對方 → 自己喇叭，雙向通話；按 Enter 結束並印 STATS |
 | **devices** | `voicelink devices` | 列出電腦上的麥克風與喇叭 |
 
 例：
@@ -122,7 +123,7 @@ voicelink call 5005 192.168.1.10 5005        # 在 B
 | `--buffer <ms>` | 60 | jitter buffer 的目標延遲：先存這麼多毫秒的聲音再開始播（必須是 20 的倍數；60 = 先存 3 包） | `recv 5004 out.wav --buffer 200`：網路很抖時先存 10 包再播，比較不會缺，但延遲多 140 ms |
 | `--plc zero\|repeat` | repeat | 該播的那包沒到時怎麼補：`zero` 補 320 個 0（靜音），`repeat` 重複上一個播出的 frame | `recv 5004 out.wav --plc zero`：掉包處會聽到「喀」一聲的斷音；用 `repeat` 單掉一包幾乎聽不出 |
 | `--timeout <ms>` | 2000 | recv 這麼久沒收到任何封包就當作結束（送端被殺掉時 recv 不能永遠等） | `recv 5004 out.wav --timeout 5000`：等 5 秒才放棄 |
-| `--codec pcm\|mulaw\|adpcm` | pcm | send／call 每包的聲音怎麼編：`pcm` 原樣 16-bit（640 bytes）、`mulaw` 壓成 8-bit（320 bytes）、`adpcm` 4-bit（160 bytes）。recv 看封包的 type 自動判斷，不用給 | `send 127.0.0.1 5004 in.wav --codec mulaw`：送出的 bytes 減半，收到的 WAV 有一點失真（SQNR 約 37 dB） |
+| `--codec pcm\|mulaw\|adpcm\|huff-mulaw\|huff-adpcm` | pcm | send／call 每包的聲音怎麼編：`pcm` 原樣 16-bit（640 bytes）、`mulaw` 壓成 8-bit（320 bytes）、`adpcm` 4-bit（160 bytes）、`huff-*` 再加一層 Huffman（長度不固定）。recv 看封包的 type 自動判斷，不用給 | `send 127.0.0.1 5004 in.wav --codec mulaw`：送出的 bytes 減半，收到的 WAV 有一點失真（SQNR 約 37 dB） |
 | `--bind <ip>` | 0.0.0.0 | recv 只在這個網路介面上收（0.0.0.0 = 所有介面） | `recv 5004 out.wav --bind 192.168.1.10`：只收送到這張網卡的 |
 | `--burst` | 關 | send 不等 20 ms，一口氣把整個檔案送完 | `send 127.0.0.1 5004 in.wav --burst`：recv 的 buffer 會塞滿、`overflow` 變大——這就是為什麼送端也要照時間送 |
 
@@ -150,13 +151,14 @@ voicelink call 5005 192.168.1.20 5005 --buffer 40         # 通話時把延遲�
 | 8 | 4 | `ssrc` | 本次串流的隨機識別碼，同一次執行固定；收到不同的 ssrc 就把 buffer 清掉重來 |
 | 12 | 依 type | 聲音資料 | 見下表 |
 
-`type` 的四種值：
+`type` 的五種值：
 
 | type | 名稱 | 聲音資料 | 封包總長 | 說明 |
 |---|---|---|---|---|
 | 0x01 | AUDIO | 320 個 16-bit sample（little-endian） | 12 + 640 = **652** | 預設；最後一包不足 320 個 sample 時後面補 0 |
-| 0x04 | AUDIO_MULAW | 320 個 μ-law byte（每 sample 1 byte） | 12 + 320 = **332** | `--codec mulaw`（進階） |
-| 0x05 | AUDIO_ADPCM | 160 bytes（每 sample 4 bits，高 4 bits 先） | 12 + 160 = **172** | `--codec adpcm`（加分） |
+| 0x04 | AUDIO_MULAW | 320 個 μ-law byte（每 sample 1 byte） | 12 + 320 = **332** | `--codec mulaw`（必做） |
+| 0x05 | AUDIO_ADPCM | 160 bytes（每 sample 4 bits，高 4 bits 先） | 12 + 160 = **172** | `--codec adpcm`（必做） |
+| 0x06 | AUDIO_HUFF | 1 byte 底層 codec 的 type（0x04 或 0x05）＋ 2 bytes **有效位元數** n（big-endian）＋ ⌈n/8⌉ bytes 的 Huffman 位元串（MSB 先、最後補 0） | 12 + 3 + ⌈n/8⌉（不固定） | `--codec huff-mulaw`／`huff-adpcm`（加分） |
 | 0x02 | BYE | 無 | **12** | 送端結束時送 3 次；`ts` = 整個檔案真正的 sample 總數 |
 
 一個 AUDIO 封包的前 12 bytes 長這樣（seq = 5、ts = 1600、ssrc = 0x1234ABCD）：
@@ -184,7 +186,7 @@ magic type
 
 ### 量測輸出（STATS）
 
-程式結束時印**一行**到 stderr（評測用正規表示式抓，**欄位順序與名稱不可改**；基本層只看粗體的四個數，其餘可以印 0）。
+程式結束時印**一行**到 stderr（評測用正規表示式抓，**欄位順序與名稱不可改**；起點 step7 已經全部印對，不用改）。
 
 **recv 印的**：
 
@@ -197,7 +199,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=mulaw frames_out=1678 received=160
 | `role` | 這一行是誰印的：`recv` 或 `send` | 收端 |
 | `buffer_ms` | 執行時用的 `--buffer` | 先存 60 ms（3 包）再播 |
 | `plc` | 執行時用的 `--plc`：`repeat` 或 `zero` | 掉包用重複上一包補 |
-| `codec` | 收到的封包是哪種編碼（看 type）：`pcm`／`mulaw`／`adpcm`；一個都沒收到時印 `pcm` | 對方用 μ-law 送 |
+| `codec` | 收到的封包是哪種編碼（看 type）：`pcm`／`mulaw`／`adpcm`／`huff-mulaw`／`huff-adpcm`；一個都沒收到時印 `pcm` | 對方用 μ-law 送 |
 | **`frames_out`** | 交給喇叭／寫進 WAV 的 frame 總數，含補償的；= 播出去的真封包 + `concealed` | 共播了 1678 個 20 ms（33.6 秒） |
 | **`received`** | 收到的合法 AUDIO 封包數（重複、遲到的也算在內；壞封包不算） | 收到 1601 包 |
 | **`lost`** | 從 seq 判斷「應該有但一直沒到」的包數（亂序後來到的不算） | 77 包在網路上不見了 |
@@ -232,7 +234,7 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 - 報告要**用耳朵和用數字**比較：同樣掉 5%，哪一種比較不刺耳？為什麼 repeat 遇到連續掉包會變成「嗡」聲？
 - 進階（加分，不是必做）：重複的 frame 每次衰減（×0.5），或 zero／repeat 之間做 2 ms 的淡入淡出。
 
-## 量測與報告：buffer 要多大？（進階／加分；基本層只要回答上面兩題）
+## 量測與報告（第 5 題必交，其餘加分）
 
 用 `udp_impair.py` 固定一組參數（例如 loss 5%、jitter ±30 ms、reorder 5%），把 `--buffer` 從 20 掃到 200 ms，
 每個點跑 3 次，記 `concealed`、`late`、`avg_delay_ms`，畫成圖。報告回答：
@@ -241,41 +243,50 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 2. 這組抖動參數下你們建議的 buffer 是多少 ms？理由？
 3. `--burst` 送（沒有 20 ms 的間隔）時 buffer 會發生什麼事？`overflow` 怎麼變？這說明了為什麼送端也要照時間送。
 4. live 模式從講話到對方聽到大概多久（自己想一個量法，例如拍手、或兩台電腦對著同一支錄音）？延遲由哪些部分組成？
-5. pcm 與 mulaw（有做 adpcm 的加上 adpcm）：位元率、SQNR、掉包 5% 時聽起來的差別；用耳朵和數字各說一次。
+5. **codec 比較表（必交）**：pcm／mulaw／adpcm（有做的加 huff-mulaw、huff-adpcm）各一列，欄位是每包 bytes、位元率 kb/s、SQNR dB、掉包 5% 時聽起來如何（一句話）。用老師的語音檔量。
 
-## 最低驗收（11/1 簡化：三層）
+## 驗收與評分（11/8 改版）
 
-評測用的 WAV 由老師當天給（16 kHz、單聲道、30 秒左右）。評測會用 `python_ref/voicelink.py` 當對手端各跑一次（你們的 send 對它的 recv、它的 send 對你們的 recv）；`tests/run_mock_tests.py --only 1,2,5` 就是基本層。
+評測用的 WAV 由老師當天給（16 kHz、單聲道、30 秒左右）。mock 測試用 `tests/run_mock_tests.py`，對手端是 `python_ref/voicelink.py`（你們的 send 對它的 recv、它的 send 對你們的 recv 各跑一次；測試 10 例外，是你們對你們）。滿分 100（含加分 10）。
 
-### 基本層（必過；團隊分的 60%）
+### 起點層（40 分）：step7 原樣就過
 
-做到這一層的程式其實只有三件事：**一包 20 ms 加 header → 收端用一個依 seq 排序的 buffer 先存 3 包再播 → 沒有就重複上一包**。[tutorial/](tutorial/) 的第 1–5 步就是這一層。
+| # | 項目 | 怎麼測 | 分 |
+|---|---|---|---|
+| S0 | 兩台電腦（不是 127.0.0.1）`call` 通話 30 秒聽得懂（單向也算） | 現場 | 10 |
+| S1 | 沒有搗蛋：輸出 WAV 與輸入**逐 byte 相同** | 測試 1 | 5 |
+| S2 | `--loss 0.05`：frame 數相同、`concealed ≈ lost`、正常結束 | 測試 2 | 5 |
+| S3 | 亂序＋抖動、`--buffer 100`：逐 byte 相同 | 測試 3 | 5 |
+| S4 | 送端中途被殺：recv 自己結束、WAV 完整、STATS 有印 | 測試 5 | 5 |
+| S5 | STATS 欄位全對：`frames_out = (received − late − dup − overflow) + concealed` | 測試 7 | 5 |
+| S6 | 重複包丟掉、壞封包不當掉 | 測試 4、6 | 5 |
 
-| # | 項目 | 怎麼測 |
-|---|---|---|
-| B0 | 兩台電腦（不是 127.0.0.1）能互通 | 現場 |
-| B1 | `send → recv`，沒有搗蛋：輸出 WAV 的 PCM 與輸入**逐 byte 相同**、長度相同 | 測試 1 |
-| B2 | 經過 `udp_impair.py --loss 0.05`：輸出的 frame 數與輸入相同（掉的用 repeat 補），`concealed ≈ lost`（±2），程式正常結束 | 測試 2 |
-| B3 | 送端中途被殺掉：recv 在 `--timeout` 內自己結束、WAV 完整、STATS 有印 | 測試 5 |
-| B4 | STATS 一行裡 `frames_out`、`received`、`lost`、`concealed` 四個數正確且 `frames_out = 播出的真封包 + concealed`；其他欄位可以印 0 | 測試 7 只看這四個 |
+這一層的目的只有一件事：**確認你們把 tutorial 做完、repo 建好、兩台能通**。11/9、11/16 工作坊照 tutorial 做到第 7 步就是這 40 分。
 
-### 進階層（每項獨立計分；30%）
+### 壓縮層（30 分）：這一輪真正要寫的東西
 
-| # | 項目 | 怎麼測 |
-|---|---|---|
-| A1 | 亂序的包排回正確位置：`--reorder 0.1 --jitter 20`、`--buffer 100` 時輸出逐 byte 相同 | 測試 3 |
-| A2 | `--plc zero` 也能用，報告用耳朵和數字比較兩種 | 現場 |
-| A3 | **μ-law**（功能 4）：`--codec mulaw` SQNR ≥ 30 dB、`bytes` 減半 | 測試 8 |
-| A4 | live：兩台電腦戴耳機通話 30 秒聽得懂（**單向**也算） | 現場 |
+| # | 項目 | 怎麼測 | 分 |
+|---|---|---|---|
+| C1 | **μ-law**：`--codec mulaw`，SQNR ≥ 30 dB、`bytes` ≈ 一半、`--loss 0.05` 仍正常 | 測試 8 | 15 |
+| C2 | **ADPCM**：`--codec adpcm`，SQNR ≥ 20 dB、`bytes` ≈ 四分之一（含 header 0.264）、`--loss 0.05` 仍正常 | 測試 9 | 15 |
 
-### 加分層（10%）
+μ-law 在 tutorial 第 6 步有手把手（m8 是零件）；ADPCM **沒有** C 的範例，只有第 9 週 `dpcm_demo.py` 與 `python_ref` 的 Python 版可以對照——這是這一輪要自己寫的部分。
 
-重複封包丟掉（測試 4）、壞封包不當掉（測試 6）、`late`／`dup`／`reordered`／`overflow`／`avg_delay_ms` 正確、buffer 掃描圖、ADPCM、PLC 衰減或淡入淡出、`--burst` 不爆記憶體。
+### 加分層（10 分）
 
-### 報告（兩題就好）
+| # | 項目 | 怎麼測 | 分 |
+|---|---|---|---|
+| X1 | **Huffman**：`--codec huff-mulaw` 或 `huff-adpcm`，SQNR 不變、`bytes` 比底層 codec 更少、兩台互通 | 測試 10（你們對你們）＋現場 | 10 |
+
+### 口試（20 分，個人）
+
+每人 2–3 分鐘：指著自己 commit 的一段 codec 程式講它在做什麼（10）；一題概念（μ-law 為什麼小聲音也清楚；ADPCM 為什麼要用重建值預測、每包歸零的代價；Huffman 表為什麼可以不送；seq 與 ts 為什麼分開）（10）。未達 10/20 可於 11/30 補驗時段 2 補考一次。
+
+### 報告（放在 slides.pdf 裡，三題）
 
 1. 你們的 buffer 設多少 ms？用 `jitter_sim.py` 或實測說明為什麼。
-2. `repeat` 和 `zero` 在掉包 5% 時聽起來差在哪？為什麼？（想多寫的再加「量測與報告」那一節的題目。）
+2. `repeat` 和 `zero` 在掉包 5% 時聽起來差在哪？為什麼？
+3. **codec 比較表**（「量測與報告」第 5 題）：每包 bytes、kb/s、SQNR、掉包時聽感；有做 Huffman 的加一列並解釋省了多少、為什麼 μ-law 上省得比 ADPCM 多。
 
 ## 跨機器測試須知
 
@@ -296,9 +307,9 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 | 週 | 日期 | 目標 |
 |---|---|---|
 | 1–2 | 10/19–11/1 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；**兩台電腦 UDP 互通** |
-| 3 | 11/2–11/8 | 11/2 第三節老師帶著做 [tutorial](tutorial/) 第 1–3 步（header、jitter buffer、repeat PLC）；回家做完第 3 步 → **基本層 B1–B3 過了** |
-| 4 | 11/9–11/15 | 11/9 工作坊 ①：Part A 模組＋第 1–3 步，每步 push → 基本層；回家做完第 3 步（11/15 前 push） |
-| 5 | 11/16–11/22 | 11/16 工作坊 ②：第 4–7 步（完整 STATS、壞封包、μ-law、live）、組間互測、live 預演；投影片、報告兩題、進度報告；**11/22 18:00 前登錄 SHA** |
+| 3 | 11/2–11/8 | 11/2 第三節老師帶著做 [tutorial](tutorial/) 第 1–3 步（header、jitter buffer、repeat PLC） |
+| 4 | 11/9–11/15 | 11/9 工作坊 ①：Part A 模組＋第 1–3 步，每步 push；回家做到第 5 步（11/15 前 push） |
+| 5 | 11/16–11/22 | 11/16 工作坊 ②：第 6 步 μ-law、第 7 步 live → **起點層 40 分到手**；開始寫 **ADPCM**（C2）、組間互測；投影片、報告三題、進度報告；**11/22 18:00 前登錄 SHA** |
 
 ## tutorial/：手把手七步（11/1 新增；從這裡開始）
 
@@ -308,13 +319,13 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 |---|---|---|
 | 1 | 讀 WAV、每 20 ms 送 640 bytes、收到就寫檔 | — |
 | 2 | 12 bytes header（seq、ts、ssrc）、BYE | — |
-| 3 | jitter buffer（依 seq 的環形陣列）、播放時鐘、repeat PLC、基本 STATS | B1、B2、B3、B4 |
-| 4 | late／dup／reordered／overflow／延遲、`--plc zero`、完整 STATS | A1、A2 |
-| 5 | 壞封包不當掉、ssrc 重置、seq 繞回 | 加分 |
-| 6 | `--codec mulaw` | A3 |
-| 7 | live `call`（麥克風→對方喇叭） | A4 |
+| 3 | jitter buffer（依 seq 的環形陣列）、播放時鐘、repeat PLC、基本 STATS | S1、S2、S4 |
+| 4 | late／dup／reordered／overflow／延遲、`--plc zero`、完整 STATS | S3、S5 |
+| 5 | 壞封包不當掉、ssrc 重置、seq 繞回 | S6 |
+| 6 | `--codec mulaw` | C1 |
+| 7 | live `call`（麥克風→對方喇叭） | S0 |
 
-你們可以直接以第 7 步的程式為起點改成自己的（要能說明每一行在做什麼——口試會問），也可以自己從頭寫。
+**第 7 步就是官方起點**：把 `step7_live.c`（連同 `baseline/wrapper/`）複製進 team repo 的 `src/`，起點層 40 分就在那裡；接著在它的 `--codec` 分支加 ADPCM（必做）與 Huffman（加分）。口試會問你們改的部分每一行在做什麼。
 
 ## baseline/：官方文字 baseline＋音訊／UDP wrapper
 

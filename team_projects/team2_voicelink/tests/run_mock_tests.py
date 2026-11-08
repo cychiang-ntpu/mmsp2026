@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""run_mock_tests.py：mock 模式的自動化驗收（README「最低驗收」第 1–7 項與第 10 項）。只用標準函式庫。
+"""run_mock_tests.py：mock 模式的自動化驗收（README「驗收與評分」：起點層測試 1–7、壓縮層 8–9、加分 10）。只用標準函式庫。
 
-  python run_mock_tests.py "<send_cmd>" "<recv_cmd>" <in.wav> [--port N] [--keep] [--only 1,3,8] [--with-adpcm]
+  python run_mock_tests.py "<send_cmd>" "<recv_cmd>" <in.wav> [--port N] [--keep] [--only 1,3,8] [--with-huffman]
 
   <send_cmd>／<recv_cmd> 是「程式名稱＋子命令」，後面的參數由本腳本接上：
     Python 對 Python：  python run_mock_tests.py "python ../python_ref/voicelink.py send" "python ../python_ref/voicelink.py recv" in.wav
@@ -9,9 +9,9 @@
     混搭（評測就是這樣）："python ../python_ref/voicelink.py send" 配你們的 recv，反過來再跑一次
   --port N       recv 聽 N、udp_impair.py 聽 N+1（預設 5004）；--keep 留下輸出的 WAV 不刪
   --only 1,3,8   只跑這幾個編號
-  --with-adpcm   也跑第 9 項（加分的 adpcm）；沒給就印 [SKIP]（--only 9 也會跑）
+  --with-huffman 也跑第 10 項（加分的 Huffman；send 與 recv 都要是你們的程式）；沒給就印 [SKIP]（--only 10 也會跑）
 
-  九個測試（每個都印 [PASS]／[FAIL]／[SKIP]，最後印 summary；有任何 FAIL 結束碼 1）：
+  十個測試（每個都印 [PASS]／[FAIL]／[SKIP]，最後印 summary；有任何 FAIL 結束碼 1）：
     1 clean      沒有搗蛋：PCM 逐 byte 相同，lost=0 concealed=0
     2 loss       --loss 0.05：輸出 frame 數與輸入相同、concealed ≈ lost（±2）、正常結束
     3 reorder    --reorder 0.1 --jitter 20、recv --buffer 100：PCM 逐 byte 相同
@@ -21,8 +21,10 @@
     7 stats      四種搗蛋全開：STATS 欄位順序正確、frames_out = received − late − dup − overflow + concealed
     8 mulaw      send --codec mulaw：沒有搗蛋時輸出長度與輸入相同、整檔 SQNR ≥ 30 dB、send 的 bytes ≈ pcm 的一半（±2%）、
                  recv 的 STATS codec=mulaw；再經過 --loss 0.05：正常結束、|concealed − lost| ≤ 2
-    9 adpcm      同 8，但 --codec adpcm：SQNR ≥ 20 dB、bytes ≈ 四分之一（含 header：172/652 = 0.264，±2%）。加分項，要 --with-adpcm 才跑
-  1–7 都用 pcm（--codec 不給）。測試 8 先用 pcm 跑一次乾淨的，拿 send 的 bytes 來當「一半」的基準，所以 8 要跑三趟、9 跑兩趟。
+    9 adpcm      同 8，但 --codec adpcm：SQNR ≥ 20 dB、bytes ≈ 四分之一（含 header：172/652 = 0.264，±2%）。必做（C2）
+    10 huffman   --codec huff-mulaw（或 huff-adpcm，看 --huff-base）：SQNR 門檻同底層 codec、bytes 比底層 codec 少、STATS codec=huff-…；
+                 再經過 --loss 0.05 正常。加分項（X1），要 --with-huffman 才跑；python_ref 不會解 0x06，所以兩端都要是你們的程式
+  1–7 都用 pcm（--codec 不給）。測試 8 先用 pcm 跑一次乾淨的，拿 send 的 bytes 來當「一半」的基準，所以 8 與 9 各跑三趟、10 跑四趟（多一趟底層 codec 當基準）。
   udp_impair.py 由本腳本自己啟動（在 ../baseline/），--seed 固定，所以每次結果一樣。
   「逐 byte 相同」容許輸出比輸入多最後一包補的 0（長度為 640 的倍數、多出來的全是 0）。
   SQNR = 10·log10(Σx² / Σ(x − y)²)，x 是輸入、y 是輸出（整個檔案一起算，長度要相同）。
@@ -43,10 +45,10 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 IMPAIR = os.path.join(HERE, "..", "baseline", "udp_impair.py")
 FRAME_BYTES = 640
-STATS_RE = re.compile(r"STATS role=recv buffer_ms=(\d+) plc=(zero|repeat) codec=(pcm|mulaw|adpcm) frames_out=(\d+) received=(\d+) lost=(\d+) late=(\d+) "
+STATS_RE = re.compile(r"STATS role=recv buffer_ms=(\d+) plc=(zero|repeat) codec=(pcm|mulaw|adpcm|huff-mulaw|huff-adpcm) frames_out=(\d+) received=(\d+) lost=(\d+) late=(\d+) "
                       r"dup=(\d+) reordered=(\d+) overflow=(\d+) concealed=(\d+) avg_delay_ms=([\d.]+) max_delay_ms=([\d.]+)")
 STATS_KEYS = ["buffer_ms", "plc", "codec", "frames_out", "received", "lost", "late", "dup", "reordered", "overflow", "concealed", "avg_delay_ms", "max_delay_ms"]
-SEND_STATS_RE = re.compile(r"STATS role=send codec=(pcm|mulaw|adpcm) frames=(\d+) bytes=(\d+)")
+SEND_STATS_RE = re.compile(r"STATS role=send codec=(pcm|mulaw|adpcm|huff-mulaw|huff-adpcm) frames=(\d+) bytes=(\d+)")
 
 
 # ------------------------------------------------------------ 小工具
@@ -308,19 +310,20 @@ def test_stats(cfg, out):
                     (True, stats_line(s))])
 
 
-def test_codec(cfg, out, codec, min_sqnr_db, ratio, ratio_why):
-    """測試 8／9 共用：先 pcm 乾淨跑一次拿 bytes 基準 → codec 乾淨跑（長度、SQNR、bytes 比例、STATS codec）→ codec 加 --loss 0.05。"""
-    base = run_once(cfg, out)
+def test_codec(cfg, out, codec, min_sqnr_db, ratio, ratio_why, base_codec=None):
+    """測試 8／9／10 共用：先 pcm（測試 10 是底層 codec）乾淨跑一次拿 bytes 基準 → codec 乾淨跑（長度、SQNR、bytes 比例、STATS codec）→ codec 加 --loss 0.05。
+    ratio 是數字時要 ±2%；是 None 時（測試 10）只要求「比基準少」。"""
+    base = run_once(cfg, out, send_opts=["--codec", base_codec] if base_codec else [])
     if base.recv_rc is None or base.recv_rc != 0 or base.stats is None:
         ok, why = need(base, [])
-        return ok, f"pcm 基準那一趟：{why}"
+        return ok, f"{base_codec or 'pcm'} 基準那一趟：{why}"
     if base.send_stats is None:
-        return False, f"pcm 基準那一趟：send 的 stderr 裡沒有 STATS role=send codec=… frames=… bytes=…；stderr：{base.send_err.strip()[-200:]}"
+        return False, f"{base_codec or 'pcm'} 基準那一趟：send 的 stderr 裡沒有 STATS role=send codec=… frames=… bytes=…；stderr：{base.send_err.strip()[-200:]}"
     r = run_once(cfg, out, send_opts=["--codec", codec])
+    if r.send_rc is not None and r.send_rc != 0:                    # 先看 send：還沒實作這個 codec 時通常是它先拒絕
+        return False, f"send --codec {codec} 結束碼 {r.send_rc}（還沒實作這個 codec？）；stderr：{r.send_err.strip()[-200:]}"
     if r.recv_rc is None or r.recv_rc != 0 or r.stats is None:
         return need(r, [])
-    if r.send_rc != 0:
-        return False, f"send --codec {codec} 結束碼 {r.send_rc}；stderr：{r.send_err.strip()[-200:]}"
     if r.send_stats is None:
         return False, f"send --codec {codec} 的 stderr 裡沒有 STATS role=send；stderr：{r.send_err.strip()[-200:]}"
     if r.pcm is None:
@@ -330,7 +333,8 @@ def test_codec(cfg, out, codec, min_sqnr_db, ratio, ratio_why):
     got_ratio = r.send_stats["bytes"] / base.send_stats["bytes"]
     checks = [(len(r.pcm) == len(cfg.src), f"長度 {len(r.pcm)} bytes（輸入 {len(cfg.src)}）"),
               (sq >= min_sqnr_db, f"SQNR {sq:.1f} dB（≥ {min_sqnr_db}）"),
-              (abs(got_ratio - ratio) <= 0.02, f"bytes {r.send_stats['bytes']} / pcm {base.send_stats['bytes']} = {got_ratio:.3f}（{ratio_why}）"),
+              ((abs(got_ratio - ratio) <= 0.02) if ratio is not None else (got_ratio < 0.99),
+               f"bytes {r.send_stats['bytes']} / {base_codec or 'pcm'} {base.send_stats['bytes']} = {got_ratio:.3f}（{ratio_why}）"),
               (s["codec"] == codec and r.send_stats["codec"] == codec, f"STATS codec={s['codec']}（send 印 {r.send_stats['codec']}）"),
               (s["lost"] == 0 and s["concealed"] <= 2, f"lost={s['lost']} concealed={s['concealed']}（CI 的慢機器偶爾會補 1–2 個，容許）")]
     ok, why = need(r, checks)
@@ -358,14 +362,19 @@ def test_adpcm(cfg, out):
     return test_codec(cfg, out, "adpcm", 20.0, want, f"≈ 四分之一，含 header 是 {want:.3f} ±2%")
 
 
+def test_huffman(cfg, out):
+    base = cfg.huff_base                                              # mulaw 或 adpcm
+    return test_codec(cfg, out, "huff-" + base, 30.0 if base == "mulaw" else 20.0, None, f"要比 {base} 少（< 0.99）", base_codec=base)
+
+
 TESTS = [("1 clean", test_clean), ("2 loss", test_loss), ("3 reorder", test_reorder), ("4 dup", test_dup),
-         ("5 kill", test_kill), ("6 garbage", test_garbage), ("7 stats", test_stats), ("8 mulaw", test_mulaw), ("9 adpcm", test_adpcm)]
-OPTIONAL = {"9 adpcm": "加分項，要 --with-adpcm（或 --only 9）才跑"}
+         ("5 kill", test_kill), ("6 garbage", test_garbage), ("7 stats", test_stats), ("8 mulaw", test_mulaw), ("9 adpcm", test_adpcm), ("10 huffman", test_huffman)]
+OPTIONAL = {"10 huffman": "加分項 X1，要 --with-huffman（或 --only 10）才跑；兩端都要是你們的程式"}
 
 
 # ------------------------------------------------------------ main
 def main():
-    ap = argparse.ArgumentParser(description="mock 模式的自動化驗收（README 第 1–7 項與第 10 項）")
+    ap = argparse.ArgumentParser(description="mock 模式的自動化驗收（README「驗收與評分」測試 1–10）")
     ap.add_argument("send_cmd", help='例如 "python ../python_ref/voicelink.py send"')
     ap.add_argument("recv_cmd", help='例如 "python ../python_ref/voicelink.py recv"')
     ap.add_argument("--buffer", type=int, default=60, help="recv 的 --buffer（預設 60；CI 的機器很慢時可以放大到 200）")
@@ -373,7 +382,9 @@ def main():
     ap.add_argument("--port", type=int, default=5004, help="recv 聽這個 port，udp_impair.py 聽 port+1（預設 5004）")
     ap.add_argument("--keep", action="store_true", help="留下輸出的 WAV")
     ap.add_argument("--only", help="只跑這幾個（逗號分隔的編號，例如 1,3,8）")
-    ap.add_argument("--with-adpcm", action="store_true", help="也跑第 9 項 adpcm（加分項；沒給就印 SKIP）")
+    ap.add_argument("--with-huffman", action="store_true", help="也跑第 10 項 Huffman（加分項；沒給就印 SKIP）")
+    ap.add_argument("--huff-base", choices=["mulaw", "adpcm"], default="mulaw", help="第 10 項疊在哪個 codec 上（預設 mulaw）")
+    ap.add_argument("--with-adpcm", action="store_true", help=argparse.SUPPRESS)    # 舊參數，11/8 起 adpcm 預設就跑；留著不報錯
     cfg = ap.parse_args()
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -401,7 +412,7 @@ def main():
     for name, fn in TESTS:
         if only and name.split()[0] not in only:
             continue
-        if name in OPTIONAL and not cfg.with_adpcm and not only:     # 加分項：沒有明說要跑就 SKIP（不算 FAIL）
+        if name in OPTIONAL and not cfg.with_huffman and not only:   # 加分項：沒有明說要跑就 SKIP（不算 FAIL）
             skipped += 1
             print(f"[SKIP] {name:10s} {OPTIONAL[name]}", flush=True)
             continue

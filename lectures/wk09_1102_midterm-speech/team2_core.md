@@ -1,6 +1,6 @@
 # Team 2 的核心：不等、會掉、要補（11/9 討論會前必讀；10/19 沒講到的部分）
 
-> 搭配 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 第 1–3 步做一遍，基本層就過了。
+> 搭配 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 第 1–3 步做一遍，起點層的測試 1、2、5 就過了。
 
 
 ### 1 為什麼不用 TCP
@@ -70,7 +70,7 @@ magic 'V' | type | seq(2) | ts(4) | ssrc(4) | 640 bytes PCM        多 byte 欄�
 
 ### 5 手把手：跟著 tutorial 做第 1–3 步
 
-[team_projects/team2_voicelink/tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 七步，每步一支完整、有註解的程式。課堂上投影 `step2_header.c` 與 `step3_buffer.c` 的差異：header 怎麼打包（`put_u16`／`put_u32`）、環形 buffer 怎麼用 `seq % 16` 當索引、播放時鐘怎麼用「下一拍的時間」當 `udp_recv` 的 timeout 所以不用執行緒、沒有就 `memcpy` 上一個 frame（repeat）。做完第 3 步就過基本層 B1–B4。
+[team_projects/team2_voicelink/tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 七步，每步一支完整、有註解的程式。課堂上投影 `step2_header.c` 與 `step3_buffer.c` 的差異：header 怎麼打包（`put_u16`／`put_u32`）、環形 buffer 怎麼用 `seq % 16` 當索引、播放時鐘怎麼用「下一拍的時間」當 `udp_recv` 的 timeout 所以不用執行緒、沒有就 `memcpy` 上一個 frame（repeat）。做完第 3 步就過起點層的測試 1、2、5。
 
 ### 5b 新功能 4：μ-law 壓縮（進階 A3）、ADPCM（加分）
 
@@ -80,9 +80,9 @@ ADPCM（2.3 的做法，4 bits、160 bytes、type 0x05）是加分：每個 fram
 
 ### 6 接下來三週怎麼跑
 
-驗收分三層（規格「最低驗收」）：**基本層**（tutorial 第 1–5 步：一包 20 ms 加 header → 排序的 buffer 先存 3 包 → 沒有就重複上一包）必過；進階（亂序、zero、μ-law、live）各自計分；其餘加分。
+評分（規格「驗收與評分」，11/8 改版）：**起點層 40**（tutorial 第 7 步原樣：測試 1–7 與兩台 live）、**壓縮層 30**（μ-law 15、ADPCM 15）、**加分 10**（Huffman）、**口試 20**；另有 11/9、11/16 工作坊的過程分 30。
 
-- **11/9 工作坊 ①**（助教主持）：全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做 Part A 模組與第 1–3 步，每步 push；做完就過基本層。
+- **11/9 工作坊 ①**（助教主持）：全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做 Part A 模組與第 1–3 步，每步 push。
 - **11/16 工作坊 ②**：第 4–7 步（完整 STATS、壞封包、μ-law、live）、組間互測、live 預演；進度報告＋小成品 11/22 與 SHA 一起交。
 - **11/22（日）18:00 截止；11/23 評測**：mock 用老師的 WAV 跑 `run_mock_tests.py` 兩個方向、live 用熱點；評測前老師先回答兩次討論會收集的問題。
 - 工作坊的指令與簽核表在 [lab.md](lab.md)；先把 lab.md 的 2.1「聽掉封包」跑一次。

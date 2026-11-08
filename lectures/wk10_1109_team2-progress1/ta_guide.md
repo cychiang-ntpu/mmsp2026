@@ -17,8 +17,21 @@
 - 每一步：助教先用 5 分鐘投影該步的「要加的東西」與兩個 step 檔的差異，再各組自己做（約 40 分鐘），助教巡場。
 - 卡住先問「印出來／`--probe` 看到什麼」；不代寫，指到 TUTORIAL.md 的「常見錯誤」；兩組都說自己對時用 `python_ref/voicelink.py` 當裁判。
 - 每節結束前把各組「做到第幾步、SHA、問老師的一題」記下來貼 Slack `#team2-questions`。
+- **評量**（11/8 改版，過程分共 30）：11/9 個人 m 模組 8 分＋步驟 1–3 各 2 分；11/16 步驟 4–7 各 2 分＋交叉測試 4＋「改一處」4。每步的 2 分 = 1 分 commit ＋ 1 分「過關證據＋桌邊抽問一題」（每步只問一人、輪流，30 秒內答；答不出只少這 1 分）。抽問題目：
 
-## 11/9 ①：第 1–3 步（基本層）
+  | 步 | 過關證據（貼 Slack） | 抽問 |
+  |---|---|---|
+  | 1 | out.wav 與輸入的 bytes 數 | 掉包以後聲音為什麼變短而不是變難聽？ |
+  | 2 | 收端前 5 行 seq／ts | ts 為什麼每包加 320 不是加 1？ |
+  | 3 | `--only 1,2,5` PASS；`--buffer 20`／`100` 的 STATS 各一行 | buffer 大了，哪個數字變小、哪個變大？ |
+  | 4 | 測試 7 輸出；`--plc zero`／`repeat` 的 STATS 並排 | 用自己那一行代入 `frames_out = (received − late − dup − overflow) + concealed` |
+  | 5 | 測試 5 輸出；送端被殺後收端的結束碼 | ssrc 突然變了，你們的程式做什麼？ |
+  | 6 | 測試 8 的 SQNR 與 bytes | 為什麼 μ-law 的 bytes 剛好一半？header 有沒有變小？ |
+  | 7 | 兩台 `call` 30 秒雙方 STATS 截圖 | 同一台自己打自己為什麼有回音？ |
+
+  「改一處」小題（11/16 第三節前出一題即可，30 分鐘內 push）：buffer 滿了改成丟最新的；STATS 多印一欄 `codec` 的 bytes；`--plc repeat` 第二次重複時音量減半。
+
+## 11/9 ①：Part A 模組＋第 1–3 步
 
 | 時間 | 步 | 助教 |
 |---|---|---|
@@ -27,13 +40,13 @@
 | 15:10–15:50 | 第 3 步 jitter buffer | 帶看環形陣列、播放時鐘、repeat；目標每組 `run_mock_tests.py --only 1,2,5` PASS |
 | 15:50–16:00 | 收 SHA 與問題；沒做完 11/15 18:00 前 push | |
 
-## 11/16 ②：第 4–7 步（進階層）
+## 11/16 ②：第 4–7 步（做完＝官方起點）＋ADPCM 開工
 
 | 時間 | 步 | 助教 |
 |---|---|---|
-| 13:10–14:00 | 第 4 步 counters（基本層沒過的先補第 3 步） | 帶看 late／dup／reordered 的判斷式與 `--plc zero` |
+| 13:10–14:00 | 第 4 步 counters（第 3 步沒過的先補） | 帶看 late／dup／reordered 的判斷式與 `--plc zero` |
 | 14:10–15:00 | 第 5 步 robust＋第 6 步 μ-law；兩組互測（1↔3、2↔4…） | 帶看壞封包檢查與 μ-law 查表；互測跑 `run_mock_tests.py` 兩個方向 |
-| 15:10–15:45 | 第 7 步 live：兩組用熱點通話 | 沒麥克風的用 `python_ref` 當聲源 |
+| 15:10–15:45 | 第 7 步 live（15 分鐘）＋ ADPCM 開工（20 分鐘） | 沒麥克風的用 `python_ref` 當聲源；ADPCM 指到 `python_ref/voicelink.py` 的 `adpcm_encode`／`adpcm_reconstruct` 與第 9 週 `dpcm_demo.py`，目標 `--only 9` 跑得完 |
 | 15:45–16:00 | 收尾：進度報告＋SHA 11/22 18:00；11/23 評測要帶的東西 | |
 
 ## 會後
@@ -49,7 +62,9 @@
 📢 11/9（一）老師出國，改為「Team 2 工作坊 ①」，助教主持，照常上課、照常點名。
 帶筆電、熱點、耳機；來之前至少讓 send／recv 在自己電腦跑得起來。
 全班一起照 tutorial（team_projects/team2_voicelink/tutorial/TUTORIAL.md）做第 1–3 步，每一步做完就 push 到 team repo：
-第一節 第 1 步 raw → 第二節 第 2 步 header → 第三節 第 3 步 jitter buffer（做完就過基本層）
+第一節 Part A 模組＋第 1 步 raw → 第二節 第 2 步 header → 第三節 第 3 步 jitter buffer
+評量：每支模組「跑一次、改一處」把輸出貼 Slack（個人 8 分）；每一步 commit＋過關證據＋桌邊抽問（組，每步 2 分）。
+⚠ 規格 11/8 改版：tutorial 第 7 步就是官方起點（40 分），作業真正要寫的是壓縮：μ-law、ADPCM 必做、Huffman 加分。先把起點讀懂。
 下課前把 SHA 貼到 Slack；沒做完的 11/15（日）18:00 前 push。
 問題我 11/23 第一節統一回答。
 講義：https://github.com/cychiang-ntpu/mmsp2026/blob/main/lectures/wk10_1109_team2-progress1/README.md
@@ -60,7 +75,9 @@
 ```
 📢 11/16（一）「Team 2 工作坊 ②」，助教主持，照常上課。離 11/22 截止只剩 6 天，今天是評測預演。
 來之前先把 tests/run_mock_tests.py 自己對自己跑一遍，帶結果來。
-接著做 tutorial 第 4–7 步，每步 push：第一節 第 4 步（完整 STATS、zero PLC（packet loss concealment，封包遺失補償））→ 第二節 第 5、6 步（壞封包、μ-law）＋兩組互測 → 第三節 第 7 步 live 通話
+接著做 tutorial 第 4–7 步，每步 push：第一節 第 4 步（完整 STATS、zero PLC（packet loss concealment，封包遺失補償））→ 第二節 第 5、6 步（壞封包、μ-law）＋兩組互測 → 第三節 第 7 步 live 通話＋ADPCM 開工
+做完第 7 步 = 起點層 40 分到手；11/22 前要再加 ADPCM（必做 15 分，--only 9 PASS），有餘力做 Huffman（加分 10）。
+評量：每步 2 分（commit＋過關證據＋抽問）、互測 4 分、「改一處」小題 4 分。
 交：進度報告（docs/templates/progress_report.md）＋SHA，11/22（日）18:00 前。
 11/23 評測：每組兩台筆電、耳機、熱點，P 的 slides.pdf 要在 SHA 裡。
 講義：https://github.com/cychiang-ntpu/mmsp2026/blob/main/lectures/wk11_1116_team2-progress2/README.md
