@@ -117,13 +117,23 @@ voicelink call 5005 192.168.1.20 5005        # 在 A
 voicelink call 5005 192.168.1.10 5005        # 在 B
 ```
 
-| 參數 | 預設 | 意義 |
-|---|---|---|
-| `--buffer <ms>` | 60 | jitter buffer 的目標延遲（必須是 20 的倍數；60＝先存 3 個 frame 再開始播）|
-| `--plc zero\|repeat` | repeat | 遺失補償：補 320 個 0，或重複上一個收到的 frame |
-| `--timeout <ms>` | 2000 | recv：這麼久沒有任何封包就當作結束（**不可以永久等待**）|
-| `--codec pcm\|mulaw\|adpcm` | pcm | send／call：每包的 PCM 怎麼編（pcm = 16-bit 原樣 640 bytes；mulaw = 320 bytes；adpcm = 160 bytes）；recv 由封包的 `type` 自動判斷，不用參數 |
-| `--bind <ip>` | 0.0.0.0 | recv 綁哪個介面 |
+| 參數 | 預設 | 意義 | 例子 |
+|---|---|---|---|
+| `--buffer <ms>` | 60 | jitter buffer 的目標延遲：先存這麼多毫秒的聲音再開始播（必須是 20 的倍數；60 = 先存 3 包） | `recv 5004 out.wav --buffer 200`：網路很抖時先存 10 包再播，比較不會缺，但延遲多 140 ms |
+| `--plc zero\|repeat` | repeat | 該播的那包沒到時怎麼補：`zero` 補 320 個 0（靜音），`repeat` 重複上一個播出的 frame | `recv 5004 out.wav --plc zero`：掉包處會聽到「喀」一聲的斷音；用 `repeat` 單掉一包幾乎聽不出 |
+| `--timeout <ms>` | 2000 | recv 這麼久沒收到任何封包就當作結束（送端被殺掉時 recv 不能永遠等） | `recv 5004 out.wav --timeout 5000`：等 5 秒才放棄 |
+| `--codec pcm\|mulaw\|adpcm` | pcm | send／call 每包的聲音怎麼編：`pcm` 原樣 16-bit（640 bytes）、`mulaw` 壓成 8-bit（320 bytes）、`adpcm` 4-bit（160 bytes）。recv 看封包的 type 自動判斷，不用給 | `send 127.0.0.1 5004 in.wav --codec mulaw`：送出的 bytes 減半，收到的 WAV 有一點失真（SQNR 約 37 dB） |
+| `--bind <ip>` | 0.0.0.0 | recv 只在這個網路介面上收（0.0.0.0 = 所有介面） | `recv 5004 out.wav --bind 192.168.1.10`：只收送到這張網卡的 |
+| `--burst` | 關 | send 不等 20 ms，一口氣把整個檔案送完 | `send 127.0.0.1 5004 in.wav --burst`：recv 的 buffer 會塞滿、`overflow` 變大——這就是為什麼送端也要照時間送 |
+
+幾個常見組合：
+
+```
+voicelink recv 5004 out.wav                               # 全部預設：buffer 60 ms、repeat、等 2 秒
+voicelink recv 5004 out.wav --buffer 100 --plc zero       # 抖動大的網路、用靜音補
+voicelink send 127.0.0.1 5004 in.wav --codec mulaw        # 送壓縮過的
+voicelink call 5005 192.168.1.20 5005 --buffer 40         # 通話時把延遲壓低（網路好才行）
+```
 
 結束碼：0 正常；1 網路或裝置錯誤；2 參數或檔案格式錯誤。
 
