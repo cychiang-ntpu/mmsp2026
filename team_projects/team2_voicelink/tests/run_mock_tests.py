@@ -56,7 +56,12 @@ def split_cmd(cmd):
     """把 "python ../x/voicelink.py send" 拆成 list。Windows 的反斜線路徑先換成正斜線，shlex 才不會把它吃掉。"""
     if os.name == "nt":
         cmd = cmd.replace("\\", "/")
-    return shlex.split(cmd)
+    parts = shlex.split(cmd)
+    # 第一個 token 若是存在的檔案（例如 "step3_buffer/step3_buffer.exe"），換成絕對路徑：
+    # Windows 的 CreateProcess 對「含資料夾但沒有 ./ 開頭」的相對路徑會找不到
+    if parts and "/" in parts[0] and os.path.exists(parts[0]):
+        parts[0] = os.path.abspath(parts[0])
+    return parts
 
 
 def read_pcm(path):

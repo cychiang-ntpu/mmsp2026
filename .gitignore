@@ -74,3 +74,4 @@ team_projects/*/tutorial/*.o
 team_projects/*/tutorial/step[0-9]_*[!c]
 team_projects/*/tutorial/m[0-9]_*[!c]
 team_projects/*/tutorial/*.wav
+.check_result

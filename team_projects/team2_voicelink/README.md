@@ -6,7 +6,7 @@
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
 - 繳交：登錄 repo URL＋完整 commit SHA
 - 本輪四人組角色：**P＋D＋D＋V**（三人組 P＋D＋V）；分組名單於 10/19 公告
-- **11/8 改版（取代 11/1 的三層）**：[tutorial/](tutorial/) 第 7 步 `step7_live.c` 是**官方給的起點**（能傳 raw PCM、有 header／jitter buffer／PLC／STATS／live 通話）。這一輪真正的作業是**在它上面加語音壓縮**：μ-law（必做）、ADPCM（必做）、Huffman（加分）。評分見「驗收與評分」。
+- **11/8 改版（取代 11/1 的三層）**：[tutorial/](tutorial/) 第 7 步 [`step7_live/step7_live.c`](tutorial/step7_live/step7_live.c) 是**官方給的起點**（能傳 raw PCM、有 header／jitter buffer／PLC／STATS／live 通話）。這一輪真正的作業是**在它上面加語音壓縮**：μ-law（必做）、ADPCM（必做）、Huffman（加分）。評分見「驗收與評分」。
 
 ## 從這裡開始（學生進入點，11/8 起）
 
@@ -14,7 +14,7 @@
 
 ### 這一輪要做什麼（30 秒版）
 
-1. 跟著 [tutorial/TUTORIAL.md](tutorial/TUTORIAL.md) 做完八個模組與七步——第 7 步 `step7_live.c` 是**官方起點**，複製進 team repo 就拿到起點層 40 分。
+1. 跟著 [tutorial/TUTORIAL.md](tutorial/TUTORIAL.md) 做完八個模組與七步（每個各自一個資料夾、有自己的 README）——第 7 步 `step7_live/step7_live.c` 是**官方起點**，複製進 team repo 就拿到起點層 40 分。
 2. 在起點上加三種語音壓縮：**μ-law**（必做 15，tutorial 第 6 步有手把手）、**ADPCM**（必做 15，要自己寫）、**Huffman**（加分 10）。
 3. 11/22（日）18:00 前登錄 SHA；11/23 評測＋口試（個人 20）。
 
@@ -32,16 +32,16 @@
 ### 五個最常用的指令（Windows PowerShell；macOS／Linux 把 `mingw32-make` 換成 `make`、`.\x.exe` 換成 `./x`）
 
 ```powershell
-cd team_projects\team2_voicelink\tutorial
-mingw32-make                      # 編出全部模組與七步（只編一步：mingw32-make step7）
-$W = "..\..\..\lectures\wk07_1019_audio-pcm\data\speech_osr_16k.wav"   # 34 秒的測試語音（16 kHz 單聲道）
+cd team_projects\team2_voicelink\tutorial\step7_live     # 每個模組／步驟各自一個資料夾，裡面有 README、.c、Makefile
+mingw32-make                      # 只編這一步（在上一層 tutorial\ 下 mingw32-make 會編全部）
+$W = "..\..\..\..\lectures\wk07_1019_audio-pcm\data\speech_osr_16k.wav"   # 34 秒的測試語音（16 kHz 單聲道）
 
 # 自己對自己（兩個視窗）：先 recv 再 send；收端結束會印一行 STATS、寫出 out.wav
 .\step7_live.exe recv 5004 out.wav --buffer 60 --plc repeat
 .\step7_live.exe send 127.0.0.1 5004 $W --codec mulaw
 
 # 自動驗收（Git Bash 或 PowerShell 都可）：測試 1–9；加 --with-huffman 跑 10
-python ..\tests\run_mock_tests.py ".\step7_live.exe send" ".\step7_live.exe recv" $W
+python ..\..\tests\run_mock_tests.py ".\step7_live.exe send" ".\step7_live.exe recv" $W
 ```
 
 更多指令與參數：「[命令列介面](#命令列介面)」；壞網路模擬：`baseline/udp_impair.py`；對手端：`python_ref/voicelink.py`。
@@ -50,8 +50,8 @@ python ..\tests\run_mock_tests.py ".\step7_live.exe send" ".\step7_live.exe recv
 
 | 位置 | 是什麼 | 你會在什麼時候用 |
 |---|---|---|
-| [tutorial/](tutorial/TUTORIAL.md) | 手把手教學：m1–m8 模組、step1–step7 | 11/9、11/16 全程 |
-| [tutorial/step7_live.c](tutorial/step7_live.c) | **官方起點**，完整主程式 | 複製進 team repo 的 `src/` 後開始加 codec |
+| [tutorial/](tutorial/TUTORIAL.md) | 手把手教學總覽；m1–m8、step1–step7 每個各自一個資料夾，各有 README | 11/9、11/16 全程 |
+| [tutorial/step7_live/](tutorial/step7_live/README.md) | **官方起點**，完整主程式 | 複製進 team repo 的 `src/` 後開始加 codec |
 | [baseline/wrapper/](baseline/wrapper/) | WAV／UDP／時鐘／音訊四個標頭 | 起點要用，一起複製 |
 | [baseline/udp_impair.py](baseline/udp_impair.py) | 掉包／亂序／抖動的搗蛋中繼 | 自己測 buffer 與 PLC |
 | [python_ref/voicelink.py](python_ref/voicelink.py) | Python 完整版（含 ADPCM） | 評測對手端；寫 ADPCM 時對照 `adpcm_encode`／`adpcm_decode` |
@@ -365,7 +365,7 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 
 ## tutorial/：手把手七步（11/1 新增；從這裡開始）
 
-[`tutorial/TUTORIAL.md`](tutorial/TUTORIAL.md) 分兩部分。**Part A 拆解**：八支各 50–80 行的小程式，一支只做一件事——`m1_wav`（讀寫 WAV）、`m2_udp_send`／`m2_udp_recv`（UDP 一包就是一包）、`m3_clock`（20 ms 的時鐘）、`m4_mic_to_wav`（錄音）、`m5_play_wav`（播放）、`m6_header`（12 bytes header 打包／解析）、`m7_ringbuffer`（不用網路的 jitter buffer）、`m8_mulaw`（μ-law 編解碼）——先各自跑過、改過。**Part B 組裝**：七步把模組接成整支程式，每一步都是一支能編譯、能跑、能用 `run_mock_tests.py --only …` 驗的完整程式（`step1_raw.c` → `step7_live.c`），每一行都有註解：
+[`tutorial/TUTORIAL.md`](tutorial/TUTORIAL.md) 分兩部分。**Part A 拆解**：八支各 50–80 行的小程式，一支只做一件事——`m1_wav`（讀寫 WAV）、`m2_udp_send`／`m2_udp_recv`（UDP 一包就是一包）、`m3_clock`（20 ms 的時鐘）、`m4_mic_to_wav`（錄音）、`m5_play_wav`（播放）、`m6_header`（12 bytes header 打包／解析）、`m7_ringbuffer`（不用網路的 jitter buffer）、`m8_mulaw`（μ-law 編解碼）——先各自跑過、改過。**Part B 組裝**：七步把模組接成整支程式，每一步都是一支能編譯、能跑、能用 `run_mock_tests.py --only …` 驗的完整程式（`step1_raw/` → `step7_live/`），每一行都有註解。**每個模組與每一步各自一個資料夾**，裡面有自己的 `README.md`、`.c`、`Makefile`，可以單獨 `cd` 進去 `make`：
 
 | 步 | 加什麼 | 過哪些驗收 |
 |---|---|---|
@@ -377,7 +377,7 @@ STATS role=send codec=pcm frames=1678 bytes=1094056 duration_ms=33560 pace=20
 | 6 | `--codec mulaw` | C1 |
 | 7 | live `call`（麥克風→對方喇叭） | S0 |
 
-**第 7 步就是官方起點**：把 `step7_live.c`（連同 `baseline/wrapper/`）複製進 team repo 的 `src/`，起點層 40 分就在那裡；接著在它的 `--codec` 分支加 ADPCM（必做）與 Huffman（加分）。口試會問你們改的部分每一行在做什麼。
+**第 7 步就是官方起點**：把 `step7_live/step7_live.c`（連同 `baseline/wrapper/`）複製進 team repo 的 `src/`，起點層 40 分就在那裡；接著在它的 `--codec` 分支加 ADPCM（必做）與 Huffman（加分）。口試會問你們改的部分每一行在做什麼。
 
 ## baseline/：官方文字 baseline＋音訊／UDP wrapper
 

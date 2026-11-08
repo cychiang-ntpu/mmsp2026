@@ -35,7 +35,7 @@
 
 | 時間 | 步 | 助教 |
 |---|---|---|
-| 13:10–14:00 | 第 1 步 raw | 帶看 `step1_raw.c` 的 send／recv 兩個迴圈；巡場確認每組 recv 寫得出 WAV |
+| 13:10–14:00 | 第 1 步 raw | 帶看 `step1_raw/step1_raw.c` 的 send／recv 兩個迴圈；巡場確認每組 recv 寫得出 WAV |
 | 14:10–15:00 | 第 2 步 header | 帶看 header 的 12 bytes 與 `put_u16`／`put_u32`；讓每組經過 `udp_impair.py --loss 0.05` 看 seq 跳號 |
 | 15:10–15:50 | 第 3 步 jitter buffer | 帶看環形陣列、播放時鐘、repeat；目標每組 `run_mock_tests.py --only 1,2,5` PASS |
 | 15:50–16:00 | 收 SHA 與問題；沒做完 11/15 18:00 前 push | |

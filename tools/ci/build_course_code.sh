@@ -57,12 +57,12 @@ run "make smoke（本機 UDP：send → recv 逐 byte 相同）" $MAKE -C $D smo
 echo "== Team 2 python_ref：驗收 1–7（本機 UDP，經 udp_impair.py）=="
 run "run_mock_tests.py（python_ref 對 python_ref）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$PY team_projects/team2_voicelink/python_ref/voicelink.py" "$PY team_projects/team2_voicelink/python_ref/voicelink.py" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5390 --buffer 200
 
-echo "== Team 2 tutorial（Part A 八個模組＋Part B 七步）=="
+echo "== Team 2 tutorial（Part A 八個模組＋Part B 七步，每個各自一個資料夾）=="
 D=team_projects/team2_voicelink/tutorial
 run "make" $MAKE -B -C $D all; nowarn "Team 2 tutorial"
 run "make check-modules（m3 時鐘、m6 header、m7 環形 buffer、m8 μ-law）" $MAKE -C $D check-modules
-run "step5_robust：驗收 1–7（本機 UDP）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$D/step5_robust$EXE" "$D/step5_robust$EXE" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5460 --buffer 200 --only 1,2,3,4,5,6,7
-run "step6_mulaw：驗收 8（μ-law SQNR ≥ 30 dB）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$D/step6_mulaw$EXE" "$D/step6_mulaw$EXE" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5470 --buffer 200 --only 1,8
+run "step5_robust：驗收 1–7（本機 UDP）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$D/step5_robust/step5_robust$EXE" "$D/step5_robust/step5_robust$EXE" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5460 --buffer 200 --only 1,2,3,4,5,6,7
+run "step6_mulaw：驗收 8（μ-law SQNR ≥ 30 dB）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$D/step6_mulaw/step6_mulaw$EXE" "$D/step6_mulaw/step6_mulaw$EXE" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5470 --buffer 200 --only 1,8
 
 echo "== Team 3 baseline（jpeg／camera／display wrapper＋make_sequence＋miniline_raw）=="
 D=team_projects/team3_miniline/baseline
