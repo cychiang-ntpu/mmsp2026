@@ -1,7 +1,7 @@
 # Team 2｜VoiceLink：即時語音管線（UDP、20 ms framing、jitter buffer、遺失補償）
 
 - 期間：10/19－11/23｜繳交截止：**11/22（日）18:00**｜評測：11/23（三節課內）
-- 2026/11/1 公告：11/9、11/16 老師出國改為進度討論會，截止與評測各順延兩週（原 11/8／11/9）；**同時新增功能 4「語音壓縮（μ-law）」**，見下
+- 2026/11/1 公告：11/9、11/16 老師出國改為助教主持的 tutorial 工作坊，截止與評測各順延兩週（原 11/8／11/9）；**同時新增功能 4「語音壓縮（μ-law）」**，見下
 - 團隊 repo 必備：`src/`、`include/`、`tests/`、建置檔、`README.md`、
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
 - 繳交：登錄 repo URL＋完整 commit SHA
@@ -239,8 +239,8 @@ STATS role=recv buffer_ms=60 plc=repeat codec=mulaw frames_out=1678 received=160
 |---|---|---|
 | 1–2 | 10/19–11/1 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；**兩台電腦 UDP 互通** |
 | 3 | 11/2–11/8 | 11/2 第三節老師帶著做 [tutorial](tutorial/) 第 1–3 步（header、jitter buffer、repeat PLC）；回家做完第 3 步 → **基本層 B1–B3 過了** |
-| 4 | 11/9–11/15 | 11/9 進度討論會 ①（格式互測、問題診所、交進度報告 ①）；tutorial 第 4–5 步（完整 STATS、壞封包、亂序）→ 基本層全過、進階 A1 |
-| 5 | 11/16–11/22 | 11/16 進度討論會 ②（自動驗收互測、live 預演、交進度報告 ②＋小成品）；tutorial 第 6–7 步（μ-law、live）；投影片、報告兩題；**11/22 18:00 前登錄 SHA** |
+| 4 | 11/9–11/15 | 11/9 工作坊 ①：Part A 模組＋第 1–3 步，每步 push → 基本層；回家做完第 3 步（11/15 前 push） |
+| 5 | 11/16–11/22 | 11/16 工作坊 ②：第 4–7 步（完整 STATS、壞封包、μ-law、live）、組間互測、live 預演；投影片、報告兩題、進度報告；**11/22 18:00 前登錄 SHA** |
 
 ## tutorial/：手把手七步（11/1 新增；從這裡開始）
 
