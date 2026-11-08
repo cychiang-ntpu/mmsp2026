@@ -15,7 +15,12 @@
  *  不能把一個 struct 直接 memcpy 進封包：struct 有對齊空隙，而且 CPU 是 little-endian、網路慣例是 big-endian。
  *  要一個 byte 一個 byte 用位移放：put_u16(p, v) 就是 p[0] = v >> 8; p[1] = v & 0xff。
  *===========================================================================*/
-#include "udp.h"                 /* put_u16／put_u32／get_u16／get_u32 在這裡 */
+/* ---- 下面這些 .h 是課程自己寫的 wrapper，不是系統函式庫：都在 ../../baseline/wrapper/（Makefile 用 -I 指過去）。
+ *   udp.h 一定要是第一個 #include：它在任何系統標頭之前定義 _POSIX_C_SOURCE（macOS／Linux 才看得到 select／clock_gettime），
+ *   而且 Windows 的 winsock2.h 必須排在 windows.h 前面；放第一行兩邊都安全（和 Team 1 的 platform.h 同一個道理）。
+ *   udp.h    UDP socket 的薄包裝（Windows 底下是 Winsock、macOS／Linux 是 POSIX socket）＋ put_u16／put_u32／get_u16／get_u32（big-endian）
+ */
+#include "udp.h"                 /* 一定排第一（原因見上面） */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -6,7 +6,12 @@
  *           對方一次 recvfrom 就拿到整行，不會「半行」、也不會兩行黏在一起（TCP 才會）。打空行結束兩邊。
  *  試著改：連打兩行很長的字（超過 1400 bytes）看看；或把 ip 改成沒人在聽的位址——sendto 照樣「成功」（UDP 不知道對方在不在）。
  *===========================================================================*/
-#include "udp.h"                 /* 一定排第一 */
+/* ---- 下面這些 .h 是課程自己寫的 wrapper，不是系統函式庫：都在 ../../baseline/wrapper/（Makefile 用 -I 指過去）。
+ *   udp.h 一定要是第一個 #include：它在任何系統標頭之前定義 _POSIX_C_SOURCE（macOS／Linux 才看得到 select／clock_gettime），
+ *   而且 Windows 的 winsock2.h 必須排在 windows.h 前面；放第一行兩邊都安全（和 Team 1 的 platform.h 同一個道理）。
+ *   udp.h    UDP socket 的薄包裝（Windows 底下是 Winsock、macOS／Linux 是 POSIX socket）＋ put_u16／put_u32／get_u16／get_u32（big-endian）
+ */
+#include "udp.h"                 /* 一定排第一（原因見上面） */
 
 #include <stdio.h>
 #include <stdlib.h>

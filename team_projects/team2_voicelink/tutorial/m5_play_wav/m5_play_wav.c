@@ -9,7 +9,15 @@
  *  和 Team 2 的關係：live 模式的喇叭就是這樣餵的——每次 callback 向 jitter buffer 要一個 frame；
  *  這裡「要 frame」的來源是檔案的下一段，檔案播完就填 0（Team 2 裡是 PLC）。
  *===========================================================================*/
-#include "udp.h"                 /* 一定排第一 */
+/* ---- 下面這些 .h 是課程自己寫的 wrapper，不是系統函式庫：都在 ../../baseline/wrapper/（Makefile 用 -I 指過去）。
+ *   udp.h 一定要是第一個 #include：它在任何系統標頭之前定義 _POSIX_C_SOURCE（macOS／Linux 才看得到 select／clock_gettime），
+ *   而且 Windows 的 winsock2.h 必須排在 windows.h 前面；放第一行兩邊都安全（和 Team 1 的 platform.h 同一個道理）。
+ *   udp.h    UDP socket 的薄包裝（Windows 底下是 Winsock、macOS／Linux 是 POSIX socket）＋ put_u16／put_u32／get_u16／get_u32（big-endian）
+ *   clock.h  單調時鐘：clock_ms（毫秒）、sleep_until_ms（睡到某個絕對時刻）
+ *   wav.h    讀寫 WAV：wav_read／wav_write（wav_t）
+ *   audio.h  麥克風與喇叭：audio_start_duplex／audio_stop／audio_list_devices（實作在 audio.c，用 miniaudio；要連結 ../audio.o）
+ */
+#include "udp.h"                 /* 一定排第一（原因見上面） */
 #include "clock.h"
 #include "wav.h"
 #include "audio.h"

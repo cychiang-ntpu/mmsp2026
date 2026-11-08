@@ -18,7 +18,14 @@
  *    offset 8   4 bytes  ssrc   這次串流的隨機識別碼
  *    offset 12  640      PCM    320 個 16-bit little-endian sample（BYE 沒有這段）
  *===========================================================================*/
-#include "udp.h"                 /* 一定要第一個 include */
+/* ---- 下面這些 .h 是課程自己寫的 wrapper，不是系統函式庫：都在 ../../baseline/wrapper/（Makefile 用 -I 指過去）。
+ *   udp.h 一定要是第一個 #include：它在任何系統標頭之前定義 _POSIX_C_SOURCE（macOS／Linux 才看得到 select／clock_gettime），
+ *   而且 Windows 的 winsock2.h 必須排在 windows.h 前面；放第一行兩邊都安全（和 Team 1 的 platform.h 同一個道理）。
+ *   udp.h    UDP socket 的薄包裝（Windows 底下是 Winsock、macOS／Linux 是 POSIX socket）＋ put_u16／put_u32／get_u16／get_u32（big-endian）
+ *   clock.h  單調時鐘：clock_ms（毫秒）、sleep_until_ms（睡到某個絕對時刻）
+ *   wav.h    讀寫 WAV：wav_read／wav_write（wav_t）
+ */
+#include "udp.h"                 /* 一定排第一（原因見上面） */
 #include "clock.h"
 #include "wav.h"
 

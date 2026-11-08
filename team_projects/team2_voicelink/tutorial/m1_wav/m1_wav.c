@@ -12,7 +12,13 @@
  *      pcm          指向 sample 陣列的指標（int16_t，由 wav_read 用 malloc 配置，用完要 wav_free）
  *      n_samples    陣列裡有幾個 int16_t
  *===========================================================================*/
-#include "udp.h"                 /* 這個模組用不到網路，但 wrapper 要求它排第一（平台的 #define 在裡面） */
+/* ---- 下面這些 .h 是課程自己寫的 wrapper，不是系統函式庫：都在 ../../baseline/wrapper/（Makefile 用 -I 指過去）。
+ *   udp.h 一定要是第一個 #include：它在任何系統標頭之前定義 _POSIX_C_SOURCE（macOS／Linux 才看得到 select／clock_gettime），
+ *   而且 Windows 的 winsock2.h 必須排在 windows.h 前面；放第一行兩邊都安全（和 Team 1 的 platform.h 同一個道理）。
+ *   udp.h    UDP socket 的薄包裝（Windows 底下是 Winsock、macOS／Linux 是 POSIX socket）＋ put_u16／put_u32／get_u16／get_u32（big-endian）
+ *   wav.h    讀寫 WAV：wav_read／wav_write（wav_t）
+ */
+#include "udp.h"                 /* 一定排第一（原因見上面） */
 #include "wav.h"
 
 #include <stdio.h>

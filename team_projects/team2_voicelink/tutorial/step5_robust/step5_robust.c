@@ -16,7 +16,14 @@
  *    5. --bind <ip>：只收某一張網卡；第一包的等待上限 = max(10 × timeout, 30 s)，永遠不會無限等。
  *    6. 結束碼：0 正常；1 網路錯誤（開不了 socket、recv 失敗）；2 參數或檔案格式錯誤。前幾步已經這樣做，這裡整理成一致。
  *===========================================================================*/
-#include "udp.h"
+/* ---- 下面這些 .h 是課程自己寫的 wrapper，不是系統函式庫：都在 ../../baseline/wrapper/（Makefile 用 -I 指過去）。
+ *   udp.h 一定要是第一個 #include：它在任何系統標頭之前定義 _POSIX_C_SOURCE（macOS／Linux 才看得到 select／clock_gettime），
+ *   而且 Windows 的 winsock2.h 必須排在 windows.h 前面；放第一行兩邊都安全（和 Team 1 的 platform.h 同一個道理）。
+ *   udp.h    UDP socket 的薄包裝（Windows 底下是 Winsock、macOS／Linux 是 POSIX socket）＋ put_u16／put_u32／get_u16／get_u32（big-endian）
+ *   clock.h  單調時鐘：clock_ms（毫秒）、sleep_until_ms（睡到某個絕對時刻）
+ *   wav.h    讀寫 WAV：wav_read／wav_write（wav_t）
+ */
+#include "udp.h"                 /* 一定排第一（原因見上面） */
 #include "clock.h"
 #include "wav.h"
 

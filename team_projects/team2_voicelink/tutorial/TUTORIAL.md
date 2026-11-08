@@ -24,6 +24,9 @@ step7_live     + call／devices（麥克風 ↔ 喇叭，執行緒）           
 每一步都可以單獨編譯、單獨執行、單獨測；想知道「這一步到底改了什麼」就 `diff step3_buffer/step3_buffer.c step4_counters/step4_counters.c`。
 七個檔案只用 `baseline/wrapper/` 的四個標頭（`udp.h`、`clock.h`、`wav.h`、`audio.h`），什麼都沒複製，編譯時 `-I../baseline/wrapper`。
 
+**每支程式開頭的 `#include "udp.h"`、`"clock.h"`、`"wav.h"`、`"audio.h"` 都不是系統函式庫**，是課程自己寫的 wrapper，放在 [`../baseline/wrapper/`](../baseline/wrapper/)（Makefile 用 `-I` 指過去）。
+`udp.h` 底下在 Windows 是 Winsock、在 macOS／Linux 是 POSIX socket；它一定要是第一個 `#include`，因為它要在任何系統標頭之前定義 `_POSIX_C_SOURCE`，而且 `winsock2.h` 必須排在 `windows.h` 前面。每個 `.c` 檔的 include 區都有一段註解說明這件事（只有 m7 完全不用 wrapper，是純 C）。
+
 規格在 [`../README.md`](../README.md)：先把「名詞解釋」那張表看過一遍，下面每一步會指回去。
 對照用的 Python 完整版在 [`../python_ref/voicelink.py`](../python_ref/voicelink.py)：它是評測的對手端，所以每一步都拿它互測。
 
