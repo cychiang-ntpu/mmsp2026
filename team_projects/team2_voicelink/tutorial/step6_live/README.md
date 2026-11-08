@@ -1,22 +1,23 @@
-## 第 7 步｜step7_live.c：`call`——麥克風進去、對方喇叭出來（執行緒只在這一步出現）
+## 第 6 步｜step6_live.c：`call`——麥克風進去、對方喇叭出來（執行緒只在這一步出現）
 
-[← 教學總覽](../TUTORIAL.md)｜上一個：[第 6 步 μ-law](../step6_mulaw/README.md)
+[← 教學總覽](../TUTORIAL.md)｜上一個：[第 5 步 robust](../step5_robust/README.md)｜下一個：[mulaw_system（你們寫）](../../mulaw_system/README.md)
 
 ### 在這個資料夾
 
 | macOS / Linux | Windows PowerShell |
 |---|---|
-| `cd team_projects/team2_voicelink/tutorial/step7_live` | `cd team_projects\team2_voicelink\tutorial\step7_live` |
-| `make`（編出 `./step7_live`（Windows `.\step7_live.exe`）） | `mingw32-make` |
+| `cd team_projects/team2_voicelink/tutorial/step6_live` | `cd team_projects\team2_voicelink\tutorial\step6_live` |
+| `make`（編出 `./step6_live`（Windows `.\step6_live.exe`）） | `mingw32-make` |
 | `W=../../../../lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav` | `$W = "..\..\..\..\lectures\wk07_1019_audio-pcm\data\aeueo-16kHz.wav"` |
 
-程式：[`step7_live.c`](step7_live.c)（每一行都有註解，先讀檔頭的「用法／看到什麼／試著改」）。
+程式：[`step6_live.c`](step6_live.c)（每一行都有註解，先讀檔頭的「用法／看到什麼／試著改」）。
 這支程式用到麥克風／喇叭，`make` 會先把 `../../baseline/wrapper/audio.c`（miniaudio）編成 `../audio.o`，第一次要 10–20 秒。
 
-**目標**：`call <my_port> <peer_ip> <peer_port>` 兩台電腦戴耳機通話；同一套 jitter buffer 與 PLC；按 Enter 結束印 STATS；`devices` 列裝置。
+**目標**：`call <my_port> <peer_ip> <peer_port>` 兩台電腦戴耳機通話；同一套 jitter buffer 與 PLC；按 Enter 結束印 STATS；`devices` 列裝置。聲音還是 raw PCM（640 bytes 一包）。
 
-**用到的模組**：m4（mic 那一半 → 湊 320 → m6 的 header → m2 的 `udp_send`）、m5（spk 那一半 → 向 m7 的 buffer 要 frame）、
-m8（`--codec mulaw`）。
+**tutorial 到這裡結束**：做到第 6 步、兩台能通話，就是 11/23 demo 的第一個 10 分。接下來的 μ-law、ADPCM、Huffman 在 [`../../mulaw_system/`](../../mulaw_system/README.md) 與 [`../../adpcm_huffman_system/`](../../adpcm_huffman_system/README.md)——那兩個資料夾給的框架就是這支程式加一張 codec 表。
+
+**用到的模組**：m4（mic 那一半 → 湊 320 → m6 的 header → m2 的 `udp_send`）、m5（spk 那一半 → 向 m7 的 buffer 要 frame）。
 
 **要加的東西（為什麼）**
 
@@ -25,19 +26,18 @@ m8（`--codec mulaw`）。
 - **audio callback 就是播放時鐘**：mock 模式要自己算 `play_t0 + 20i`，live 不用——喇叭每 320 個 sample 跟你要一次，節奏由硬體決定。
   每湊滿 320 就 `jb_tick` 一次，其他一模一樣（開播條件也一樣：第一包到達 + `--buffer` ms）。
 - **為什麼要一條接收執行緒**：mock 的「播放」只是寫記憶體，可以和收封包排在同一個迴圈；live 的播放由音訊系統在它的執行緒上呼叫，
-  我們管不了它什麼時候來，所以收封包要另外一條執行緒（`recv_thread`：`udp_recv` 200 ms 逾時 → 解析 → 解碼 → `jb_put`）。
+  我們管不了它什麼時候來，所以收封包要另外一條執行緒（`recv_thread`：`udp_recv` 200 ms 逾時 → 解析 → `jb_put`）。
 
   ```
   main ──── 等 Enter ─────────────────────────────────────────────▶ running=0、BYE×3、audio_stop、join
-  recv_thread ── udp_recv → parse → decode → [lock] jb_put [unlock] ──▶ 一直到 running=0
-  音訊執行緒 ─── 每 20 ms audio_cb：mic → 湊 320 → encode → sendto
+  recv_thread ── udp_recv → parse → [lock] jb_put [unlock] ─────────▶ 一直到 running=0
+  音訊執行緒 ─── 每 20 ms audio_cb：mic → 湊 320 → header → sendto
                                    spk ← 每 320 個 [lock] jb_tick [unlock]
   ```
 - **鎖（mutex）**：兩條執行緒都碰 `jb`，不加鎖會在 `jb_put` 寫到一半時被 `jb_tick` 讀到。規則：**任何讀寫 jb 的地方都在 `lock_take` / `lock_give` 之間，
-  鎖裡不做慢的事**（解碼在鎖外做、不 printf、不等網路）。平台差異（Windows `CRITICAL_SECTION`／POSIX `pthread_mutex`）包成四個小函式，
-  和第 2 週 `chat.c` 同一套。
+  鎖裡不做慢的事**（不 printf、不等網路）。平台差異（Windows `CRITICAL_SECTION`／POSIX `pthread_mutex`）包成四個小函式，和第 2 週 `chat.c` 同一套。
 - **結束**：Enter → `running = 0` → `audio_stop()`（之後 callback 不會再來）→ 送 3 次 BYE → `thread_join`。對方收到 BYE 或看到新的 ssrc 就 `jb_reset`。
-- `send`／`recv` 一行都沒改——`diff ../step6_mulaw/step6_mulaw.c step7_live.c` 全是「加」。
+- `send`／`recv` 一行都沒改——`diff ../step5_robust/step5_robust.c step6_live.c` 全是「加」。
 
 **程式碼**
 
@@ -65,20 +65,21 @@ static void spk_fill(call_t *c, int16_t *spk, size_t n) {    /* 這裡就是 liv
 }
 static void audio_cb(const int16_t *mic, int16_t *spk, size_t n, void *user) {
     call_t *c = (call_t *)user;                               /* user = 我們交給 audio_start_duplex 的 call_t 位址 */
-    if (mic) mic_push_and_send(c, mic, n);                    /* 湊滿 320 → encode → header → udp_send */
+    if (mic) mic_push_and_send(c, mic, n);                    /* 湊滿 320 → header → udp_send */
     if (spk) spk_fill(c, spk, n);                             /* mic／spk 可能是 NULL（退路模式分開叫） */
 }
-static THREAD_FN(recv_thread) { while (c->running) { udp_recv(..., 200, ...); parse; decode; lock; jb_put; unlock; } }
+static THREAD_FN(recv_thread) { while (c->running) { udp_recv(..., 200, ...); parse; lock; jb_put; unlock; } }
 ```
 
 **怎麼測**
 
 | macOS / Linux | Windows PowerShell |
 |---|---|
-| `./step7_live devices` | `.\step7_live.exe devices` |
-| 同一台兩個視窗：`./step7_live call 5001 127.0.0.1 5002` 與 `./step7_live call 5002 127.0.0.1 5001` | `.\step7_live.exe call 5001 127.0.0.1 5002` 與 `.\step7_live.exe call 5002 127.0.0.1 5001` |
-| 兩台電腦（手機熱點）：A `./step7_live call 5001 <B的IP> 5001 --codec mulaw`、B 反過來 | 同左（Windows 防火牆第一次會問，允許「私人網路」） |
+| `./step6_live devices` | `.\step6_live.exe devices` |
+| 同一台兩個視窗：`./step6_live call 5001 127.0.0.1 5002` 與 `./step6_live call 5002 127.0.0.1 5001` | `.\step6_live.exe call 5001 127.0.0.1 5002` 與 `.\step6_live.exe call 5002 127.0.0.1 5001` |
+| 兩台電腦（手機熱點）：A `./step6_live call 5001 <B的IP> 5001`、B 反過來 | 同左（Windows 防火牆第一次會問，允許「私人網路」） |
 | 夾搗蛋：中繼 `udp_impair.py 5005 127.0.0.1 5002 --loss 0.05 --jitter 30`，A 改送 5005 | 同左 |
+| mock 模式沒變：`python3 ../../tests/run_mock_tests.py "./step6_live send" "./step6_live recv" $W --only 1,2,3,4,5,6,7` 仍 7/7 | `python ..\..\tests\run_mock_tests.py ".\step6_live.exe send" ".\step6_live.exe recv" $W --only 1,2,3,4,5,6,7` |
 
 **看到什麼才算對**
 
@@ -91,7 +92,7 @@ STATS role=recv buffer_ms=60 plc=repeat codec=pcm frames_out=142 received=148 lo
 STATS role=send codec=pcm frames=150 bytes=97800 duration_ms=3000 pace=20
 ```
 
-兩台電腦戴耳機講話 30 秒聽得懂（單向也算；11/23 demo 的第一項）。`avg_delay_ms` ≈ buffer + 喇叭的輸出 buffer（約 40 ms），這是報告第 4 題「延遲由哪些部分組成」的一項。
+兩台電腦戴耳機講話 30 秒聽得懂（單向也算；11/23 demo 的第一項 10 分）。`avg_delay_ms` ≈ buffer + 喇叭的輸出 buffer（約 40 ms），這是報告第 4 題「延遲由哪些部分組成」的一項。
 `received` 比 `frames_out` 多幾包是正常的：按 Enter 時 buffer 裡還有沒播完的。
 
 **常見錯誤**

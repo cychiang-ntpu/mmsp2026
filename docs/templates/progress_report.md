@@ -2,7 +2,7 @@
 
 組別：　　　組員：　　　　　　　　　　　　日期：　　　　（① 11/9 用、② 11/16 用，同一個範本）
 
-> ① 存成 team repo 的 `docs/progress_team2_1.md`，11/15（日）18:00 前 push；② 存成 `docs/progress_team2_2.md`，11/22（日）18:00 與 SHA 一起交。
+> ① 存成 team repo 的 `docs/progress_team2_1.md`，11/16（一）16:00 前 push；② 存成 `docs/progress_team2_2.md`，11/22（日）18:00 與 SHA 一起交。
 
 ## 1. 進度表
 

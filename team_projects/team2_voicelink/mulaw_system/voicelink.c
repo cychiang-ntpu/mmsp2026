@@ -1,29 +1,23 @@
 /*============================================================================
- *  step7_live.c  —  第 7 步：live 模式：call（麥克風 → 對方喇叭、對方 → 我的喇叭）與 devices
+ *  voicelink.c  —  μ-law 系統的框架（mulaw_system/）：第 6 步 live 的完整程式 ＋ 一張 codec 表（目前只有 pcm）
  *----------------------------------------------------------------------------
- *  用法：
- *    step7_live send <ip> <port> <in.wav> [--burst] [--seq0 <n>] [--codec pcm|mulaw]
- *    step7_live recv <port> <out.wav> [--bind <ip>] [--buffer <ms>] [--plc zero|repeat] [--timeout <ms>]
- *    step7_live call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero|repeat] [--codec pcm|mulaw]
- *    step7_live devices
+ *  用法（和第 6 步一樣，多一個 --codec）：
+ *    voicelink send <ip> <port> <in.wav> [--burst] [--seq0 <n>] [--codec <名字>]
+ *    voicelink recv <port> <out.wav> [--bind <ip>] [--buffer <ms>] [--plc zero|repeat] [--timeout <ms>]
+ *    voicelink call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero|repeat] [--codec <名字>]
+ *    voicelink devices
  *
- *  和第 6 步的差別（diff step6_mulaw.c step7_live.c）：send／recv 一行都沒改，只「加」了 call 與 devices。
- *    1. audio.h 的 duplex callback：音訊系統每 20 ms 在「它自己的執行緒」上呼叫 audio_cb 一次，
- *       給我們剛錄到的 n 個 sample（mic），並要我們把接下來要播的 n 個 sample 填進 spk。
- *       mic 那一半：湊滿 320 個就「編碼 → 加 header → udp_send」（和 send 的迴圈一樣，只是資料來自麥克風）。
- *       spk 那一半：每湊滿 320 個就向 jitter buffer 要一個 frame（jb_tick）——**audio callback 就是播放時鐘**，
- *       不用自己算 play_t0 + 20×i：喇叭每 20 ms 跟我們要一次，節奏由硬體決定。
- *    2. 一條接收執行緒（recv_thread）：udp_recv → 解析 → 解碼 → jb_put。和 mock 模式用「同一個」jb_t。
- *    3. 兩條執行緒都碰 jb，所以用一把鎖（mutex）保護：碰 jb 之前 lock_take、碰完 lock_give。
- *       規則很簡單：任何讀寫 jb 的地方都要在鎖裡面，而且鎖裡面不做慢的事（不 printf、不等網路）。
- *    4. 為什麼 mock 模式不用執行緒、live 要？mock 的「播放」只是寫記憶體，可以和收封包排在同一個迴圈裡；
- *       live 的播放由音訊系統在它的執行緒上呼叫，我們管不了它什麼時候來，所以收封包要另外一條執行緒。
- *    5. 開播條件和 mock 一樣：第一包到達 --buffer ms 之後才開始 tick；之前喇叭填 0（不算 frames_out）。
- *       收到 BYE 或 ssrc 換了：buffer 重置、等下一次開播。按 Enter：送 3 次 BYE、停音訊、印 STATS。
- *  平台差異（執行緒與鎖）：Windows 用 _beginthreadex／CRITICAL_SECTION，POSIX 用 pthread——和第 2 週 chat.c 同一套，
- *  包成 thread_create／thread_join／lock_take／lock_give 四個小函式，後面的程式就不用再管平台。
+ *  這支程式「已經能用」（raw PCM、live、過測試 1–7），你們要做的是把 μ-law 加進去（README.md 有步驟）：
+ *    搜尋 "★ 第 8 步" 就是要動手的地方，一共四處：
+ *      ★ 第 8 步 (1)  搬 m8 的兩張表與 mulaw_init
+ *      ★ 第 8 步 (2)  寫 frame 版的 mulaw_encode／mulaw_decode（一次 320 個 sample）
+ *      ★ 第 8 步 (3)  CODECS 表加一列 { "mulaw", 0x04, 320, mulaw_encode, mulaw_decode }
+ *      ★ 第 8 步 (4)  main 開頭叫 mulaw_init()
+ *    其他地方不用改：jitter buffer、PLC、STATS、執行緒都只看解碼後的 16-bit frame。
+ *  為什麼用一張表：所有「和 codec 有關」的地方（parse_header 的長度檢查、send／call 的 type 與 encode、recv／call 的 decode、
+ *  STATS 的 codec=）都查這張表，加一個 codec 只要加一列，不會「send 用 μ-law 了、call 還是 pcm」。
  *===========================================================================*/
-/* ---- 下面這些 .h 是課程自己寫的 wrapper，不是系統函式庫：都在 ../../baseline/wrapper/（Makefile 用 -I 指過去）。
+/* ---- 下面這些 .h 是課程自己寫的 wrapper，不是系統函式庫：都在 ../baseline/wrapper/（Makefile 用 -I 指過去）。
  *   udp.h 一定要是第一個 #include：它在任何系統標頭之前定義 _POSIX_C_SOURCE（macOS／Linux 才看得到 select／clock_gettime），
  *   而且 Windows 的 winsock2.h 必須排在 windows.h 前面；放第一行兩邊都安全（和 Team 1 的 platform.h 同一個道理）。
  *   udp.h    UDP socket 的薄包裝（Windows 底下是 Winsock、macOS／Linux 是 POSIX socket）＋ put_u16／put_u32／get_u16／get_u32（big-endian）
@@ -34,7 +28,7 @@
 #include "udp.h"                 /* 一定排第一（原因見上面） */
 #include "clock.h"
 #include "wav.h"
-#include "audio.h"               /* audio_start_duplex／audio_stop／audio_list_devices（實作在 ../../baseline/wrapper/audio.c） */
+#include "audio.h"               /* audio_start_duplex／audio_stop／audio_list_devices（實作在 ../baseline/wrapper/audio.c） */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -79,11 +73,8 @@
 #define MAGIC      0x56
 #define T_AUDIO    0x01
 #define T_BYE      0x02
-#define T_MULAW    0x04                          /* type：μ-law 壓縮的 frame，320 bytes */
 #define HDR_LEN    12
 #define PKT_AUDIO  (HDR_LEN + FRAME_BYTES)       /* 652 */
-#define PKT_MULAW  (HDR_LEN + FRAME_SAMPLES)     /* 332 */
-#define MU         255.0                         /* μ-law 的 μ */
 #define BYE_REPEAT 3
 
 #define RING_SLOTS  64                           /* jitter buffer 的格數（要 ≥ cap）；第 seq 包放在第 seq % 64 格 */
@@ -99,12 +90,12 @@ typedef struct {
 static int usage(void) {
     fprintf(stderr,
         "用法:\n"
-        "  step7_live send <ip> <port> <in.wav> [--burst] [--seq0 <n>] [--codec pcm|mulaw]\n"
-        "  step7_live recv <port> <out.wav> [--bind <ip>] [--buffer <ms>] [--plc zero|repeat] [--timeout <ms>]\n"
-        "  step7_live call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero|repeat] [--codec pcm|mulaw]\n"
+        "  voicelink send <ip> <port> <in.wav> [--burst] [--seq0 <n>] [--codec <名字>]\n"
+        "  voicelink recv <port> <out.wav> [--bind <ip>] [--buffer <ms>] [--plc zero|repeat] [--timeout <ms>]\n"
+        "  voicelink call <my_port> <peer_ip> <peer_port> [--buffer <ms>] [--plc zero|repeat] [--codec <名字>]\n"
         "      雙向通話（戴耳機）；按 Enter 結束\n"
-        "  step7_live devices                      列出麥克風與喇叭\n"
-        "      --codec    pcm：16-bit 原樣 640 bytes（預設）；mulaw：8-bit 320 bytes（recv 自動依封包 type 判斷）\n"
+        "  voicelink devices                      列出麥克風與喇叭\n"
+        "      --codec    送端用哪種 codec（CODECS 表裡的名字；這一步只有 pcm = 16-bit 原樣 640 bytes）；recv 依封包 type 自動判斷\n"
         "      --burst    不等 20 ms，一口氣全送（看 overflow 用）\n"
         "      --seq0     第一包的 seq（預設 0；給 65500 可以看 16-bit 繞回）\n"
         "      --bind     只收這個本機 IP 的封包（預設 0.0.0.0 = 全部）\n"
@@ -154,6 +145,41 @@ static int load_wav_16k_mono(const char *path, wav_t *w) {
     return 0;
 }
 
+/*--------------------------------------------------------------------------
+ * codec 介面：換 codec 只動這一區（第 8、9 步就是在 CODECS 表裡各加一列，並寫出那一列的 encode／decode）
+ *-------------------------------------------------------------------------*/
+typedef struct {
+    const char *name;                            /* --codec 的名字 = STATS 印的名字 */
+    uint8_t     type;                            /* 封包 header 的 type（規格的表） */
+    size_t      payload;                         /* 每包聲音資料的 bytes（規格：pcm 640、mulaw 320、adpcm 160） */
+    void (*encode)(const int16_t *pcm, uint8_t *out);   /* 320 個 16-bit sample → payload bytes */
+    void (*decode)(const uint8_t *in, int16_t *pcm);    /* payload bytes → 320 個 16-bit sample */
+} codec_t;
+
+/* ★ 第 8 步 (1)(2)：m8 的兩張表、mulaw_init、frame 版的 mulaw_encode／mulaw_decode 放在這一段的前面（表要先宣告才能放進 CODECS）。
+ * 提示：#include <math.h>、#define MU 255.0、static uint8_t mulaw_enc[65536]; static int16_t mulaw_dec[256]; */
+
+/* pcm：不壓縮，只是 16-bit 轉成 little-endian 的 bytes（和第 1 步一樣） */
+static void pcm_encode(const int16_t *pcm, uint8_t *out) { pcm_to_bytes(pcm, FRAME_SAMPLES, out); }
+static void pcm_decode(const uint8_t *in, int16_t *pcm)  { bytes_to_pcm(in, FRAME_SAMPLES, pcm); }
+
+static const codec_t CODECS[] = {
+    { "pcm", T_AUDIO, FRAME_BYTES, pcm_encode, pcm_decode },
+    /* ★ 第 8 步 (3)：在這裡加一列 { "mulaw", 0x04, FRAME_SAMPLES, mulaw_encode, mulaw_decode }（320 bytes；規格 type 表的 0x04） */
+};
+#define N_CODECS (sizeof(CODECS) / sizeof(CODECS[0]))
+
+/* 名字 → 表的那一列（--codec 用）；找不到回傳 NULL */
+static const codec_t *codec_by_name(const char *name) {
+    for (size_t i = 0; i < N_CODECS; i++) if (strcmp(CODECS[i].name, name) == 0) return &CODECS[i];
+    return NULL;
+}
+/* 封包 type → 表的那一列（recv 用）；找不到回傳 NULL（＝不是 AUDIO 類的 type） */
+static const codec_t *codec_by_type(uint8_t type) {
+    for (size_t i = 0; i < N_CODECS; i++) if (CODECS[i].type == type) return &CODECS[i];
+    return NULL;
+}
+
 static void pack_header(uint8_t *p, uint8_t type, uint16_t seq, uint32_t ts, uint32_t ssrc) {
     p[0] = MAGIC;
     p[1] = type;
@@ -168,50 +194,13 @@ static int parse_header(const uint8_t *p, int len, hdr_t *h) {
     h->seq  = get_u16(p + 2);
     h->ts   = get_u32(p + 4);
     h->ssrc = get_u32(p + 8);
-    if (h->type == T_AUDIO && len == PKT_AUDIO) return 1;
-    if (h->type == T_MULAW && len == PKT_MULAW) return 1;
     if (h->type == T_BYE && len == HDR_LEN) return 1;
-    return 0;
+    const codec_t *c = codec_by_type(h->type);                        /* AUDIO 類：type 在表裡、長度剛好 = header + payload */
+    return c != NULL && len == (int)(HDR_LEN + c->payload);
 }
 
-/* type → 名字（STATS 用） */
-static const char *codec_name(uint8_t type) { return type == T_MULAW ? "mulaw" : "pcm"; }
-
-/*--------------------------------------------------------------------------
- * μ-law：兩張查表
- *-------------------------------------------------------------------------*/
-static uint8_t mulaw_enc[65536];                 /* 索引 = sample + 32768（把 -32768…32767 平移成 0…65535） */
-static int16_t mulaw_dec[256];                   /* 索引 = 收到的 byte */
-
-/* 夾在 [lo, hi] 之間 */
-static long clampl(long v, long lo, long hi) { return v < lo ? lo : (v > hi ? hi : v); }
-
-/* 程式開始時叫一次：用公式把兩張表算好。lrint = 四捨五入到最接近的整數（.5 時取偶數，和 Python 的 round 一樣）。 */
-static void mulaw_init(void) {
-    for (long sv = -32768; sv <= 32767; sv++) {
-        double x = (double)sv / 32768.0;                                    /* 正規化到 [-1, 1) */
-        double y = log(1.0 + MU * fabs(x)) / log(1.0 + MU);                 /* 壓縮：log 曲線，結果在 [0, 1] */
-        if (x < 0) y = -y;                                                  /* 符號另外處理（copysign） */
-        long q = clampl(lrint(y * 128.0), -128, 127);                       /* 256 階均勻量化 */
-        mulaw_enc[sv + 32768] = (uint8_t)(q + 128);                         /* 存成 0…255 */
-    }
-    for (int b = 0; b < 256; b++) {
-        double q = (double)(b - 128) / 128.0;                               /* 還原成 [-1, 1) 的 y */
-        double x = (pow(1.0 + MU, fabs(q)) - 1.0) / MU;                     /* 展開：log 的反函數 */
-        if (q < 0) x = -x;
-        mulaw_dec[b] = (int16_t)clampl(lrint(x * 32768.0), -32768, 32767);
-    }
-}
-
-/* 320 個 16-bit sample → 320 bytes */
-static void mulaw_encode(const int16_t *pcm, uint8_t *out) {
-    for (int i = 0; i < FRAME_SAMPLES; i++) out[i] = mulaw_enc[pcm[i] + 32768];
-}
-
-/* 320 bytes → 320 個 16-bit sample */
-static void mulaw_decode(const uint8_t *in, int16_t *pcm) {
-    for (int i = 0; i < FRAME_SAMPLES; i++) pcm[i] = mulaw_dec[in[i]];
-}
+/* type → 名字（STATS 用）；不在表裡就當 pcm（還沒收到任何包時 STATS 也要印得出來） */
+static const char *codec_name(uint8_t type) { const codec_t *c = codec_by_type(type); return c ? c->name : "pcm"; }
 
 /* 16-bit seq 的比較：a 比 b 新幾個？回傳 a − b（正 = a 比較新、負 = a 比較舊、0 = 同一包）。
  * seq 是 uint16_t，65535 的下一個是 0；直接比大小會以為 0 < 65535 是「很舊」。
@@ -381,7 +370,7 @@ static unsigned jb_lost(const jb_t *jb) {
 /*--------------------------------------------------------------------------
  * send（和第 2 步相同）
  *-------------------------------------------------------------------------*/
-static int cmd_send(const char *ip, int port, const char *path, int burst, int seq0, int use_mulaw) {
+static int cmd_send(const char *ip, int port, const char *path, int burst, int seq0, const codec_t *codec) {
     wav_t w;
     if (load_wav_16k_mono(path, &w) != 0) return 2;
 
@@ -391,14 +380,14 @@ static int cmd_send(const char *ip, int port, const char *path, int burst, int s
     size_t n_frames = (w.n_samples + FRAME_SAMPLES - 1) / FRAME_SAMPLES;
     srand((unsigned)time(NULL) ^ (unsigned)clock_ms());
     uint32_t ssrc = ((uint32_t)rand() << 16) ^ (uint32_t)rand();
-    uint8_t ptype = use_mulaw ? T_MULAW : T_AUDIO;                     /* --codec 決定 type 與每包的長度 */
-    size_t pkt_len = use_mulaw ? PKT_MULAW : PKT_AUDIO;
+    uint8_t ptype = codec->type;                                       /* --codec 查表：type 與每包的長度都在表裡 */
+    size_t pkt_len = HDR_LEN + codec->payload;
     printf("send：%s（%u samples → %u 包）→ %s:%d，ssrc=0x%08X，codec=%s，每 %d ms 一包 %u bytes\n",
            path, (unsigned)w.n_samples, (unsigned)n_frames, ip, port, (unsigned)ssrc, codec_name(ptype), FRAME_MS,
            (unsigned)pkt_len);
     fflush(stdout);
 
-    uint8_t pkt[PKT_AUDIO];
+    uint8_t pkt[PKT_AUDIO];                      /* 最大的一種（pcm）就夠放任何 codec */
     int16_t frame[FRAME_SAMPLES];
     uint16_t seq = (uint16_t)seq0;               /* 平常從 0 開始；--seq0 65500 可以看 65535 → 0 的繞回 */
     size_t sent_bytes = 0;
@@ -412,8 +401,7 @@ static int cmd_send(const char *ip, int port, const char *path, int burst, int s
         if (n > FRAME_SAMPLES) n = FRAME_SAMPLES;
         memset(frame, 0, sizeof(frame));
         memcpy(frame, w.pcm + start, n * sizeof(int16_t));
-        if (use_mulaw) mulaw_encode(frame, pkt + HDR_LEN);                 /* 320 bytes */
-        else pcm_to_bytes(frame, FRAME_SAMPLES, pkt + HDR_LEN);            /* 640 bytes */
+        codec->encode(frame, pkt + HDR_LEN);                               /* 表裡那一列的 encode：pcm 是 640 bytes */
         if (udp_send(&u, pkt, pkt_len) < 0) { udp_close(&u); wav_free(&w); return 1; }
         sent_bytes += pkt_len;
         seq++;
@@ -518,7 +506,7 @@ static int cmd_recv(const char *bind_ip, int port, const char *path, int buffer_
                 if (n_bad <= 3) printf("壞封包 %d bytes（magic／長度／type 不對），丟掉\n", k);
             } else {
                 last_rx = now; have_last_rx = 1;
-                if (h.type == T_AUDIO || h.type == T_MULAW) {
+                if (codec_by_type(h.type) != NULL) {   /* AUDIO 類（表裡有的 type） */
                     if (!have_codec) {           /* 第一個合法 AUDIO 決定這次串流的 codec */
                         codec_type = h.type; have_codec = 1;
                         printf("codec=%s（type 0x%02X）\n", codec_name(h.type), h.type);
@@ -538,8 +526,7 @@ static int cmd_recv(const char *bind_ip, int port, const char *path, int buffer_
                         printf("第一包到了（seq=%u），%d ms 後開播\n", (unsigned)h.seq, buffer_ms);
                     }
                     /* 先解碼成 16-bit，再進 jitter buffer（buffer 與 PLC 不用知道 codec） */
-                    if (h.type == T_MULAW) mulaw_decode(buf + HDR_LEN, frame);
-                    else bytes_to_pcm(buf + HDR_LEN, FRAME_SAMPLES, frame);
+                    codec_by_type(h.type)->decode(buf + HDR_LEN, frame);
                     jb_put(&jb, h.seq, frame, now);
                 } else if (!jb.have_end && (!have_ssrc || h.ssrc == ssrc)) {   /* BYE（同一個 ssrc 的才算）：知道結尾了 */
                     /* 三個 BYE 的 seq 各 +1，第一個掉了就會多算；用 ts（真正的 sample 數）交叉比對：
@@ -626,7 +613,7 @@ typedef struct {
     lock_t   lock;                               /* 保護 jb 與下面「收端狀態」的鎖 */
     volatile int running;                        /* main 把它設成 0，其他執行緒看到就收工 */
     int      buffer_ms;
-    int      use_mulaw;
+    const codec_t *codec;                        /* 我送出去用的 codec（--codec）；對方用什麼看封包的 type */
     /* 送端狀態（只有音訊執行緒碰，不用鎖） */
     uint32_t ssrc;                               /* 我這次串流的識別碼 */
     uint16_t seq;                                /* 下一包的 seq */
@@ -649,10 +636,9 @@ static void mic_push_and_send(call_t *c, const int16_t *mic, size_t n) {
         c->mic_stage[c->mic_fill++] = mic[i];
         if (c->mic_fill == FRAME_SAMPLES) {
             uint8_t pkt[PKT_AUDIO];
-            size_t pkt_len = c->use_mulaw ? PKT_MULAW : PKT_AUDIO;
-            pack_header(pkt, c->use_mulaw ? T_MULAW : T_AUDIO, c->seq, c->ts, c->ssrc);
-            if (c->use_mulaw) mulaw_encode(c->mic_stage, pkt + HDR_LEN);
-            else pcm_to_bytes(c->mic_stage, FRAME_SAMPLES, pkt + HDR_LEN);
+            size_t pkt_len = HDR_LEN + c->codec->payload;
+            pack_header(pkt, c->codec->type, c->seq, c->ts, c->ssrc);
+            c->codec->encode(c->mic_stage, pkt + HDR_LEN);
             if (udp_send(&c->u, pkt, pkt_len) > 0) { c->sent++; c->sent_bytes += (unsigned)pkt_len; }
             c->seq++;
             c->ts += FRAME_SAMPLES;
@@ -712,8 +698,7 @@ static THREAD_FN(recv_thread) {
         }
         if (!c->have_codec) { c->codec_type = h.type; c->have_codec = 1; }
         else if (h.type != c->codec_type) { c->bad++; continue; }
-        if (h.type == T_MULAW) mulaw_decode(buf + HDR_LEN, frame);   /* 解碼在鎖外面做（鎖裡不做慢的事） */
-        else bytes_to_pcm(buf + HDR_LEN, FRAME_SAMPLES, frame);
+        codec_by_type(h.type)->decode(buf + HDR_LEN, frame);         /* 解碼在鎖外面做（鎖裡不做慢的事）；parse_header 已保證 type 在表裡 */
         lock_take(&c->lock);
         if (c->have_peer_ssrc && h.ssrc != c->peer_ssrc) { jb_reset(&c->jb); c->have_first = 0; }
         c->peer_ssrc = h.ssrc; c->have_peer_ssrc = 1;
@@ -724,7 +709,7 @@ static THREAD_FN(recv_thread) {
     THREAD_RETURN;
 }
 
-static int cmd_call(int my_port, const char *peer_ip, int peer_port, int buffer_ms, int plc_zero, int use_mulaw) {
+static int cmd_call(int my_port, const char *peer_ip, int peer_port, int buffer_ms, int plc_zero, const codec_t *codec) {
     if (buffer_ms % FRAME_MS != 0) { fprintf(stderr, "錯誤: --buffer 要是 %d 的倍數\n", FRAME_MS); return 2; }
     int buffer_frames = buffer_ms / FRAME_MS;
     if (buffer_frames * 4 > RING_SLOTS) {
@@ -738,7 +723,7 @@ static int cmd_call(int my_port, const char *peer_ip, int peer_port, int buffer_
     c.jb.cap = buffer_frames * 4;
     c.jb.plc_zero = plc_zero;
     c.buffer_ms = buffer_ms;
-    c.use_mulaw = use_mulaw;
+    c.codec = codec;
     c.spk_pos = FRAME_SAMPLES;                    /* 一開始沒有 frame 在播 */
     srand((unsigned)time(NULL) ^ (unsigned)clock_ms());
     c.ssrc = ((uint32_t)rand() << 16) ^ (uint32_t)rand();
@@ -756,7 +741,7 @@ static int cmd_call(int my_port, const char *peer_ip, int peer_port, int buffer_
         return 1;
     }
     printf("通話中：我聽 port %d，送到 %s:%d，buffer=%d ms，plc=%s，codec=%s。請戴耳機。按 Enter 結束。\n",
-           my_port, peer_ip, peer_port, buffer_ms, plc_zero ? "zero" : "repeat", use_mulaw ? "mulaw" : "pcm");
+           my_port, peer_ip, peer_port, buffer_ms, plc_zero ? "zero" : "repeat", codec->name);
     fflush(stdout);
 
     char line[16];
@@ -783,33 +768,31 @@ static int cmd_call(int my_port, const char *peer_ip, int peer_port, int buffer_
             c.jb.frames_out, c.jb.received, jb_lost(&c.jb), c.jb.late, c.jb.dup, c.jb.reordered, c.jb.overflow,
             c.jb.concealed, avg, c.jb.delay_max);
     fprintf(stderr, "STATS role=send codec=%s frames=%u bytes=%u duration_ms=%u pace=%d\n",
-            use_mulaw ? "mulaw" : "pcm", c.sent, c.sent_bytes, c.sent * FRAME_MS, FRAME_MS);
+            codec->name, c.sent, c.sent_bytes, c.sent * FRAME_MS, FRAME_MS);
     return 0;
 }
 
 int main(int argc, char **argv) {
     if (argc < 2) return usage();
     if (udp_global_init() != 0) return 1;
-    mulaw_init();                                 /* 建 μ-law 的兩張表（幾毫秒） */
+    /* ★ 第 8 步 (4)：這裡叫一次 mulaw_init()（建兩張表，幾毫秒） */
     int rc;
 
     if (strcmp(argv[1], "send") == 0 && argc >= 5) {
         int port = parse_port(argv[3]);
-        int burst = 0, seq0 = 0, use_mulaw = 0;
+        int burst = 0, seq0 = 0;
+        const codec_t *codec = &CODECS[0];       /* 預設 pcm */
         int ok = (port >= 0);
         if (!ok) fprintf(stderr, "錯誤: port 不合法：%s\n", argv[3]);
         for (int i = 5; ok && i < argc; i++) {
             if (strcmp(argv[i], "--burst") == 0) burst = 1;
-            else if (strcmp(argv[i], "--codec") == 0 && i + 1 < argc && strcmp(argv[i + 1], "pcm") == 0) {
-                use_mulaw = 0; i++;
-            } else if (strcmp(argv[i], "--codec") == 0 && i + 1 < argc && strcmp(argv[i + 1], "mulaw") == 0) {
-                use_mulaw = 1; i++;
-            }
+            else if (strcmp(argv[i], "--codec") == 0 && i + 1 < argc && codec_by_name(argv[i + 1]) != NULL)
+                codec = codec_by_name(argv[++i]);
             else if (strcmp(argv[i], "--seq0") == 0 && i + 1 < argc && parse_int(argv[i + 1]) >= 0)
                 seq0 = parse_int(argv[++i]) & 0xFFFF;
             else { fprintf(stderr, "錯誤: 不認識的選項或值不對：%s\n", argv[i]); ok = 0; }
         }
-        rc = ok ? cmd_send(argv[2], port, argv[4], burst, seq0, use_mulaw) : 2;
+        rc = ok ? cmd_send(argv[2], port, argv[4], burst, seq0, codec) : 2;
     } else if (strcmp(argv[1], "recv") == 0 && argc >= 4) {
         int port = parse_port(argv[2]);
         int buffer_ms = 60, timeout_ms = 2000, plc_zero = 0;
@@ -831,7 +814,8 @@ int main(int argc, char **argv) {
     } else if (strcmp(argv[1], "call") == 0 && argc >= 5) {
         int my_port = parse_port(argv[2]);
         int peer_port = parse_port(argv[4]);
-        int buffer_ms = 60, plc_zero = 0, use_mulaw = 0;
+        int buffer_ms = 60, plc_zero = 0;
+        const codec_t *codec = &CODECS[0];
         int ok = (my_port >= 0 && peer_port >= 0);
         if (!ok) fprintf(stderr, "錯誤: port 不合法\n");
         for (int i = 5; ok && i < argc; i += 2) {
@@ -840,11 +824,10 @@ int main(int argc, char **argv) {
             if (strcmp(name, "--buffer") == 0 && val && parse_int(val) > 0)          buffer_ms = parse_int(val);
             else if (strcmp(name, "--plc") == 0 && val && strcmp(val, "zero") == 0)   plc_zero = 1;
             else if (strcmp(name, "--plc") == 0 && val && strcmp(val, "repeat") == 0) plc_zero = 0;
-            else if (strcmp(name, "--codec") == 0 && val && strcmp(val, "pcm") == 0)  use_mulaw = 0;
-            else if (strcmp(name, "--codec") == 0 && val && strcmp(val, "mulaw") == 0) use_mulaw = 1;
+            else if (strcmp(name, "--codec") == 0 && val && codec_by_name(val) != NULL) codec = codec_by_name(val);
             else { fprintf(stderr, "錯誤: 不認識的選項或值不對：%s\n", name); ok = 0; }
         }
-        rc = ok ? cmd_call(my_port, argv[3], peer_port, buffer_ms, plc_zero, use_mulaw) : 2;
+        rc = ok ? cmd_call(my_port, argv[3], peer_port, buffer_ms, plc_zero, codec) : 2;
     } else if (strcmp(argv[1], "devices") == 0) {
         int n = audio_list_devices();
         printf("共 %d 個裝置\n", n);

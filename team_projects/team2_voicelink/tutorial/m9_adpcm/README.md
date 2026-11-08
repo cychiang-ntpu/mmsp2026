@@ -15,8 +15,8 @@
 ### 這個模組的目的
 
 - **做什麼**：把一個 WAV 用 ADPCM 壓成 4 bits／sample（bytes 四分之一）再解回來，算 SQNR；可以逐 sample 印出編碼器在想什麼。
-- **為什麼要先做它**：功能 4 的第二個 codec（必做；程式碼審查 30 分裡最重的一項）。它和 μ-law 是**完全不同的想法**：μ-law 是「每個 sample 自己砍 bits」，ADPCM 是「利用相鄰 sample 很像、只送差」。這支程式把演算法在檔案上做對、讓你用 `--trace` 看到每一步；你們的作業是把它接進 step7 的封包（每包 320 個 sample 獨立編、type 0x05、過測試 9）。
-- **在 Part B 的哪裡用到**：沒有現成的 step——這是你們要自己加進 step7 的 `--codec adpcm`。
+- **為什麼要先做它**：功能 4 的第二個 codec（必做；程式碼審查 30 分裡最重的一項）。它和 μ-law 是**完全不同的想法**：μ-law 是「每個 sample 自己砍 bits」，ADPCM 是「利用相鄰 sample 很像、只送差」。這支程式把演算法在檔案上做對、讓你用 `--trace` 看到每一步；你們的作業是把它接進 `adpcm_huffman_system/voicelink.c` 的 codec 表（每包 320 個 sample 獨立編、type 0x05、過測試 9）。
+- **在哪裡用到**：沒有現成的 step——在 [`../../adpcm_huffman_system/`](../../adpcm_huffman_system/README.md) 的 `voicelink.c` codec 表加一列 `adpcm`（程式裡的 ★ 第 9 步 (a)）。
 - **做完要能回答**：為什麼預測要用「重建值」不用原始值？step 為什麼要自己調？每包開頭為什麼歸零、代價是什麼？
 
 ---
@@ -82,7 +82,7 @@ ADPCM = **A**daptive **D**ifferential **PCM**。
 SQNR 25.2 dB（規格 ≥ 20）OK
 ```
 
-- **比例 0.250**：每個 sample 4 bits = 半個 byte，兩個 sample 包成一個 byte（先到的在高 4 bits，規格這樣定）。到了 step7，一包 640 → 160 bytes；含 12 bytes header 是 172/652 ≈ 0.264（測試 9 看這個）。
+- **比例 0.250**：每個 sample 4 bits = 半個 byte，兩個 sample 包成一個 byte（先到的在高 4 bits，規格這樣定）。到了系統裡，一包 640 → 160 bytes；含 12 bytes header 是 172/652 ≈ 0.264（測試 9 看這個）。
 - **SQNR 25 dB**：比 μ-law 的 37 dB 低 12 dB，但位元率只有它的一半（64 kb/s 對 128 kb/s）。這就是壓縮的取捨：報告的 codec 比較表要把這兩個數字並排。
 - 7 秒的母音檔 `aeueo-16kHz.wav` 只有 21.4 dB——母音振幅大、變化快，差分比較不划算。**SQNR 和內容有關**，所以驗收用老師的語音檔。
 
@@ -107,18 +107,18 @@ SQNR 掉到個位數——大聲的地方一步最多只能走 100 + 50 + 25 + 1
 **實驗 D：故意用原始值預測。** 在 `adpcm_encode_one` 裡，`adpcm_reconstruct(st, nibble)` 之後加一行 `st->pred = s;`（編碼端偷看答案）。
 重跑：編碼端自己覺得誤差很小，但解碼端（沒有這一行）解出來的 SQNR 崩掉。這就是第 2 節那句話的實證。做完記得改回來。
 
-### 6. 搬進 step7（這才是 demo 與程式碼審查看的東西）
+### 6. 搬進 adpcm_huffman_system（這才是 demo 與程式碼審查看的東西）
 
-m9 是「檔案進、檔案出」；step7 要的是「每包 320 個 sample 進、160 bytes 出」。要做的事：
+m9 是「檔案進、檔案出」；系統要的是「每包 320 個 sample 進、160 bytes 出」。要做的事（[adpcm_huffman_system/README.md](../../adpcm_huffman_system/README.md) 9a 有完整程式片段）：
 
-1. 把兩張表、`adpcm_state_t`、`adpcm_reconstruct`、`adpcm_encode_one` 搬進 step7（可以直接複製）。
+1. 把兩張表、`adpcm_state_t`、`adpcm_reconstruct`、`adpcm_encode_one` 搬進 `adpcm_huffman_system/voicelink.c`（可以直接複製）。
 2. 寫兩個 frame 版的函式：
    - `adpcm_encode_frame(const int16_t pcm[320], uint8_t out[160])`：`state_reset`、第 0 個 sample 後把 index 設成 `ADPCM_INDEX0`、320 次 `adpcm_encode_one`、兩個 nibble 包一個 byte（高 4 bits 先）。
    - `adpcm_decode_frame(const uint8_t in[160], int16_t pcm[320])`：同樣的歸零規則、320 次 `adpcm_reconstruct`。
    m9 的主迴圈裡 `i % frame == 0`／`== 1` 那兩行就是這個規則。
 3. send：`--codec adpcm` 時 type = 0x05、payload 160 bytes；STATS 的 `codec=adpcm`、`bytes` 會是 pcm 的 0.264 倍。
 4. recv：type 0x05 → `adpcm_decode_frame` 解成 320 個 int16 **再**丟進 jitter buffer；PLC 不用改。
-5. 驗收：`python ../../tests/run_mock_tests.py "./voicelink send" "./voicelink recv" $S --only 9`，再和 python_ref 互跑（它的 send 對你們的 recv、反過來）。SQNR ≥ 20 dB、bytes 0.264 ± 2%、`--loss 0.05` 仍正常結束。
+5. 驗收：在 `adpcm_huffman_system/` 下 `python ../tests/run_mock_tests.py "./voicelink send" "./voicelink recv" $S --only 9`，再和 python_ref 互跑（它的 send 對你們的 recv、反過來）。SQNR ≥ 20 dB、bytes 0.264 ± 2%、`--loss 0.05` 仍正常結束。
 
 **常見錯誤**：
 - 忘了第 2 個 sample 要把 index 換成 32（python_ref 有，你沒有 → 互通時 SQNR 崩）。

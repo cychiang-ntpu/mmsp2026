@@ -1,0 +1,44 @@
+# Team 2 team repo 的自動檢查：每次 push 都跑 tests/check_submission.py
+#   - tutorial 的 m1–m9、step1–step6：資料夾在、.c 在、make 零警告、該過的測試過（規格「驗收與評分」①）
+#   - mulaw_system／adpcm_huffman_system：框架編得過；codec 表裡有 mulaw／adpcm 就順便跑測試 8／9
+#   這個檔案跟著 team2_voicelink/ 的結構複製到 team repo 的根目錄就會生效（在課程 repo 裡它只是範本，不會跑）。
+#   看結果：repo 的 Actions 分頁；綠勾＝15 項都在。助教批改也看同一份輸出（summary 那一行就是繳交分）。
+name: team2-check
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # --deadline-report 要看 git log
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 工具（gcc、make 已內建）與測試用 WAV
+        run: |
+          gcc --version | head -1
+          python3 - <<'EOF'
+          # 產生 7 秒、16 kHz、單聲道的測試語音替代品（掃頻＋靜音段）；評測時助教用老師的 WAV 另外跑一次
+          import math, struct, wave
+          sr, n = 16000, 16000 * 7
+          w = wave.open("ci_test.wav", "wb"); w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+          pcm = []
+          for i in range(n):
+              t = i / sr
+              env = 0.0 if (int(t * 2) % 3 == 2) else 0.5
+              f = 200 + 800 * (0.5 + 0.5 * math.sin(2 * math.pi * 0.25 * t))
+              pcm.append(int(32767 * env * math.sin(2 * math.pi * f * t)))
+          w.writeframes(struct.pack("<%dh" % n, *pcm)); w.close()
+          EOF
+
+      - name: 檢查 tutorial m1–m9、step1–6 與兩個系統框架
+        run: python3 tests/check_submission.py --wav ci_test.wav --buffer 200 --deadline-report

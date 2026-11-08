@@ -1,4 +1,4 @@
-# 第 12 週（2026/11/23）｜Team 2 評測、Team 3 提早開題
+# 第 12 週（2026/11/23）｜Team 2 demo 與口試日（流程同 Team 1）、Team 3 提早開題
 
 對應：Team 2、Team 3
 時間：13:10–16:00，三節。
@@ -9,19 +9,19 @@
 
 | 節次 | 時間 | 內容 |
 |---|---|---|
-| 1–2 | 13:10–15:00 | **Team 2 評測**：11 組，每組約 9 分鐘（P 報告 4 分鐘 → D 現場展示 3 分鐘 → 問答 2 分鐘）；mock 驗收由助教在旁邊的電腦同步跑 |
-| 3 | 15:10–15:40 | **Team 2 補展示與問答**：第一、二節沒排到或 live 失敗的組重試一次；老師隨機抽人解釋自己 commit 的一段程式（程式碼審查的參考） |
+| 1–2 | 13:10–15:00 | **Team 2 demo**（同 Team 1 的流程）：11 組，每組約 9 分鐘（P 報告 4 分鐘 → D 現場展示 3 分鐘 → 問答 2 分鐘）；mock 驗收由助教在旁邊的電腦同步跑 |
+| 3 | 15:10–15:40 | **Team 2 個人口試**（同 Team 1：分散到各組桌邊，老師與助教分頭問）：每人 2–3 分鐘，指著自己 commit 的一段程式講它在做什麼、一題概念；結果作為程式碼審查「個人貢獻 10 分」的依據。live 失敗的組趁這一節重試一次 |
 | 3 | 15:40–16:00 | **Team 3 開題（規格導讀）**：[規格](../../team_projects/team3_miniline/README.md)、[baseline](../../team_projects/team3_miniline/baseline/)、分組公告 |
 
 ## Team 2 評測流程（每組）
 
-1. **登錄 SHA 的版本**：助教事先 clone、`make`、跑 `tests/run_mock_tests.py`（老師的 WAV、兩個方向：你們 send 對參考 recv、參考 send 對你們 recv）。測試 1–7 共 4 分、8 μ-law 3 分、9 ADPCM 3 分（demo 的「mock 測試」10 分）；加分看 10（Huffman，你們對你們）。結果表投影，不佔報告時間。
-2. **P 報告（4 分鐘；與問答合計 10 分）**：**codec 比較表**（pcm／mulaw／adpcm／huff 的每包 bytes、kb/s、SQNR、掉包聽感）是主菜；ADPCM 每包歸零的理由；有做 Huffman 的講表怎麼建、省了多少、為什麼 μ-law 上省得多；最後一分鐘講 buffer 設多少、repeat 與 zero 的差別。
-3. **D 現場展示（3 分鐘，10 分）**：兩台電腦用熱點 `call` 通話 30 秒；當場切 `--codec adpcm` 再切 `--plc zero` 聽差別；有 Huffman 的切 `huff-mulaw` 給大家看 STATS 的 bytes。
+1. **登錄 SHA 的版本**：助教事先 clone、`make`、跑 `tests/run_mock_tests.py`（老師的 WAV、兩個方向：你們 send 對參考 recv、參考 send 對你們 recv）。`tutorial/step6_live` 跑測試 1–7（第 6 步 10 分的一半）、`mulaw_system` 跑 8、`adpcm_huffman_system` 跑 9（ADPCM 10 分）與 10（Huffman 10 分，你們對你們）。結果表投影，不佔報告時間。
+2. **P 報告（4 分鐘；不另計分，審查時對照）**：**codec 比較表**（pcm／mulaw／adpcm／huff 的每包 bytes、kb/s、SQNR、掉包聽感）是主菜；ADPCM 每包歸零的理由；有做 Huffman 的講表怎麼建、省了多少、為什麼 μ-law 上省得多；最後一分鐘講 buffer 設多少、repeat 與 zero 的差別。
+3. **D 現場展示（3 分鐘）**：兩台電腦用熱點 `call` 通話 30 秒（第 6 步，10 分）；當場切 `--codec adpcm`（ADPCM 10 分的現場部分）再切 `--plc zero` 聽差別；有 Huffman 的切 `huff-mulaw` 給大家看 STATS 的 bytes 變少（Huffman 10 分的現場部分）。
 4. **問答（2 分鐘）**：老師問 1–2 題（μ-law 為什麼小聲音也清楚；ADPCM 為什麼用重建值預測、每包歸零的代價；Huffman 表為什麼可以不送；seq 與 ts 為什麼分開；遲到的包為什麼要丟）。
-5. **程式碼實質審查（30 分，11/23 後一週內）**：老師與助教看登錄 SHA 的 repo——ADPCM 整合 10、μ-law 與 buffer／PLC 正確性 5、程式品質 5、個人貢獻 10（看 `git log`，沒有 C commit 的人 0 分）。審查期間可能找你當面解釋自己寫的一段。
+5. **程式碼實質審查（30 分，11/23 後一週內，助教）**：看登錄 SHA 的 repo（照 `team2_voicelink/` 的結構）——正確性與互通 10（測試 8／9／10、codec 表、ADPCM 細節）、程式品質 10、個人貢獻 10（看 `git log`，沒有 C commit 的人 0 分）。審查期間可能找你當面解釋自己寫的一段。
 
-評分（11/9 定版）：**tutorial 繳交 40**（m1–m9、step1–7 各自一個資料夾 push，每項 2.5）＋**今天 demo 30**（live 10＋mock 測試 10＋報告問答 10；Huffman +5）＋**程式碼實質審查 30**（組 20＋個人貢獻 10）。總分上限 100。
+評分（11/9 定版）：**tutorial 繳交 40**（m1–m9、step1–6 共 15 項各自一個資料夾 push，缺一項扣 3）＋**11/23 demo 30**（第 6 步兩台 live 10、ADPCM 10、Huffman 10）＋**助教程式碼實質審查 30**（正確性與互通 10、程式品質 10、個人貢獻 10）。總分 100。
 
 ## Team 3 開題（20 分鐘）
 

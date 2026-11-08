@@ -3,10 +3,11 @@
 #   Windows (Git Bash)       : mingw32-make    （同上）
 #   Windows (PowerShell/cmd) : mingw32-make / mingw32-make step3 / mingw32-make clean（check 請在 Git Bash 跑：它用 sh 的語法）
 #
-#   make            進每個資料夾編（m1_wav … m8_mulaw、step1_raw … step7_live）
+#   make            進每個資料夾編（m1_wav … m9_adpcm、step1_raw … step6_live）
 #   make modules    只編 Part A 的八個模組；make stepN 只編第 N 步；也可以直接 cd 進資料夾自己 make
 #   make check      先跑不用互動的模組 m3／m6／m7／m8／m9 並檢查結果，再用 tests/run_mock_tests.py 自動驗收：
-#                   step3 跑測試 1,2,5；step4 跑 1,2,3,5,7；step5 跑 1–7；step6 跑 8（μ-law）
+#                   step3 跑測試 1,2,5；step4 跑 1,2,3,5,7；step5 跑 1–7；step6（live；mock 模式沒變）再跑一次 1–7
+#                   μ-law／ADPCM／Huffman 在 ../mulaw_system 與 ../adpcm_huffman_system（你們寫）：自己用 run_mock_tests.py --only 8／9／10 測
 #                   預設兩邊都是自己（C send → C recv）；make check-ref 改用 python_ref 當送端（評測就是這樣跑）
 #   make clean      刪掉編出來的東西
 PY = python3
@@ -24,13 +25,13 @@ else
 endif
 
 MODULES = m1_wav m2_udp m3_clock m4_mic_to_wav m5_play_wav m6_header m7_ringbuffer m8_mulaw m9_adpcm
-STEPS   = step1_raw step2_header step3_buffer step4_counters step5_robust step6_mulaw step7_live
+STEPS   = step1_raw step2_header step3_buffer step4_counters step5_robust step6_live
 WAV  = ../../../lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav
 PORT = 5604
 T3 = 1,2,5
 T4 = 1,2,3,5,7
 T5 = 1,2,3,4,5,6,7
-T6 = 8
+T6 = 1,2,3,4,5,6,7
 
 all: $(MODULES) $(STEPS)
 modules: $(MODULES)
@@ -44,8 +45,7 @@ step2: step2_header
 step3: step3_buffer
 step4: step4_counters
 step5: step5_robust
-step6: step6_mulaw
-step7: step7_live
+step6: step6_live
 
 # ---- 自動驗收（要在 sh 裡跑：Git Bash／macOS／Linux）----
 define RUN_CHECK
@@ -70,22 +70,22 @@ check-modules: m3_clock m6_header m7_ringbuffer m8_mulaw m9_adpcm
 	then echo "m9_adpcm: PASS" >> .check_result; \
 	else echo "m9_adpcm: FAIL" >> .check_result; fi
 
-check: step3_buffer step4_counters step5_robust step6_mulaw
+check: step3_buffer step4_counters step5_robust step6_live
 	@$(RM_F) .check_result
 	@$(MAKE) --no-print-directory check-modules
 	$(call RUN_CHECK,step3_buffer,step3_buffer/step3_buffer$(EXE),$(T3))
 	$(call RUN_CHECK,step4_counters,step4_counters/step4_counters$(EXE),$(T4))
 	$(call RUN_CHECK,step5_robust,step5_robust/step5_robust$(EXE),$(T5))
-	$(call RUN_CHECK,step6_mulaw,step6_mulaw/step6_mulaw$(EXE),$(T6))
+	$(call RUN_CHECK,step6_live,step6_live/step6_live$(EXE),$(T6))
 	@echo; echo "===== make check summary ====="; cat .check_result; \
 	if grep -q FAIL .check_result; then echo "RESULT: SOME FAIL"; exit 1; else echo "RESULT: ALL PASS"; fi
 
-check-ref: step3_buffer step4_counters step5_robust step6_mulaw
+check-ref: step3_buffer step4_counters step5_robust step6_live
 	@$(RM_F) .check_result
 	$(call RUN_CHECK,step3_buffer,$(PY) ../python_ref/voicelink.py,$(T3))
 	$(call RUN_CHECK,step4_counters,$(PY) ../python_ref/voicelink.py,$(T4))
 	$(call RUN_CHECK,step5_robust,$(PY) ../python_ref/voicelink.py,$(T5))
-	$(call RUN_CHECK,step6_mulaw,$(PY) ../python_ref/voicelink.py,$(T6))
+	$(call RUN_CHECK,step6_live,$(PY) ../python_ref/voicelink.py,$(T6))
 	@echo; echo "===== make check-ref summary ====="; cat .check_result; \
 	if grep -q FAIL .check_result; then echo "RESULT: SOME FAIL"; exit 1; else echo "RESULT: ALL PASS"; fi
 
@@ -93,4 +93,4 @@ clean:
 	@for d in $(MODULES) $(STEPS); do $(MAKE) --no-print-directory -C $$d clean; done
 	-$(RM_F) audio.o .check_result m8_out.wav m9_out.wav
 
-.PHONY: all modules $(MODULES) $(STEPS) step1 step2 step3 step4 step5 step6 step7 check check-modules check-ref clean
+.PHONY: all modules $(MODULES) $(STEPS) step1 step2 step3 step4 step5 step6 check check-modules check-ref clean

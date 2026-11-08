@@ -1,6 +1,6 @@
 # baseline/：Team 2 的 wrapper 與測試工具（不是程式起點）
 
-程式的起點在 [`../tutorial/step7_live/`](../tutorial/step7_live/README.md)；手把手教學在 [`../tutorial/TUTORIAL.md`](../tutorial/TUTORIAL.md)。
+能通話的完整程式在 [`../tutorial/step6_live/`](../tutorial/step6_live/README.md)，要加壓縮的框架在 [`../mulaw_system/`](../mulaw_system/README.md) 與 [`../adpcm_huffman_system/`](../adpcm_huffman_system/README.md)；手把手教學在 [`../tutorial/TUTORIAL.md`](../tutorial/TUTORIAL.md)。
 這個資料夾只放**所有程式都要用、但你們不用改**的東西：
 
 | 檔案 | 是什麼 | 誰用 |
@@ -8,13 +8,13 @@
 | `wrapper/wav.h` | 讀寫 WAV（照 chunk 走，`data` 不一定在第 44 byte；只收 16-bit PCM）：`wav_read`／`wav_write`／`wav_free` | m1、m4、m5、m8、m9、所有 step |
 | `wrapper/udp.h` | UDP socket：`udp_open`／`udp_set_peer`／`udp_send`／`udp_recv`（有逾時）／`udp_close`，加上 big-endian 的 `put_u16`／`put_u32`／`get_u16`／`get_u32`。Windows（Winsock）／POSIX 的差異都抹平了；**一定要是第一個 `#include`** | 每一支 |
 | `wrapper/clock.h` | `clock_ms`（單調時鐘）、`sleep_ms`、`sleep_until_ms`（準確的 20 ms 節奏靠它） | m3、所有 step |
-| `wrapper/audio.h`／`audio.c` | 麥克風與喇叭：`audio_start_duplex(callback)`／`audio_stop`／`audio_list_devices`。底下是 miniaudio；`audio.c` 是整支程式裡**唯一**定義 `MINIAUDIO_IMPLEMENTATION` 的檔案 | m4、m5、step7 |
+| `wrapper/audio.h`／`audio.c` | 麥克風與喇叭：`audio_start_duplex(callback)`／`audio_stop`／`audio_list_devices`。底下是 miniaudio；`audio.c` 是整支程式裡**唯一**定義 `MINIAUDIO_IMPLEMENTATION` 的檔案 | m4、m5、step6、兩個系統 |
 | `wrapper/miniaudio.h` | 第三方的單一檔頭音訊函式庫（授權見下） | 不要改 |
 | `udp_impair.py` | 搗蛋的中繼：夾在 send 與 recv 中間製造遺失、抖動、亂序、重複；`../tests/run_mock_tests.py` 與評測都用它 | 自己測、評測 |
 | `smoke_check.py` | 比對兩個 WAV 的 PCM 是否逐 byte 相同（會告訴你第幾包開始不同） | tutorial 第 1 步 |
 | `Makefile` | `make` 只把 `wrapper/audio.c` 編成 `audio.o`，確認 wrapper 在這台機器零警告 | CI |
 
-把 step7 複製進 team repo 時，`wrapper/` 整個資料夾要一起帶走（放 `include/` 或照 tutorial 的路徑用 `-I`）。
+team repo 照 `team2_voicelink/` 的結構繳交，`baseline/wrapper/` 整個帶著走（`mulaw_system/Makefile` 與 `adpcm_huffman_system/Makefile` 用 `-I../baseline/wrapper`）。
 
 ## udp_impair.py：怎麼搗蛋
 

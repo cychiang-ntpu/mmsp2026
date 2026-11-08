@@ -1,6 +1,6 @@
 ## 第 5 步｜step5_robust.c：壞封包不當掉、ssrc 換了、seq 繞回、--bind、結束碼
 
-[← 教學總覽](../TUTORIAL.md)｜上一個：[第 4 步 counters](../step4_counters/README.md)｜下一個：[第 6 步 μ-law](../step6_mulaw/README.md)
+[← 教學總覽](../TUTORIAL.md)｜上一個：[第 4 步 counters](../step4_counters/README.md)｜下一個：[第 6 步 live](../step6_live/README.md)
 
 ### 在這個資料夾
 

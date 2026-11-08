@@ -17,7 +17,7 @@
 - 每一步：助教先用 5 分鐘投影該步的「要加的東西」與兩個 step 檔的差異，再各組自己做（約 40 分鐘），助教巡場。
 - 卡住先問「印出來／`--probe` 看到什麼」；不代寫，指到 TUTORIAL.md 的「常見錯誤」；兩組都說自己對時用 `python_ref/voicelink.py` 當裁判。
 - 每節結束前把各組「做到第幾步、SHA、問老師的一題」記下來貼 Slack `#team2-questions`。
-- **評量**（11/9 定版）：工作坊兩天**不計分**。分數是規格①「tutorial 繳交 40」：每個模組、每一步各自一個資料夾 push 到 team repo、至少一個 commit、`make` 零警告（m1–m9＋step1–3 在 11/15 18:00 前、step4–7 在 11/22 18:00 前）。助教的工作是巡場協助，並在每節結束記錄各組做到第幾步。下表的「抽問」改成**巡場時順口問、答不出就指回 README**，不扣分：
+- **評量**（11/9 定版）：工作坊兩天**不計分**。分數是規格①「tutorial 繳交 40」：每個模組、每一步各自一個資料夾 push 到 team repo、至少一個 commit、`make` 零警告（m1–m9 在 11/11（三）18:00 前、step1–6 在 11/16（一）16:00 前；各組 repo 的 Actions `team2-check` 綠勾＝15 項都在）。助教的工作是巡場協助，並在每節結束記錄各組做到第幾步。下表的「抽問」改成**巡場時順口問、答不出就指回 README**，不扣分：
 
   | 步 | 建議看的證據 | 順口問一題 |
   |---|---|---|
@@ -26,8 +26,8 @@
   | 3 | `--only 1,2,5` PASS | buffer 大了，哪個數字變小、哪個變大？ |
   | 4 | 測試 7 輸出 | 用自己那一行代入 `frames_out = (received − late − dup − overflow) + concealed` |
   | 5 | 測試 5 輸出 | ssrc 突然變了，你們的程式做什麼？ |
-  | 6 | 測試 8 的 SQNR 與 bytes | 為什麼 μ-law 的 bytes 剛好一半？header 有沒有變小？ |
-  | 7 | 兩台 `call` 30 秒雙方 STATS | 同一台自己打自己為什麼有回音？ |
+  | 6 | 兩台 `call` 30 秒雙方 STATS | 同一台自己打自己為什麼有回音？ |
+  | mulaw_system | 測試 8 的 SQNR 與 bytes | 為什麼 μ-law 的 bytes 剛好一半？header 有沒有變小？ |
 
 ## 11/9 ①：Part A 模組＋第 1–3 步
 
@@ -36,21 +36,21 @@
 | 13:10–14:00 | 第 1 步 raw | 帶看 `step1_raw/step1_raw.c` 的 send／recv 兩個迴圈；巡場確認每組 recv 寫得出 WAV |
 | 14:10–15:00 | 第 2 步 header | 帶看 header 的 12 bytes 與 `put_u16`／`put_u32`；讓每組經過 `udp_impair.py --loss 0.05` 看 seq 跳號 |
 | 15:10–15:50 | 第 3 步 jitter buffer | 帶看環形陣列、播放時鐘、repeat；目標每組 `run_mock_tests.py --only 1,2,5` PASS |
-| 15:50–16:00 | 收 SHA 與問題；沒做完 11/15 18:00 前 push | |
+| 15:50–16:00 | 收 SHA 與問題；m1–m9 沒做完的 11/11（三）18:00 前 push（Actions 會自動檢查） | |
 
-## 11/16 ②：第 4–7 步（做完＝官方起點）＋ADPCM 開工
+## 11/16 ②：第 4–6 步（做完＝能通話）＋mulaw_system 開工
 
 | 時間 | 步 | 助教 |
 |---|---|---|
 | 13:10–14:00 | 第 4 步 counters（第 3 步沒過的先補） | 帶看 late／dup／reordered 的判斷式與 `--plc zero` |
 | 14:10–15:00 | 第 5 步 robust＋第 6 步 μ-law；兩組互測（1↔3、2↔4…） | 帶看壞封包檢查與 μ-law 查表；互測跑 `run_mock_tests.py` 兩個方向 |
-| 15:10–15:45 | 第 7 步 live（15 分鐘）＋ ADPCM 開工（20 分鐘） | 沒麥克風的用 `python_ref` 當聲源；ADPCM 先帶做零件 `tutorial/m9_adpcm`（`--trace 8` 投影逐 sample 的表、`--frame 0` 與 `--fixed-step 100` 聽差別），再指到 m9 README 第 6 節「搬進 step7」，目標 `--only 9` 跑得完 |
-| 15:45–16:00 | 收尾：進度報告＋SHA 11/22 18:00；11/23 評測要帶的東西 | |
+| 15:10–15:45 | 第 6 步 live（15 分鐘）＋ `mulaw_system` 開工（20 分鐘） | 沒麥克風的用 `python_ref` 當聲源；μ-law 先帶看 `tutorial/m8_mulaw`，再投影 `mulaw_system/voicelink.c` 裡的四個 `★ 第 8 步`，目標 `--only 8` 跑得完；ADPCM／Huffman 回家做（`adpcm_huffman_system/`，零件 m9） |
+| 15:45–16:00 | 收尾：**16:00 前 step1–6 全部 push**（看各組 Actions）；進度報告＋SHA 11/22 18:00；11/23 評測要帶的東西 | |
 
 ## 會後
 
 - 11/9 的問題清單 11/12 前、11/16 的 11/19 前整理給老師（照類別合併）。
-- 列「各組做到第幾步」的表（11/15、11/22 各一次）給老師。
+- 列「各組做到第幾步」的表（11/11 看 m1–m9、11/16 16:00 看 step1–6；直接看各組 repo 的 Actions 結果）給老師。
 
 ## Slack 公告（老師貼）
 
@@ -61,9 +61,9 @@
 帶筆電、熱點、耳機；來之前至少讓 send／recv 在自己電腦跑得起來。
 全班一起照 tutorial（team_projects/team2_voicelink/tutorial/TUTORIAL.md）做第 1–3 步，每一步做完就 push 到 team repo：
 第一節 Part A 模組＋第 1 步 raw → 第二節 第 2 步 header → 第三節 第 3 步 jitter buffer
-評量：九個模組與七步每一個 push 到 team repo（各自一個資料夾、至少一個 commit）就是 40 分；m1–m9＋step1–3 在 11/15（日）18:00 前。今天不抽問、不扣分。
-⚠ 規格 11/9 定版：第 7 步就是官方起點，作業真正要寫的是壓縮：μ-law、ADPCM 必做、Huffman 加分；11/23 demo 30、程式碼審查 30。
-下課前把 SHA 貼到 Slack；沒做完的 11/15（日）18:00 前 push。
+評量：九個模組與六步每一個 push 到 team repo（各自一個資料夾、至少一個 commit）就是 40 分；m1–m9 在 11/11（三）18:00 前、step1–6 在 11/16（一）16:00 前。repo 裡的 GitHub Actions 會自動檢查，綠勾就對。今天不抽問、不扣分。
+⚠ 規格 11/9 定版：第 6 步做完就是能通話的 voicelink；作業是在 mulaw_system/、adpcm_huffman_system/ 加壓縮（框架已給、★ 標出要動手的地方）；11/23 demo 30（第 6 步 live 10、ADPCM 10、Huffman 10）、程式碼審查 30。team repo 照 team2_voicelink/ 的結構繳交。
+下課前把 SHA 貼到 Slack；m1–m9 沒做完的 11/11（三）18:00 前 push。
 問題我 11/23 第一節統一回答。
 講義：https://github.com/cychiang-ntpu/mmsp2026/blob/main/lectures/wk10_1109_team2-progress1/README.md
 ```
@@ -71,10 +71,10 @@
 **11/16 用：**
 
 ```
-📢 11/16（一）「Team 2 工作坊 ②」，助教主持，照常上課。離 11/22 截止只剩 6 天，今天是評測預演。
+📢 11/16（一）「Team 2 工作坊 ②」，助教主持，照常上課。今天 16:00 下課前 step1–6 要全部 push（Actions 綠勾）；離 11/22 登錄 SHA 只剩 6 天。
 來之前先把 tests/run_mock_tests.py 自己對自己跑一遍，帶結果來。
-接著做 tutorial 第 4–7 步，每步 push：第一節 第 4 步（完整 STATS、zero PLC（packet loss concealment，封包遺失補償））→ 第二節 第 5、6 步（壞封包、μ-law）＋兩組互測 → 第三節 第 7 步 live 通話＋ADPCM 開工
-step4–7 都 push 完 = 繳交 40 分到手；11/22 前要再加 ADPCM（必做，--only 9 PASS），有餘力做 Huffman（加分）。
+接著做 tutorial 第 4–6 步，每步 push：第一節 第 4 步（完整 STATS、zero PLC（packet loss concealment，封包遺失補償））→ 第二節 第 5 步（壞封包）＋兩組互測 → 第三節 第 6 步 live 通話＋mulaw_system 開工
+step1–6 在 16:00 前都 push 完 = 繳交 40 分到手；11/22 前做 mulaw_system（--only 8 PASS）與 adpcm_huffman_system（ADPCM --only 9、Huffman --only 10，demo 各 10 分）。
 11/23 demo 30 分（live 通話 10、助教跑測試 1–9 共 10、報告問答 10）；之後一週程式碼實質審查 30 分（ADPCM 整合、正確性、品質、個人貢獻）。
 交：進度報告（docs/templates/progress_report.md）＋SHA，11/22（日）18:00 前。
 11/23 評測：每組兩台筆電、耳機、熱點，P 的 slides.pdf 要在 SHA 裡。

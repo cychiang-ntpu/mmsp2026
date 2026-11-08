@@ -16,8 +16,8 @@
 ### 這個模組的目的
 
 - **做什麼**：把一個 WAV 用 μ-law 壓成 8 bits／sample 再解回來，算 bytes 比例與 SQNR。
-- **為什麼要先做它**：功能 4 的第一個 codec（必做）。先在檔案上把編碼表、解碼表、SQNR 做對，step6 只是把它套進 send（編）與 recv（解）；接下來的 m9 ADPCM 與你們自己寫的 Huffman，量 SQNR 的方法也是這一支。
-- **在 Part B 的哪裡用到**：step6 的 `mulaw_init`／`mulaw_encode`／`mulaw_decode`。
+- **為什麼要先做它**：功能 4 的第一個 codec（必做）。先在檔案上把編碼表、解碼表、SQNR 做對，`mulaw_system/` 只是把它套進 codec 表（send 編、recv 解）；接下來的 m9 ADPCM 與你們自己寫的 Huffman，量 SQNR 的方法也是這一支。
+- **在哪裡用到**：[`../../mulaw_system/`](../../mulaw_system/README.md)（你們寫）：`mulaw_init` 與 frame 版的 `mulaw_encode`／`mulaw_decode` 進 codec 表。
 - **做完要能回答**：bytes 為什麼剛好一半？SQNR 37 dB 是什麼意思？為什麼小聲的地方 μ-law 比線性 8-bit 清楚？
 
 ---
@@ -60,7 +60,7 @@ bytes[i] = enc[w.pcm[i] + 32768];   /* 編碼 = 查一次表 */
 back[i]  = dec[bytes[i]];           /* 解碼 = 查一次表 */
 ```
 
-step6 原封不動用這兩張表；live 模式每 20 ms 要編 320 個 sample，查表一瞬間就完成。
+`mulaw_system` 原封不動用這兩張表；live 模式每 20 ms 要編 320 個 sample，查表一瞬間就完成。
 
 ### 4. 跑一次，看三個數字
 
@@ -96,7 +96,7 @@ ln(1 + x)/ln 2 幾乎是直線，等於退化成**線性 8-bit**。SQNR 會掉�
 **實驗 C：看一眼表。** 在 `mulaw_init` 後面加幾行印 `dec[128]、dec[129]、dec[130]`（0 附近）與 `dec[253]、dec[254]、dec[255]`（最大聲）：
 0 附近相鄰兩格差只有幾個單位，最大聲那邊相鄰兩格差超過 1000。這就是「對數刻度的尺」長什麼樣。
 
-### 6. 搬進 step6 要注意的事
+### 6. 搬進 mulaw_system 要注意的事
 
 1. `enc`／`dec` 兩張表、`mulaw_init()` 原封不動；程式開頭叫一次 `mulaw_init()`。
 2. send：`--codec mulaw` 時每包 320 個 sample 查 `enc` → 320 bytes，封包 type 改成 0x04。
@@ -117,8 +117,8 @@ ln(1 + x)/ln 2 幾乎是直線，等於退化成**線性 8-bit**。SQNR 會掉�
 | m1 | wav.h 讀寫 | step1 的 `load_wav_16k_mono`、`wav_write` |
 | m2 | udp.h 送收 | step1 的 `cmd_send`／`cmd_recv` |
 | m3 | clock.h 絕對時刻 | step1 送端的節奏、step3 的播放時鐘 |
-| m4、m5 | audio.h callback | step7 的 `audio_cb` |
+| m4、m5 | audio.h callback | step6 的 `audio_cb` |
 | m6 | header 打包／解析 | step2 的 `pack_header`／`parse_header` |
 | m7 | 環狀 buffer＋時鐘 | step3 的 `jb_put`／`jb_tick` |
-| m8 | μ-law 查表 | step6 的 `mulaw_init`／`mulaw_encode`／`mulaw_decode` |
-| m9 | ADPCM 編解碼 | 你們要自己加進 step7 的 `--codec adpcm` |
+| m8 | μ-law 查表 | `../../mulaw_system/`（你們寫） |
+| m9 | ADPCM 編解碼 | `../../adpcm_huffman_system/`（你們寫） |

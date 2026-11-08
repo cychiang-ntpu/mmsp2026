@@ -80,7 +80,7 @@ ADPCM（2.3 的做法，4 bits、160 bytes、type 0x05）是加分：每個 fram
 
 ### 6 接下來三週怎麼跑
 
-評分（規格「驗收與評分」，11/9 定版）：**tutorial 繳交 40**（m1–m9、step1–7 各自一個資料夾 push 到 team repo，每項 2.5）＋**11/23 demo 30**（live 通話 10、助教跑測試 1–9 共 10、報告與問答 10；Huffman +5）＋**程式碼實質審查 30**（ADPCM 整合 10、μ-law 與 buffer 正確性 5、程式品質 5、個人貢獻 10）。
+評分（規格「驗收與評分」，11/9 定版）：**tutorial 繳交 40**（m1–m9、step1–6 共 15 項各自一個資料夾 push，缺一項扣 3）＋**11/23 demo 30**（第 6 步兩台 live 10、ADPCM 10、Huffman 10）＋**助教程式碼實質審查 30**（正確性與互通 10、程式品質 10、個人貢獻 10）。team repo 照 `team2_voicelink/` 的結構繳交。
 
 - **11/9 工作坊 ①**（助教主持）：全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做 Part A 模組與第 1–3 步，每步 push。
 - **11/16 工作坊 ②**：第 4–7 步（完整 STATS、壞封包、μ-law、live）、組間互測、live 預演；進度報告＋小成品 11/22 與 SHA 一起交。

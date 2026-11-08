@@ -59,7 +59,7 @@ m2（`udp_recv` 的逾時 = 離下一拍的時間）。
 - **STATS**：規格的一行，這一步先填 `frames_out`／`received`／`lost`／`concealed`，其他印 0（第 4 步再補齊）。
   `lost` = 從第一個播的 seq 到結尾「應該有幾包」− 「真的到過幾包」（`unique`）。
 
-**程式碼**（`diff ../step2_header/step2_header.c step3_buffer.c`；整個 buffer 包成 `jb_t` 和五個函式，第 7 步會原封不動拿去 live 用）
+**程式碼**（`diff ../step2_header/step2_header.c step3_buffer.c`；整個 buffer 包成 `jb_t` 和五個函式，第 6 步會原封不動拿去 live 用）
 
 ```c
 typedef struct { int valid; uint16_t seq; double arrived; int16_t pcm[FRAME_SAMPLES]; } slot_t;

@@ -1,15 +1,15 @@
-# Team 2 VoiceLink 手把手教學：先拆成九個模組看懂，再七步組裝成官方起點（step7）＋μ-law；m9 是 ADPCM 的零件
+# Team 2 VoiceLink 手把手教學：先拆成九個模組看懂，再六步組裝成能通話的 voicelink（raw PCM）；壓縮在 ../mulaw_system 與 ../adpcm_huffman_system
 
-> **11/9 起**：九個模組與七步**每一個都 push 到 team repo 就是 40 分**（各自一個資料夾、至少一個 commit、`make` 零警告；規格「驗收與評分」①）。第 7 步 `step7_live.c` 就是作業的**官方起點**：讀懂它的每一行，因為接下來要在它上面加 ADPCM（必做）與 Huffman（加分），那是 11/23 demo（30）與程式碼審查（30）看的東西。
+> **11/9 起**：九個模組與六步**每一個都 push 到 team repo 就是 40 分**（各自一個資料夾、至少一個 commit、`make` 零警告；規格「驗收與評分」①）。第 6 步做完就是能通話的 voicelink（raw PCM），11/23 demo 到這裡 10 分。接下來在 [`../mulaw_system/`](../mulaw_system/README.md)（μ-law）與 [`../adpcm_huffman_system/`](../adpcm_huffman_system/README.md)（ADPCM／Huffman，各 10 分）加壓縮——那是這一輪真正要寫的東西，也是程式碼審查（30）看的地方。
 
 這份教學假設你修過一學期的 C，看過第 2 週的 `chat.c`（所以知道 socket 是什麼、`sendto`／`recvfrom` 長什麼樣），
 其他都從零講。分成兩部分：
 
 - **Part A 拆解**：九個 50–130 行的小程式 `m1_wav.c` … `m9_adpcm.c`，每個只做**一件事**、印出看得見的結果。
   先把每一塊零件玩過一遍（讀 WAV、寄一張 UDP 明信片、每 20 ms 醒來、錄音、放音、打包 header、環狀 buffer、μ-law、ADPCM）。
-- **Part B 組裝**：七個程式 `step1_raw.c` … `step7_live.c`，每一個都是前一個的「超集」，把零件接起來變成規格的 `voicelink`。
+- **Part B 組裝**：六個程式 `step1_raw.c` … `step6_live.c`，每一個都是前一個的「超集」，把零件接起來變成能通話的 `voicelink`（raw PCM）。
 
-Part B 的七步：
+Part B 的六步：
 
 ```
 step1_raw      640 bytes 一包、沒有 header                       ← 最笨的版本：聽聽看掉包有多難聽
@@ -17,12 +17,11 @@ step2_header   + 12 bytes header（magic/type/seq/ts/ssrc）+ BYE   ← 看得�
 step3_buffer   + jitter buffer + 播放時鐘 + PLC（packet loss concealment，封包遺失補償） repeat + STATS    ← 過測試 1,2,5（jitter buffer 是整支程式的核心）
 step4_counters + late/dup/reordered/overflow/延遲 + --plc + --burst ← 過測試 1,2,3,5,7
 step5_robust   + 壞封包、ssrc 換了、seq 繞回、--bind、結束碼        ← 過測試 1–7
-step6_mulaw    + --codec mulaw（功能 4）                           ← 過測試 8（μ-law）
-step7_live     + call／devices（麥克風 ↔ 喇叭，執行緒）             ← **這就是官方起點**
+step6_live     + call／devices（麥克風 ↔ 喇叭，執行緒）             ← 兩台能通話；tutorial 到此為止
 ```
 
 每一步都可以單獨編譯、單獨執行、單獨測；想知道「這一步到底改了什麼」就 `diff step3_buffer/step3_buffer.c step4_counters/step4_counters.c`。
-七個檔案只用 `baseline/wrapper/` 的四個標頭（`udp.h`、`clock.h`、`wav.h`、`audio.h`），什麼都沒複製，編譯時 `-I../baseline/wrapper`。
+六個檔案只用 `baseline/wrapper/` 的四個標頭（`udp.h`、`clock.h`、`wav.h`、`audio.h`），什麼都沒複製，編譯時 `-I../baseline/wrapper`。
 
 **每支程式開頭的 `#include "udp.h"`、`"clock.h"`、`"wav.h"`、`"audio.h"` 都不是系統函式庫**，是課程自己寫的 wrapper，放在 [`../baseline/wrapper/`](../baseline/wrapper/)（Makefile 用 `-I` 指過去）。
 `udp.h` 底下在 Windows 是 Winsock、在 macOS／Linux 是 POSIX socket；它一定要是第一個 `#include`，因為它要在任何系統標頭之前定義 `_POSIX_C_SOURCE`，而且 `winsock2.h` 必須排在 `windows.h` 前面。每個 `.c` 檔的 include 區都有一段註解說明這件事（只有 m7 完全不用 wrapper，是純 C）。
@@ -61,11 +60,11 @@ Windows 的 PowerShell 沒有 `sh`，`check` 請在 Git Bash 裡跑；單一步�
 | m1 | 聲音全部是 16 kHz 單聲道 16-bit 的 WAV，不會讀寫就什麼都做不了 | step1 的讀檔／寫檔 |
 | m2 | 整個作業的「掉包、亂序、重複」都來自 UDP；先親手看到一包就是一包、寄丟了送端不知道 | step1 的 send／recv 迴圈 |
 | m3 | 送端每 20 ms 一包、收端每 20 ms 播一包，都靠「絕對時刻」的時鐘；用「睡 20 ms」會越來越慢 | step1 的節奏、step3 的播放時鐘 |
-| m4、m5 | live 通話的麥克風與喇叭是 callback 驅動的，先在沒有網路時看懂它什麼時候被叫、一次給多少 | step7 的 `audio_cb` |
+| m4、m5 | live 通話的麥克風與喇叭是 callback 驅動的，先在沒有網路時看懂它什麼時候被叫、一次給多少 | step6 的 `audio_cb` |
 | m6 | 每包前面 12 bytes 的 header 要和 python_ref 互通，位元組順序一個都不能錯，先用 hex 確認 | step2 的 `pack_header`／`parse_header` |
 | m7 | Team 2 的心臟：亂序放回、重複丟掉、沒到就補、拍子一定前進——先用 8 個數字想清楚 | step3 的 `jb_put`／`jb_tick` |
-| m8 | 功能 4 的第一個 codec；先在檔案上把表與 SQNR 做對 | step6 的 μ-law 編解碼 |
-| m9 | 功能 4 的第二個 codec：只送「差」、刻度自己調；`--trace` 看編碼器每一步在想什麼 | **沒有現成的 step**：你們要自己加進 step7 的 `--codec adpcm` |
+| m8 | 功能 4 的第一個 codec；先在檔案上把表與 SQNR 做對 | `../mulaw_system/`（你們寫） |
+| m9 | 功能 4 的第二個 codec：只送「差」、刻度自己調；`--trace` 看編碼器每一步在想什麼 | `../adpcm_huffman_system/`（你們寫） |
 
 每個模組資料夾的 README 開頭都有「這個模組的目的」四點：做什麼、為什麼要先做它、在 Part B 哪裡用到、做完要能回答什麼。
 
@@ -128,9 +127,9 @@ live 模式的喇叭就是這樣餵的——只是「下一段」改成向 jitte
 
 **看什麼**：ADPCM 三個字母三個想法——**D** 不送 sample 送「和預測值的差」、**PCM** 把差用 4 bits（1 bit 正負＋3 bits 大小）量化、**A** 刻度 step 看剛才的碼自己放大縮小，兩邊同一張表所以不用送。
 最重要的一句話：預測要用**重建值**不用原始值（編碼端裡藏一個解碼器，兩邊呼叫同一個 `adpcm_reconstruct`）。`--trace 8` 逐 sample 印出預測、殘差、step、碼、重建；`--frame 0`／`--fixed-step` 兩個開關讓你聽到「為什麼每包歸零」與「為什麼要自適應」。
-和 `python_ref` 同一張表、同樣初值，所以搬進 step7 之後能互通、過測試 9。
+和 `python_ref` 同一張表、同樣初值，所以搬進 `adpcm_huffman_system` 之後能互通、過測試 9。
 
-→ 完整說明、逐行解讀、四個實驗、搬進 step7 的步驟與常見錯誤在 **[m9_adpcm/README.md](m9_adpcm/README.md)**（程式：`m9_adpcm/m9_adpcm.c`）。
+→ 完整說明、逐行解讀、四個實驗、搬進系統的步驟與常見錯誤在 **[m9_adpcm/README.md](m9_adpcm/README.md)**（程式：`m9_adpcm/m9_adpcm.c`）。
 
 # Part B 組裝：七步做出 voicelink
 
@@ -165,30 +164,28 @@ live 模式的喇叭就是這樣餵的——只是「下一段」改成向 jitte
 
 → 完整說明、指令、程式碼導讀與「改一個地方」在 **[step5_robust/README.md](step5_robust/README.md)**（程式：`step5_robust/step5_robust.c`）。
 
-## 第 6 步｜step6_mulaw.c：功能 4 語音壓縮——`--codec mulaw`，位元率減半
+## 第 6 步｜step6_live.c：`call`——麥克風進去、對方喇叭出來（執行緒只在這一步出現）
 
-**目標**：送端把每個 16-bit sample 壓成 8 bits（一包 320 bytes，type 0x04），收端解回 16-bit 再進 buffer；SQNR ≥ 30 dB、`bytes` 減半；過測試 8。
+**目標**：`call <my_port> <peer_ip> <peer_port>` 兩台電腦戴耳機通話；同一套 jitter buffer 與 PLC；按 Enter 結束印 STATS；`devices` 列裝置。聲音還是 raw PCM。**tutorial 到這裡結束。**
 
-→ 完整說明、指令、程式碼導讀與「改一個地方」在 **[step6_mulaw/README.md](step6_mulaw/README.md)**（程式：`step6_mulaw/step6_mulaw.c`）。
+→ 完整說明、指令、程式碼導讀與「改一個地方」在 **[step6_live/README.md](step6_live/README.md)**（程式：`step6_live/step6_live.c`）。
 
-## 第 7 步｜step7_live.c：`call`——麥克風進去、對方喇叭出來（執行緒只在這一步出現）
+## 接下來：加壓縮（這才是作業）
 
-**目標**：`call <my_port> <peer_ip> <peer_port>` 兩台電腦戴耳機通話；同一套 jitter buffer 與 PLC；按 Enter 結束印 STATS；`devices` 列裝置。
+tutorial 的六步給的是「能通話的 raw PCM voicelink」。壓縮在 tutorial 旁邊的兩個資料夾，各自給了一個**框架**（第 6 步的程式＋一張 codec 表，目前只有 pcm，程式裡用 `★` 標出要動手的地方）：
 
-→ 完整說明、指令、程式碼導讀與「改一個地方」在 **[step7_live/README.md](step7_live/README.md)**（程式：`step7_live/step7_live.c`）。
+| 資料夾 | 做什麼 | 零件 | 驗收 | 分 |
+|---|---|---|---|---|
+| [`../mulaw_system/`](../mulaw_system/README.md) | 表裡加 μ-law：`--codec mulaw`，320 bytes 一包 | m8 | 測試 8（和 python_ref 互通） | Huffman 的前提；程式碼審查 |
+| [`../adpcm_huffman_system/`](../adpcm_huffman_system/README.md) | 再加 ADPCM（160 bytes）或／和 Huffman（疊在 μ-law 碼字上） | m9、Team 1 的 Huffman | 測試 9／測試 10 | demo 各 +10 |
 
-## 接下來：變成你們自己的 voicelink
+**繳交結構**：team repo 照 `team_projects/team2_voicelink/` 的資料夾結構（`baseline/`、`tutorial/`、`mulaw_system/`、`adpcm_huffman_system/`、`tests/`、`python_ref/`），助教照同樣的路徑批改。
 
-1. 把 `step7_live/step7_live.c` 改名放進 team repo 的 `src/`，`wrapper/` 的四個標頭放 `include/`（或照 baseline 的路徑 `-I`），Makefile 照 `tutorial/step7_live/Makefile`＋`tutorial/common.mk` 改。
-   一支程式同時有 `send`／`recv`／`call`／`devices`，就是規格的 `voicelink`。
-2. `tests/` 放 `run_mock_tests.py` 的呼叫腳本（`make test`），四種組合都跑：自己對自己、Python 送我收、我送 Python 收。
-3. 報告三題（第三題是 codec 比較表）：buffer 設多少（用 `avg_delay_ms`／`concealed` 掃 20–200 ms）、`repeat` 與 `zero` 的差別（用耳朵和 `concealed` 的數字）。
-4. 接著做這一輪真正的作業：**ADPCM**（必做，`python_ref` 有做法）、**Huffman**（加分）；見規格「驗收與評分」。
-
-| 步驟 | 要過的測試（`--only`） | 規格的驗收項目 |
+| 步驟 | 要過的測試（`--only`） | 內容 |
 |---|---|---|
 | step3 | 1,2,5 | 乾淨、掉包、送端被殺 |
 | step4 | 1,2,3,5,7 | ＋亂序、完整 STATS |
 | step5 | 1,2,3,4,5,6,7 | ＋重複、壞封包 |
-| step6 | 8 | μ-law |
-| step7 | 現場 | live 通話；**官方起點**。接下來：加 `--codec adpcm`（測試 9）、`huff-*`（測試 10）——demo 與程式碼審查看的就是這些 |
+| step6 | 1–7 ＋ 現場 | mock 沒變；live 通話（demo 10 分） |
+| mulaw_system | 8 | μ-law |
+| adpcm_huffman_system | 9、10 | ADPCM（+10）、Huffman（+10） |

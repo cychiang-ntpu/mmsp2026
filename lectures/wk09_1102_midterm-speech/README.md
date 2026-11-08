@@ -50,7 +50,7 @@
 
 ### 收尾（5 分鐘）
 
-- Team 2：11/9 工作坊前讀 [team2_core.md](team2_core.md)；11/9、11/16 全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做（每步 push）；11/22 截止、11/23 評測；**11/8 規格改版**：tutorial 第 7 步是官方起點（40 分），作業是加上 μ-law、ADPCM（必做）與 Huffman（加分）。
+- Team 2：11/9 工作坊前讀 [team2_core.md](team2_core.md)；11/9、11/16 全班跟著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做（每步 push）；11/22 截止、11/23 評測；**11/9 規格定版**：tutorial 六步（m1–m9、step1–6 全部 push ＝ 40 分）做出能通話的 raw PCM voicelink，作業是在 `mulaw_system/`、`adpcm_huffman_system/` 加 μ-law、ADPCM、Huffman（demo 30、程式碼審查 30）。
 - 語音壓縮（μ-law、DPCM，Team 2 功能 4）：[audio_coding.md](audio_coding.md)，11/16 前看完。
 
 ---
