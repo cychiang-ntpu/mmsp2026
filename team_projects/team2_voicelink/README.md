@@ -25,7 +25,7 @@
 | **seq**（sequence number） | 每送一包 +1 的編號（16-bit，到 65535 繞回 0） | 收端靠它知道哪一包**掉了、亂序、重複** |
 | **ts**（timestamp） | 這包的第一個 sample 是整段聲音的第幾個 sample（每包 +320） | 收端靠它知道這包**該在什麼時候播**；和 seq 分開存，因為真實系統裡一包未必剛好一個 frame |
 | **ssrc** | 本次串流的隨機識別碼，同一次執行固定 | 對方重啟後 ssrc 不同，收端就知道要把 buffer 清掉重來 |
-| **RTP** | 真實世界即時媒體用的封包格式（RFC 3550）；本專案的 header 是它的精簡版 | seq／ts／ssrc 三個欄位的概念都來自 RTP |
+| **RTP（Real-time Transport Protocol，即時傳輸協定）** | 真實世界即時媒體用的封包格式（RFC 3550）；本專案的 header 是它的精簡版 | seq／ts／ssrc 三個欄位的概念都來自 RTP |
 | **big-endian** | 多 byte 的整數高位在前（網路慣例）；WAV 檔內的 sample 是 little-endian | header 用 big-endian，PCM 維持 WAV 的原樣 |
 | **jitter（抖動）** | 封包到達時間的不規則：送端每 20 ms 一包，收端收到的間隔忽長忽短 | 網路排隊、Wi-Fi 重傳造成；用「到達時間 − 預期時間」的變化量來量 |
 | **jitter buffer** | 收端先存幾個 frame 再開始播的緩衝區，依 seq 排序 | 用「多等一點延遲」換「不卡」：抖動小於 buffer 的包都來得及 |

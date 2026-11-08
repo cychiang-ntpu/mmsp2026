@@ -206,7 +206,7 @@ live 模式還要印 Team 1 的文字、Team 2 的語音各自的 STATS 行（�
 
 ## 參考文獻
 
-- H. Schulzrinne et al., "RTP: A Transport Protocol for Real-Time Applications," RFC 3550：<https://www.rfc-editor.org/rfc/rfc3550>（frame 切片、marker bit 的概念）。
+- H. Schulzrinne et al., "RTP（Real-time Transport Protocol，即時傳輸協定）: A Transport Protocol for Real-Time Applications," RFC 3550：<https://www.rfc-editor.org/rfc/rfc3550>（frame 切片、marker bit 的概念）。
 - L. Berc, W. Fenner, R. Frederick, S. McCanne, P. Stewart, "RTP Payload Format for JPEG-compressed Video," RFC 2435, Oct. 1998：<https://www.rfc-editor.org/rfc/rfc2435>（真正的 MJPEG over RTP 怎麼切片：fragment offset、type、q）。
 - ITU-T Rec. T.81（JPEG，1992）：<https://www.itu.int/rec/T-REC-T.81>；G. K. Wallace, "The JPEG Still Picture Compression Standard," *Comm. ACM*, 1991, [doi:10.1145/103085.103089](https://doi.org/10.1145/103085.103089)。
 - stb_image／stb_image_write（Sean Barrett，public domain／MIT）：<https://github.com/nothings/stb>。

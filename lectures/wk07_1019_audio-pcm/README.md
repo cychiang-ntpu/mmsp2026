@@ -204,7 +204,7 @@ mp5 spec <w_ms> <hamming|rectangular> <dft_ms> <hop_ms> <in.wav> <out.txt>
 | `ts`（4 bytes，單位 sample，每包 +320） | 這包**什麼時候該播** | 播放時鐘對齊 |
 | `ssrc`（4 bytes，隨機） | 這是**哪一次**的串流 | 對方重啟時重置 buffer |
 
-這就是 RTP（RFC 3550）header 的精簡版——真的 VoIP 用的格式，你們做完就看得懂 Wireshark 裡的 RTP。
+這就是 RTP（Real-time Transport Protocol，即時傳輸協定）（RFC 3550）header 的精簡版——真的 VoIP 用的格式，你們做完就看得懂 Wireshark 裡的 RTP。
 seq 是 16-bit 會**繞回**（65535 → 0）：比較「誰在前面」要用差值的正負，不能直接比大小（規格要求處理）。
 
 ### 2.3 抖動、jitter buffer 與播放時鐘（12 分鐘）

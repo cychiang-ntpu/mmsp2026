@@ -27,7 +27,7 @@ magic 'V' | type | seq(2) | ts(4) | ssrc(4) | 640 bytes PCM        多 byte 欄�
 | `ts`（單位 sample，每包 +320） | 這包**什麼時候該播** | 對齊播放時鐘 |
 | `ssrc`（隨機） | 這是**哪一次**的串流 | 對方重啟就重置 |
 
-這是 RTP（RFC 3550）的精簡版。`type` 另有 0x04 μ-law（320 bytes）、0x05 ADPCM（160 bytes）——功能 4，見第 5b 節。
+這是 RTP（Real-time Transport Protocol，即時傳輸協定）（RFC 3550）的精簡版。`type` 另有 0x04 μ-law（320 bytes）、0x05 ADPCM（160 bytes）——功能 4，見第 5b 節。
 
 ### 3 jitter buffer 與播放時鐘
 
