@@ -139,18 +139,32 @@ voicelink call 5005 192.168.1.20 5005 --buffer 40         # 通話時把延遲�
 
 ### 封包格式（UDP payload）
 
-每個 UDP 封包＝**12 bytes 的 header＋640 bytes 的 PCM**（最後一包不足 640 時後面補 0 到 640）。
-所有多 byte 欄位 **big-endian**（PCM 本身維持 WAV 的 little-endian）。
+每個 UDP 封包 = **12 bytes 的 header ＋ 聲音資料**。多 byte 的欄位都是 **big-endian**（高位在前）；聲音資料本身維持 WAV 的 little-endian。
+
+| offset | 長度（bytes） | 欄位 | 值 |
+|---|---|---|---|
+| 0 | 1 | `magic` | 固定 0x56（ASCII 的 `V`）；不是就當壞封包 |
+| 1 | 1 | `type` | 這包是什麼，見下表 |
+| 2 | 2 | `seq` | 封包序號：每送一包 +1，從 0 開始，到 65535 之後繞回 0 |
+| 4 | 4 | `ts` | timestamp，單位是 sample：第 k 個 frame 的 ts = 320·k |
+| 8 | 4 | `ssrc` | 本次串流的隨機識別碼，同一次執行固定；收到不同的 ssrc 就把 buffer 清掉重來 |
+| 12 | 依 type | 聲音資料 | 見下表 |
+
+`type` 的四種值：
+
+| type | 名稱 | 聲音資料 | 封包總長 | 說明 |
+|---|---|---|---|---|
+| 0x01 | AUDIO | 320 個 16-bit sample（little-endian） | 12 + 640 = **652** | 預設；最後一包不足 320 個 sample 時後面補 0 |
+| 0x04 | AUDIO_MULAW | 320 個 μ-law byte（每 sample 1 byte） | 12 + 320 = **332** | `--codec mulaw`（進階） |
+| 0x05 | AUDIO_ADPCM | 160 bytes（每 sample 4 bits，高 4 bits 先） | 12 + 160 = **172** | `--codec adpcm`（加分） |
+| 0x02 | BYE | 無 | **12** | 送端結束時送 3 次；`ts` = 整個檔案真正的 sample 總數 |
+
+一個 AUDIO 封包的前 12 bytes 長這樣（seq = 5、ts = 1600、ssrc = 0x1234ABCD）：
 
 ```
-offset  長度  欄位
- 0      1     magic    = 0x56（'V'）
- 1      1     type     = 0x01 AUDIO（16-bit PCM，640 bytes）、0x02 BYE（結束，沒有 PCM）、
-                         0x04 AUDIO_MULAW（320 bytes，每 sample 1 byte）、0x05 AUDIO_ADPCM（160 bytes，每 sample 4 bits，加分）
- 2      2     seq      每送一包 +1，從 0 開始；2^16 後繞回 0
- 4      4     ts       timestamp，單位 sample：第 k 個 frame 是 320·k
- 8      4     ssrc     本次串流的隨機識別碼；同一次執行固定。收到不同 ssrc 就重置 buffer
-12      640   PCM      320 個 16-bit little-endian sample（type 0x01）；type 0x04 是 320 bytes 的 μ-law；0x05 是 160 bytes（高 4 bits 先）
+56 01 | 00 05 | 00 00 06 40 | 12 34 AB CD | <640 bytes PCM…>
+ ↑  ↑    seq        ts            ssrc
+magic type
 ```
 
 - `seq` 用來偵測**遺失、亂序、重複**；`ts` 用來決定**什麼時候播**。兩者分開存，因為真實系統裡一包未必剛好一個 frame（例如靜音壓縮）。
