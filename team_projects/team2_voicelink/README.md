@@ -4,7 +4,7 @@
 - 2026/11/1 公告：11/9、11/16 老師出國改為助教主持的 tutorial 工作坊，截止與評測各順延兩週（原 11/8／11/9）；**同時新增功能 4「語音壓縮（μ-law）」**，見下
 - 團隊 repo 必備：`src/`、`include/`、`tests/`、建置檔、`README.md`、
   `docs/interface.md`、`TEAM_LOG.md`、`CONTRIBUTIONS.md`、`AI_USAGE.md`、`slides.pdf`
-- 繳交：登錄 repo URL＋完整 commit SHA
+- 繳交：team repo 設為 **private**、Settings → Collaborators 加入所有組員、老師與助教；**11/11（三）18:00 前**在數位學苑 3.0 繳交 team repo 的 GitHub 連結；11/22 登錄 repo URL＋完整 commit SHA
 - 本輪四人組角色：**P＋D＋D＋V**（三人組 P＋D＋V）；分組名單於 10/19 公告
 - **11/9 定版**：[tutorial/](tutorial/TUTORIAL.md) 九個模組＋六步做出**能通話的 raw PCM voicelink**（第 6 步 live）。這一輪真正的作業是**加語音壓縮**，在 tutorial 旁邊兩個資料夾裡做：[`mulaw_system/`](mulaw_system/README.md)（μ-law）與 [`adpcm_huffman_system/`](adpcm_huffman_system/README.md)（ADPCM 或／和 Huffman），各給一個框架（第 6 步的程式＋一張 codec 表，`★` 標出要動手的地方）。評分 **40（m 與 step 全部 push）＋demo 最多 40（11/23：raw 通話 10、μ-law 10、ADPCM 10、Huffman 10）＋助教程式碼實質審查最多 30；**加總超過 100 以 100 計****；**team repo 照這個資料夾的結構繳交**。見「驗收與評分」。
 
@@ -20,7 +20,7 @@
 
 ### team repo 的結構（助教照這個批改）
 
-把整個 `team_projects/team2_voicelink/` 複製成 team repo 的內容，**資料夾名稱不要改**：
+在 GitHub 建一個 **private** repo `mmsp2026-team2-gXX`（XX 是組別，例如 `g03`），Settings → Collaborators 加入所有組員、老師與助教（同 Team 1）；把整個 `team_projects/team2_voicelink/` 複製成 team repo 的內容，**資料夾名稱不要改**。建好後 **11/11（三）18:00 前**每組一位代表到數位學苑 3.0（<https://lms3.ntpu.edu.tw>）繳交 team repo 的 GitHub 連結，助教從這個連結看你們的 Actions 結果：
 
 ```
 mmsp2026-team2-gXX/
@@ -37,7 +37,7 @@ mmsp2026-team2-gXX/
 
 | 日期 | 做什麼 | 繳交 | 分 | 講義 |
 |---|---|---|---|---|
-| **11/9（一）** 不上課：自習週 | 建 team repo（照這個資料夾的結構）；Part A 模組 m1–m9 各「跑一次、改一處」 | 每個模組、每一步各自一個資料夾 push；**m1–m9 全部在 11/11（三）18:00 前** | 繳交 40 的一部分 | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
+| **11/9（一）** 不上課：自習週 | 建 team repo（private、加老師與助教為 collaborator，照這個資料夾的結構）；Part A 模組 m1–m9 各「跑一次、改一處」 | 每個模組、每一步各自一個資料夾 push；**m1–m9 全部在 11/11（三）18:00 前**；同一時間前在數位學苑 3.0 繳交 team repo 的 GitHub 連結 | 繳交 40 的一部分 | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
 | **11/16（一）** 工作坊 ②（助教主持） | 第 4–6 步（做完＝能通話）；兩組互測；`mulaw_system` 開工 | **step1–6 全部在 11/16（一）16:00 下課前 push**（含 step6_live） | 繳交 40 的其餘部分 | [wk11](../../lectures/wk11_1116_team2-progress2/README.md) |
 | **11/22（日）18:00** | `mulaw_system` 過測試 8；`adpcm_huffman_system` 做 ADPCM（測試 9）或／和 Huffman（測試 10）；投影片含報告三題 | 登錄 repo URL＋commit SHA | — | — |
 | **11/23（一）** 評測 | D 兩台 live 3 分鐘、助教當場跑測試、P 報告 4 分鐘＋問答 2 分鐘；第三節**分組口試**（以組為單位） | 帶兩台筆電、耳機、熱點 | demo 最多 40（raw 10、μ-law 10、ADPCM 10、Huffman 10）；之後一週審查最多 30 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
@@ -329,7 +329,7 @@ m1–m9 與 step1–step6 共 **15 項**都在 team repo 裡 → 40 分；**缺�
 - **至少一個 commit**，訊息寫清楚是哪一項、誰做的（例：`m7 ringbuffer：改到達順序看 REPEAT 變 4 次（王小明）`）。
 - **該項的檢查有過**：m 模組把 README「做完要能回答」的答案寫進 commit 訊息或 `TEAM_LOG.md`；step3–step6 把對應的 `run_mock_tests.py --only …` PASS 輸出貼進 `TEAM_LOG.md`；step6 另貼兩台 `call` 的 STATS 截圖。
 
-截止：**m1–m9 → 11/11（三）18:00**；**step1–step6 → 11/16（一）16:00**（工作坊 ② 下課時）。逾期補交的項目減半。
+team repo 的 GitHub 連結 **11/11（三）18:00 前**交到數位學苑 3.0（<https://lms3.ntpu.edu.tw>）（private repo 要先把老師與助教加成 collaborator，否則助教打不開，等同沒交）。截止：**m1–m9 → 11/11（三）18:00**；**step1–step6 → 11/16（一）16:00**（工作坊 ② 下課時）。逾期補交的項目減半。
 
 **自動檢查**：team repo 根目錄放著 [`.github/workflows/team2-check.yml`](.github/workflows/team2-check.yml)（跟著結構複製過去就有），每次 push 都會跑 [`tests/check_submission.py`](tests/check_submission.py)：15 項各自「資料夾在、.c 在、make 零警告、該過的測試過」，Actions 綠勾就是 40 分；summary 那一行寫著缺幾項、扣幾分。自己在本機也能跑：`python tests/check_submission.py --wav <16k wav> --deadline-report`。
 11/9、11/16 工作坊當天助教只協助與記錄進度，**不另外計分、不抽問扣分**。
@@ -383,7 +383,7 @@ P 報告 4 分鐘（codec 比較表、三題）＋問答 2 分鐘不另計分，
 |---|---|---|
 | 1–2 | 10/19–11/1 | 建 team repo（`mmsp2026-team2-gXX`）；跑通 baseline 的 raw 串流；**兩台電腦 UDP 互通** |
 | 3 | 11/2–11/8 | 11/2 第三節老師帶著做 [tutorial](tutorial/) 第 1–3 步（header、jitter buffer、repeat PLC） |
-| 4 | 11/9–11/15 | 11/9 不上課（自習週）：建 team repo、Part A 模組 m1–m9 各自 commit，**11/11（三）18:00 前全部 push**（Actions 自動檢查）；有餘力先做第 1–3 步 |
+| 4 | 11/9–11/15 | 11/9 不上課（自習週）：建 team repo（private、加老師與助教）、Part A 模組 m1–m9 各自 commit，**11/11（三）18:00 前全部 push**（Actions 自動檢查），並在數位學苑 3.0 繳交 GitHub 連結；有餘力先做第 1–3 步 |
 | 5 | 11/16–11/22 | 11/16 工作坊 ②：第 4–6 步，**16:00 下課前 step1–6 全部 push（繳交 40 分到手）**；`mulaw_system` 開工（m8 → 表加一列 → 測試 8）；回家做 `adpcm_huffman_system`（m9 → ADPCM 測試 9；Huffman 測試 10）、組間互測；投影片、報告三題、進度報告；**11/22 18:00 前登錄 SHA** |
 
 ## tutorial/：手把手六步（從這裡開始）＋兩個系統資料夾（你們寫）

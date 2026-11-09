@@ -11,12 +11,13 @@ tutorial 的九個模組（m1–m9）＋六步（step1–step6）做出一支能
 真正要寫的是「加壓縮」：mulaw_system/（μ-law）、adpcm_huffman_system/（ADPCM 或／和 Huffman），兩個資料夾都給了框架，程式裡 ★ 標出要動手的地方。
 
 ■ 怎麼繳交
-把 team_projects/team2_voicelink/ 整個複製成 team repo（mmsp2026-team2-gXX），資料夾名稱不要改。
+在 GitHub 建 private repo（mmsp2026-team2-gXX），Settings → Collaborators 加入所有組員、老師與助教；把 team_projects/team2_voicelink/ 整個複製進去，資料夾名稱不要改。
+11/11（三）18:00 前，每組一位代表到數位學苑 3.0（https://lms3.ntpu.edu.tw）繳交 team repo 的 GitHub 連結。
 repo 裡的 GitHub Actions（team2-check）每次 push 會自動檢查 m1–m9、step1–6：綠勾就對了。
 
 ■ 時程
 11/9（一）不上課、助教不到場（我出國）。各組自己做 m1–m9，每個模組各自一個 commit。
-　→ 11/11（三）18:00 前 m1–m9 全部 push。
+　→ 11/11（三）18:00 前 m1–m9 全部 push，並在數位學苑 3.0 繳交 team repo 的 GitHub 連結。
 11/16（一）照常到電腦教室，點名，助教現場主持：做 step4–6。
 　→ 當天 16:00 下課前 step1–6 全部 push（含 step6_live）。第三節開始 mulaw_system。
 　→ 助教會帶實驗室的 USB 麥克風，借給同學在課堂上使用；也可以自己帶 USB 麥克風，或帶自己的筆記型電腦、耳機、麥克風，方便現場實作與驗證通話。
