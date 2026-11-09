@@ -13,7 +13,7 @@
 | 9 | 11/2 | 期中考（[範例考題](wk09_1102_midterm-speech/midterm_sample.md)）、Team 2 實作工作坊 | 期中考、Team 2 | [wk09_1102_midterm-speech/](wk09_1102_midterm-speech/) |
 | 10 | 11/9 | 不上課（老師出國、助教不到場）：Team 2 自習週，m1–m9 在 11/11 18:00 前 push | Team 2 | [wk10_1109_team2-progress1/](wk10_1109_team2-progress1/) |
 | 11 | 11/16 | Team 2 工作坊 ②（電腦教室、點名、助教主持）：第 4–6 步，16:00 前 step1–6 全部 push | Team 2 | [wk11_1116_team2-progress2/](wk11_1116_team2-progress2/) |
-| 12 | 11/23 | Team 2 demo 與口試（流程同 Team 1）；Team 3 提早開題（規格導讀） | Team 2、Team 3 | [wk12_1123_team2-eval/](wk12_1123_team2-eval/) |
+| 12 | 11/23 | Team 2 demo 與分組口試（以組為單位）；Team 3 提早開題（規格導讀） | Team 2、Team 3 | [wk12_1123_team2-eval/](wk12_1123_team2-eval/) |
 | 13 | 11/30 | 影像表示、BMP、Team 3 問答、補驗時段 2 | Team 3 | [wk13_1130_image-bmp/](wk13_1130_image-bmp/) |
 | 14 | 12/7 | DCT、JPEG、MJPEG 分片、bounded queue、整合；期末上機模擬 | Team 3、期末 | [wk14_1207_dct-jpeg-mjpeg/](wk14_1207_dct-jpeg-mjpeg/) |
 | 15 | 12/14 | Team 3 評測、補驗時段 3 | Team 3 | [wk15_1214_team3-eval/](wk15_1214_team3-eval/) |

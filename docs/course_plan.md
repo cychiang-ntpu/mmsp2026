@@ -25,7 +25,7 @@
 | 11/9 | 老師出國；**不上課、助教不到場**：Team 2 自習週，各組自己把 tutorial 的 m1–m9 做完、11/11（三）18:00 前 push（Actions 自動檢查） |
 | 11/16 | 老師出國；**Team 2 工作坊 ②**（電腦教室、點名、助教現場主持）：tutorial 第 4–6 步，16:00 前 step1–6 全部 push；第三節 mulaw_system 開工 |
 | 11/22 18:00 | **Team 2 繳交截止** |
-| 11/23 | **Team 2 評測**（demo：live 通話＋mock 測試＋報告問答）；**Team 3 提早開題**（第三節規格導讀；規格與 baseline 當天發布） |
+| 11/23 | **Team 2 評測**（demo：live 通話＋mock 測試＋報告問答；第三節分組口試，以組為單位）；**Team 3 提早開題**（第三節規格導讀；規格與 baseline 當天發布） |
 | 11/30 | 影像表示、BMP；Team 3 問答；補驗時段 2 |
 | 12/7 | DCT、JPEG、MJPEG 分片與整合；期末上機模擬 |
 | 12/13 18:00 | **Team 3 繳交截止** |
@@ -44,7 +44,7 @@
 個人 60：C 貢獻與協作 15＋P/D/V 角色履行 15＋個人口試 30。
 口試未達 15/30 → 該次上限 59，可於補驗時段補驗一次。
 
-**Team 2（11/9 定版）**：tutorial 六步做出能通話的 raw PCM voicelink，作業是在 `mulaw_system/`、`adpcm_huffman_system/` 兩個資料夾加壓縮；team repo 照 `team2_voicelink/` 的結構繳交。**tutorial 繳交 40**（m1–m9、step1–6 共 15 項各自一個資料夾 push，缺一項扣 3）＋**11/23 demo 最多 40**（raw 通話 10、μ-law 10、ADPCM 10、Huffman 10）＋**助教程式碼實質審查最多 30**（正確性與互通 10、程式品質 10、個人貢獻 10），加總超過 100 以 100 計。不另辦口試；個人分是審查裡的「個人貢獻」。
+**Team 2（11/9 定版）**：tutorial 六步做出能通話的 raw PCM voicelink，作業是在 `mulaw_system/`、`adpcm_huffman_system/` 兩個資料夾加壓縮；team repo 照 `team2_voicelink/` 的結構繳交。**tutorial 繳交 40**（m1–m9、step1–6 共 15 項各自一個資料夾 push，缺一項扣 3）＋**11/23 demo 最多 40**（raw 通話 10、μ-law 10、ADPCM 10、Huffman 10）＋**助教程式碼實質審查最多 30**（正確性與互通 10、程式品質 10、個人貢獻 10），加總超過 100 以 100 計。11/23 第三節分組口試（以組為單位，全組一起回答），結果作為審查的參考，不另計分；個人分是審查裡的「個人貢獻」（看 `git log`）。
 
 ## 分組與角色
 

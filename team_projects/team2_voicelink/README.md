@@ -29,6 +29,7 @@ mmsp2026-team2-gXX/
 ├── mulaw_system/voicelink.c  μ-law 系統（框架 + 你們加的 μ-law）
 ├── adpcm_huffman_system/voicelink.c   ADPCM 或／和 Huffman 系統
 ├── tests/、python_ref/       原樣（驗收腳本與對手端）
+├── .gitignore、.github/      擋掉執行檔與輸出的 .wav；Actions 自動檢查（不改）
 ├── README.md、docs/interface.md、TEAM_LOG.md、CONTRIBUTIONS.md、AI_USAGE.md、slides.pdf
 ```
 
@@ -39,7 +40,7 @@ mmsp2026-team2-gXX/
 | **11/9（一）** 不上課：自習週 | 建 team repo（照這個資料夾的結構）；Part A 模組 m1–m9 各「跑一次、改一處」 | 每個模組、每一步各自一個資料夾 push；**m1–m9 全部在 11/11（三）18:00 前** | 繳交 40 的一部分 | [wk10](../../lectures/wk10_1109_team2-progress1/README.md) |
 | **11/16（一）** 工作坊 ②（助教主持） | 第 4–6 步（做完＝能通話）；兩組互測；`mulaw_system` 開工 | **step1–6 全部在 11/16（一）16:00 下課前 push**（含 step6_live） | 繳交 40 的其餘部分 | [wk11](../../lectures/wk11_1116_team2-progress2/README.md) |
 | **11/22（日）18:00** | `mulaw_system` 過測試 8；`adpcm_huffman_system` 做 ADPCM（測試 9）或／和 Huffman（測試 10）；投影片含報告三題 | 登錄 repo URL＋commit SHA | — | — |
-| **11/23（一）** 評測 | D 兩台 live 3 分鐘、助教當場跑測試、P 報告 4 分鐘＋問答 2 分鐘 | 帶兩台筆電、耳機、熱點 | demo 最多 40（raw 10、μ-law 10、ADPCM 10、Huffman 10）；之後一週審查最多 30 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
+| **11/23（一）** 評測 | D 兩台 live 3 分鐘、助教當場跑測試、P 報告 4 分鐘＋問答 2 分鐘；第三節**分組口試**（以組為單位） | 帶兩台筆電、耳機、熱點 | demo 最多 40（raw 10、μ-law 10、ADPCM 10、Huffman 10）；之後一週審查最多 30 | [wk12](../../lectures/wk12_1123_team2-eval/README.md) |
 
 40＋40＋30 加總超過 100 以 100 計；各項怎麼算在「[驗收與評分](#驗收與評分119-定版403030)」。
 
@@ -343,6 +344,8 @@ m1–m9 與 step1–step6 共 **15 項**都在 team repo 裡 → 40 分；**缺�
 | **Huffman**（`adpcm_huffman_system`） | 測試 10 PASS（你們對你們）＋現場切 `--codec huff-mulaw`，STATS 的 `bytes` 比 μ-law 少 | +10 |
 
 P 報告 4 分鐘（codec 比較表、三題）＋問答 2 分鐘不另計分，但審查時會對照你們報告裡的數字。
+
+**分組口試**（11/23 第三節）：**以組為單位**，照已公告的 Team 2 分組；老師與助教到各組桌邊，全組一起回答——指著組裡 commit 的一段程式講它在做什麼、一題概念，組員每個人都可能被點到。不另計分，結果作為③程式碼實質審查的參考。
 
 ### ③ 程式碼實質審查（最多 30 分；助教在 11/23 後一週內看登錄 SHA 的 repo）
 
