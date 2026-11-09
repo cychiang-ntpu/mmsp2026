@@ -84,8 +84,8 @@ run "make check-modules（m3 時鐘、m6 header、m7 環形 buffer、m8 μ-law�
 run "step5_robust：驗收 1–7（本機 UDP）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$D/step5_robust/step5_robust$EXE" "$D/step5_robust/step5_robust$EXE" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5460 --buffer 200 --only 1,2,3,4,5,6,7
 run "step6_live：驗收 1–7（mock 模式沒變）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "$D/step6_live/step6_live$EXE" "$D/step6_live/step6_live$EXE" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5470 --buffer 200 --only 1,2,3,4,5,6,7
 for S in mulaw_system adpcm_huffman_system; do
-  run "$S：框架 make（零警告）" $MAKE -B -C team_projects/team2_voicelink/$S; nowarn "Team 2 $S"
-  run "$S：框架 devices 正常結束" team_projects/team2_voicelink/$S/voicelink$EXE devices
+  run "${S}：框架 make（零警告）" $MAKE -B -C team_projects/team2_voicelink/$S; nowarn "Team 2 ${S}"
+  run "${S}：框架 devices 正常結束" team_projects/team2_voicelink/${S}/voicelink$EXE devices
 done
 run "mulaw_system 框架：驗收 1,7（pcm 仍要全對）" $PY team_projects/team2_voicelink/tests/run_mock_tests.py "team_projects/team2_voicelink/mulaw_system/voicelink$EXE" "team_projects/team2_voicelink/mulaw_system/voicelink$EXE" lectures/wk07_1019_audio-pcm/data/aeueo-16kHz.wav --port 5480 --buffer 200 --only 1,7
 
