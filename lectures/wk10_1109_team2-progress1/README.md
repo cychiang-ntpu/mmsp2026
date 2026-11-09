@@ -7,12 +7,13 @@
 
 ## 這一週要做完的事（11/11（三）18:00 前）
 
-1. **建 team repo**：把整個 [`team_projects/team2_voicelink/`](../../team_projects/team2_voicelink/) 複製成 `mmsp2026-team2-gXX`（**資料夾名稱不要改**，含 `.github/workflows/team2-check.yml` 與 `.gitignore`——後者擋掉編出來的執行檔，`git add .` 才不會把它們 commit 進去），push 一次，到 repo 的 Actions 分頁確認 `team2-check` 有跑起來。
-2. **Part A 九個模組 m1–m9**：照 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 的順序，每個資料夾 `cd` 進去 `make`、跑一次、照 README「改一個地方」改一處再跑一次。每個模組**各自一個 commit**（訊息寫哪一個模組、誰做的），README「做完要能回答」的答案寫進 commit 訊息或 `TEAM_LOG.md`。
+1. **建 team repo**：在 GitHub 建一個 **private** repo `mmsp2026-team2-gXX`，Settings → Collaborators 加入所有組員、老師與助教（同 Team 1）；把整個 [`team_projects/team2_voicelink/`](../../team_projects/team2_voicelink/) 複製成 `mmsp2026-team2-gXX`（**資料夾名稱不要改**，含 `.github/workflows/team2-check.yml` 與 `.gitignore`——後者擋掉編出來的執行檔，`git add .` 才不會把它們 commit 進去），push 一次，到 repo 的 Actions 分頁確認 `team2-check` 有跑起來。
+2. **繳交 GitHub 連結**：每組一位代表到數位學苑 3.0（<https://lms3.ntpu.edu.tw>）的 Team 2 繳交區，交 team repo 的 GitHub 連結（例：`https://github.com/<帳號>/mmsp2026-team2-gXX`），**11/11（三）18:00 前**。助教從這個連結看你們的 Actions 結果；沒交連結、或沒把助教加成 collaborator（private repo 打不開），助教就看不到你們的進度。
+3. **Part A 九個模組 m1–m9**：照 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 的順序，每個資料夾 `cd` 進去 `make`、跑一次、照 README「改一個地方」改一處再跑一次。每個模組**各自一個 commit**（訊息寫哪一個模組、誰做的），README「做完要能回答」的答案寫進 commit 訊息或 `TEAM_LOG.md`。
    - m4／m5 要麥克風與喇叭：用自己的筆電做；沒有裝置的電腦會印「沒有裝置」正常結束，也算做完（截圖貼 `TEAM_LOG.md`）。
    - m8、m9 各約 20 分鐘，README 寫得比較長，邊做邊學，是接下來寫 codec 的基礎。
-3. **push**。Actions 綠勾＝m1–m9 都在、都編得過、該跑的檢查都過。這就是「繳交 40 分」的前 9 項（缺一項扣 3）。
-4. 有餘力就往 Part B 走（第 1–3 步），11/16 當天會比較輕鬆；第 1–6 步的截止是 11/16（一）16:00。
+4. **push**。Actions 綠勾＝m1–m9 都在、都編得過、該跑的檢查都過。這就是「繳交 40 分」的前 9 項（缺一項扣 3）。
+5. 有餘力就往 Part B 走（第 1–3 步），11/16 當天會比較輕鬆；第 1–6 步的截止是 11/16（一）16:00。
 
 ## 自己檢查
 

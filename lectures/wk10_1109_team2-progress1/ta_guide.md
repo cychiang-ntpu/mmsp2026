@@ -24,9 +24,9 @@
 
 | 時間 | 助教做什麼 |
 |---|---|
-| 11/9（一） | 在 Slack `#team2-questions` 貼公告（下方）；回答建 repo、Actions 跑不起來、make 編不過的問題 |
-| 11/11（三）18:00 後 | 看 11 組 repo 的 Actions `team2-check`：綠勾＝m1–m9 都在；紅叉點進去看哪一項 FAIL，記錄 |
-| 11/12（四）前 | 把「各組 m1–m9 完成狀況」與問題清單給老師 |
+| 11/9（一） | 在數位學苑 3.0（<https://lms3.ntpu.edu.tw>）開「Team 2 team repo GitHub 連結」繳交區（以組為單位，截止 11/11（三）18:00），開好後在 Slack 告訴同學位置；在 Slack `#team2-questions` 貼公告（下方）；回答建 repo、Actions 跑不起來、make 編不過的問題 |
+| 11/11（三）18:00 後 | 從數位學苑收到的 GitHub 連結逐組打開 Actions `team2-check`：綠勾＝m1–m9 都在；紅叉點進去看哪一項 FAIL，記錄；沒交連結、或打不開（private repo 沒加助教為 collaborator）的組也記下 |
+| 11/12（四）前 | 把「各組 m1–m9 完成狀況」、沒交連結的組與問題清單給老師 |
 
 ## 11/16 ②：第 4–6 步（做完＝能通話）＋mulaw_system 開工
 
@@ -51,7 +51,8 @@
 
 ```
 📢 11/9（一）不上課、助教不到場（老師出國）。這一週請各組自己（在家或自己約）完成：
-1. 把 team_projects/team2_voicelink/ 整個複製成 team repo（mmsp2026-team2-gXX，資料夾名稱不要改），push 一次，看 Actions 的 team2-check 有沒有跑起來。
+1. 在 GitHub 建 private repo（mmsp2026-team2-gXX），Settings → Collaborators 加入所有組員、老師與助教；把 team_projects/team2_voicelink/ 整個複製進去（資料夾名稱不要改），push 一次，看 Actions 的 team2-check 有沒有跑起來。
+   11/11（三）18:00 前，每組一位代表到數位學苑 3.0（https://lms3.ntpu.edu.tw）繳交 team repo 的 GitHub 連結。
 2. tutorial 的九個模組 m1–m9：每個資料夾 make、跑一次、照 README 改一處再跑，各自一個 commit（寫哪個模組、誰做的）。
 3. 11/11（三）18:00 前全部 push；Actions 綠勾就是繳交 40 分的前 9 項（缺一項扣 3）。
 問題貼 #team2-questions，助教線上回。11/16（一）照常上課（助教主持）：第 4–6 步，16:00 下課前 step1–6 全部 push。
