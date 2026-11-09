@@ -3,6 +3,8 @@
 對應：Team 2（step1–6 今天 16:00；SHA 登錄 11/22 18:00；11/23 demo 與口試）
 時間：13:10–16:00，三節，**電腦教室、全員到場、點名**。老師出國，助教現場主持；助教的工作是確認每一組在 16:00 前把 step1–6 都 add／commit／push 上去，現場可以問問題。
 
+**麥克風與通話裝置**：助教會帶實驗室的 USB 麥克風，借給同學在課堂上使用。也歡迎自己帶 USB 麥克風，或帶自己的筆記型電腦、耳機、麥克風，方便現場實作、驗證兩台通話（第三節第 6 步 live、`mulaw_system`）。
+
 ## 做什麼
 
 接著 [tutorial](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 做第 4–6 步；做完第 6 步就是**能兩台通話的 voicelink**（step4–6 push 完，繳交 40 分到手）。第 3 步還沒過的組先補。每步做完 push。
@@ -22,7 +24,7 @@
 - 每步先帶看 5 分鐘差異，再各組做，巡場不代寫；同學可以現場問問題。
 - **16:00 前逐組確認 step1–6 都 push 了**（看 Actions 或 `git log`），記錄每組最後的 SHA。
 - 第二節：兩組一組互測（配對 1↔3、2↔4、…）：`run_mock_tests.py` 跑「你們 send 對他們 recv」與反向。
-- 第三節 live：沒有麥克風的電腦用 `python_ref/voicelink.py send` 當聲源代替。
+- 帶實驗室的 USB 麥克風到教室，第三節 live 時借給需要的組（課堂上借用）；仍沒有麥克風的電腦用 `python_ref/voicelink.py send` 當聲源代替。
 - 16:00 前把「問老師的問題」與各組 push 狀況貼 Slack；11/19 前整理給老師。
 
 ## 給同學

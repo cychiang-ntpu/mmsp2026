@@ -9,6 +9,7 @@
 - [ ] 準備：白板筆、計時器、熱點、一台能投影的筆電。配對表印一份：
   - 11/9：1↔2、3↔4、5↔6、7↔8、9↔10、11↔1（11 組是奇數，第 11 組和第 1 組）。
   - 11/16：1↔3、2↔4、5↔7、6↔8、9↔11、10↔1。
+- [ ] 11/16：從實驗室帶 USB 麥克風到電腦教室，借給同學在課堂上使用（第 6 步 live、`mulaw_system` 通話驗證）；開課前先在教室電腦插上一支，跑 `step6_live devices` 確認抓得到。
 - [ ] 教室電腦先跑一次 `python_ref/voicelink.py` 與 `tests/run_mock_tests.py`（python_ref 對 python_ref，7/7 PASS），確認環境能用。
 
 ## 當天共同規則
@@ -43,8 +44,8 @@
 |---|---|---|
 | 13:10 | **點名**；看各組 Actions 狀態 | 缺席與 m1–m9 未綠勾的組記下來 |
 | 13:10–14:00 | 第 4 步 counters（第 3 步沒過的先補） | 帶看 late／dup／reordered 的判斷式與 `--plc zero` |
-| 14:10–15:00 | 第 5 步 robust＋第 6 步 μ-law；兩組互測（1↔3、2↔4…） | 帶看壞封包檢查與 μ-law 查表；互測跑 `run_mock_tests.py` 兩個方向 |
-| 15:10–15:45 | 第 6 步 live（15 分鐘）＋ `mulaw_system` 開工（20 分鐘） | 沒麥克風的用 `python_ref` 當聲源；μ-law 先帶看 `tutorial/m8_mulaw`，再投影 `mulaw_system/voicelink.c` 裡的四個 `★ 第 8 步`，目標 `--only 8` 跑得完；ADPCM／Huffman 回家做（`adpcm_huffman_system/`，零件 m9） |
+| 14:10–15:00 | 第 5 步 robust；兩組互測（1↔3、2↔4…） | 帶看壞封包檢查；互測跑 `run_mock_tests.py` 兩個方向 |
+| 15:10–15:45 | 第 6 步 live（15 分鐘）＋ `mulaw_system` 開工（20 分鐘） | 發實驗室 USB 麥克風給需要的組（課堂上借用）；仍沒麥克風的用 `python_ref` 當聲源；μ-law 先帶看 `tutorial/m8_mulaw`，再投影 `mulaw_system/voicelink.c` 裡的四個 `★ 第 8 步`，目標 `--only 8` 跑得完；ADPCM／Huffman 回家做（`adpcm_huffman_system/`，零件 m9） |
 | 15:45–16:00 | 收尾：**16:00 前 step1–6 全部 push**（看各組 Actions）；進度報告＋SHA 11/22 18:00；11/23 評測要帶的東西 | |
 
 ## 會後
@@ -62,6 +63,7 @@
 2. tutorial 的九個模組 m1–m9：每個資料夾 make、跑一次、照 README 改一處再跑，各自一個 commit（寫哪個模組、誰做的）。
 3. 11/11（三）18:00 前全部 push；Actions 綠勾就是繳交 40 分的前 9 項（缺一項扣 3）。
 問題貼 #team2-questions，助教線上回。11/16（一）照常上課（助教主持）：第 4–6 步，16:00 下課前 step1–6 全部 push。
+11/16 助教會帶實驗室的 USB 麥克風，借給同學在課堂上使用；也可以自己帶 USB 麥克風，或帶自己的筆記型電腦、耳機、麥克風，方便現場實作與驗證通話。
 講義：https://github.com/cychiang-ntpu/mmsp2026/blob/main/lectures/wk10_1109_team2-progress1/README.md
 ```
 
@@ -70,6 +72,7 @@
 ```
 📢 11/16（一）「Team 2 工作坊 ②」，助教主持，照常上課。今天 16:00 下課前 step1–6 要全部 push（Actions 綠勾）；離 11/22 登錄 SHA 只剩 6 天。
 來之前先把 tests/run_mock_tests.py 自己對自己跑一遍，帶結果來。
+🎤 第三節要做兩台通話：助教會帶實驗室的 USB 麥克風，借給同學在課堂上使用；也可以自己帶 USB 麥克風，或帶自己的筆記型電腦、耳機、麥克風，方便實作與驗證通話。
 接著做 tutorial 第 4–6 步，每步 push：第一節 第 4 步（完整 STATS、zero PLC（packet loss concealment，封包遺失補償））→ 第二節 第 5 步（壞封包）＋兩組互測 → 第三節 第 6 步 live 通話＋mulaw_system 開工
 step1–6 在 16:00 前都 push 完 = 繳交 40 分到手；11/22 前做 mulaw_system（--only 8 PASS）與 adpcm_huffman_system（ADPCM --only 9、Huffman --only 10）。11/23 demo：raw 通話 10、μ-law 10、ADPCM 10、Huffman 10，一項一項加。
 11/23 demo 最多 40（raw 通話 10、μ-law 10、ADPCM 10、Huffman 10）；之後一週程式碼實質審查最多 30；40＋40＋30 超過 100 以 100 計。

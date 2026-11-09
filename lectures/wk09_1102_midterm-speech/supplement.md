@@ -31,7 +31,7 @@
 
 | macOS | Linux / WSL | Windows PowerShell |
 |---|---|---|
-| `open ../wk03_0921_team1-kickoff/slides/a2d_steps.html` | `xdg-open …/a2d_steps.html` | `start ..\wk03_0921_team1-kickoff\slides2d_steps.html` |
+| `open ../wk03_0921_team1-kickoff/slides/a2d_steps.html` | `xdg-open …/a2d_steps.html` | `start ..\wk03_0921_team1-kickoff\slides\a2d_steps.html` |
 
 第 3 週 2.1 有麥克風的構造（振膜、動圈／電容）與 DSP 2026 講義的四步驟；今天從數學往下走。
 
