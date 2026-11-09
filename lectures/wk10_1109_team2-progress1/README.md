@@ -1,13 +1,13 @@
 # 第 10 週（2026/11/9）｜Team 2 自習週：11/11（三）18:00 前把 m1–m9 全部 push
 
-對應：Team 2（m1–m9 11/11 18:00、step1–6 11/16 16:00、SHA 登錄 11/22 18:00；11/23 demo 與口試）
+對應：Team 2（m1–m9 11/11 18:00、step1–6 11/16 16:00、SHA 登錄 11/22 18:00；11/23 demo 與分組口試）
 **11/9 不上課、助教不到場**。老師出國；這一週各組自己在家、或自己約時間聚在一起，把下面的事做完。問題貼 Slack `#team2-questions`，助教線上回。
 
 老師貼給全班的公告稿：[announcement_1109-1123.md](announcement_1109-1123.md)。
 
 ## 這一週要做完的事（11/11（三）18:00 前）
 
-1. **建 team repo**：把整個 [`team_projects/team2_voicelink/`](../../team_projects/team2_voicelink/) 複製成 `mmsp2026-team2-gXX`（**資料夾名稱不要改**，含 `.github/workflows/team2-check.yml`），push 一次，到 repo 的 Actions 分頁確認 `team2-check` 有跑起來。
+1. **建 team repo**：把整個 [`team_projects/team2_voicelink/`](../../team_projects/team2_voicelink/) 複製成 `mmsp2026-team2-gXX`（**資料夾名稱不要改**，含 `.github/workflows/team2-check.yml` 與 `.gitignore`——後者擋掉編出來的執行檔，`git add .` 才不會把它們 commit 進去），push 一次，到 repo 的 Actions 分頁確認 `team2-check` 有跑起來。
 2. **Part A 九個模組 m1–m9**：照 [tutorial/TUTORIAL.md](../../team_projects/team2_voicelink/tutorial/TUTORIAL.md) 的順序，每個資料夾 `cd` 進去 `make`、跑一次、照 README「改一個地方」改一處再跑一次。每個模組**各自一個 commit**（訊息寫哪一個模組、誰做的），README「做完要能回答」的答案寫進 commit 訊息或 `TEAM_LOG.md`。
    - m4／m5 要麥克風與喇叭：用自己的筆電做；沒有裝置的電腦會印「沒有裝置」正常結束，也算做完（截圖貼 `TEAM_LOG.md`）。
    - m8、m9 各約 20 分鐘，README 寫得比較長，邊做邊學，是接下來寫 codec 的基礎。

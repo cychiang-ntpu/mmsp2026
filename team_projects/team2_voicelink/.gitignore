@@ -1,0 +1,29 @@
+# Team 2 team repo 的 .gitignore：跟著 team2_voicelink/ 的結構複製到 team repo 根目錄就會生效。
+# 只擋「編出來的東西」與「跑測試產生的檔案」，原始碼（.c／.h／Makefile／README.md）不受影響。
+# 真的要 commit 某個被擋的檔案（例如報告要用的一段錄音），用 git add -f <檔案>。
+
+# 編譯產物（Windows 的 .exe、各平台的 .o）
+*.exe
+*.o
+*.obj
+
+# macOS／Linux 的執行檔沒有副檔名：tutorial 每個資料夾裡和資料夾同名開頭的檔案，只留 .c 與 .h
+tutorial/*/m[0-9]_*
+tutorial/*/step[0-9]_*
+!tutorial/*/*.c
+!tutorial/*/*.h
+
+# 兩個系統資料夾的執行檔
+mulaw_system/voicelink
+adpcm_huffman_system/voicelink
+
+# 執行時產生的聲音檔（out.wav、測試輸出、CI 產生的 ci_test.wav…）
+*.wav
+
+# tutorial 的 make check-modules 結果暫存
+.check_result
+
+# Python 快取、編輯器／系統雜檔
+__pycache__/
+.DS_Store
+Thumbs.db
