@@ -19,6 +19,7 @@ repo 裡的 GitHub Actions（team2-check）每次 push 會自動檢查 m1–m9�
 　→ 11/11（三）18:00 前 m1–m9 全部 push。
 11/16（一）照常到電腦教室，點名，助教現場主持：做 step4–6。
 　→ 當天 16:00 下課前 step1–6 全部 push（含 step6_live）。第三節開始 mulaw_system。
+　→ 助教會帶實驗室的 USB 麥克風，借給同學在課堂上使用；也可以自己帶 USB 麥克風，或帶自己的筆記型電腦、耳機、麥克風，方便現場實作與驗證通話。
 11/22（日）18:00 登錄 repo URL ＋ commit SHA（mulaw_system 過測試 8；adpcm_huffman_system 做 ADPCM／Huffman；slides.pdf 含報告三題）。
 11/23（一）demo 與口試日，流程同 Team 1：P 報告 4 分鐘 → D 兩台電腦現場通話 3 分鐘 → 問答 2 分鐘；第三節個人口試。帶兩台筆電、耳機、手機熱點。
 

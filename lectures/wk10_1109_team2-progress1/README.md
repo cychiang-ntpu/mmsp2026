@@ -19,7 +19,7 @@
 在 team repo 根目錄（Windows PowerShell；macOS／Linux 把 `python` 換成 `python3`）：
 
 ```powershell
-python tests\check_submission.py --only m --wav ..\mmsp2026\lectures\wk07_1019_audio-pcm\dataeueo-16kHz.wav
+python tests\check_submission.py --only m --wav ..\mmsp2026\lectures\wk07_1019_audio-pcm\data\aeueo-16kHz.wav
 ```
 
 印出來的 `[PASS]`／`[FAIL]` 就是 Actions 會看到的東西；`--deadline-report` 會列每個資料夾最後一次 commit 的時間。
@@ -38,3 +38,5 @@ python tests\check_submission.py --only m --wav ..\mmsp2026\lectures\wk07_1019_a
 ## 下一次見面：11/16（一）工作坊 ②（助教主持）
 
 照 [wk11](../wk11_1116_team2-progress2/README.md)：第 4–6 步，**16:00 下課前 step1–6 全部 push**；第三節開始 `mulaw_system`。
+
+**麥克風與通話裝置**：11/16 課堂上，助教會帶實驗室的 USB 麥克風，借給同學在課堂上使用。也歡迎自己帶 USB 麥克風，或帶自己的筆記型電腦、耳機、麥克風，方便現場做實作、驗證兩台通話（第 6 步 live）。
